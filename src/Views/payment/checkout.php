@@ -643,13 +643,14 @@
             const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
             const shipping = subtotal > 0 ? 9.99 : 0;
             const tax = subtotal * 0.08; // 8% tax
-            const total = subtotal + shipping + tax;
+            const totalAmount = subtotal + shipping + tax;
 
             return {
                 subtotal: subtotal.toFixed(2),
                 shipping: shipping.toFixed(2),
                 tax: tax.toFixed(2),
-                total: total.toFixed(2)
+                totalAmount: totalAmount.toFixed(2),
+                currency: 'USD'
             };
         }
 
@@ -780,8 +781,8 @@
                                 </div>
                             </div>
                             <div class="form-group">
-                                <label>${t.phone} <span class="required">${t.required}</span></label>
-                                <input type="tel" id="phone" name="phone" value="+1 (323) 555-0123" required>
+                                <label>${t.phone}</label>
+                                <input type="tel" id="phone" name="phone" value="+1 (323) 555-0123">
                             </div>
                         </div>
 
@@ -794,7 +795,7 @@
                         </div>
 
                         <button type="submit" class="submit-button" id="submitButton">
-                            ${t.confirmPay} $${totals.total}
+                            ${t.confirmPay} $${totals.totalAmount}
                         </button>
                     </form>
                 </div>
@@ -830,7 +831,7 @@
                         </div>
                         <div class="total-row grand-total">
                             <span>${t.orderTotal}</span>
-                            <span>$${totals.total}</span>
+                            <span>$${totals.totalAmount}</span>
                         </div>
                     </div>
                 </div>
@@ -958,19 +959,19 @@
                                 console.error('Unsupported redirect method:', redirectMethod);
                                 alert('Unsupported redirect method. Please contact support.');
                                 submitButton.disabled = false;
-                                submitButton.innerHTML = `${translations[currentLang].confirmPay} $${totals.total}`;
+                                submitButton.innerHTML = `${translations[currentLang].confirmPay} $${totals.totalAmount}`;
                             }
                         } else if (result.data.client_secret) {
                             // Store payment intent for later use
                             localStorage.setItem('currentPaymentIntent', JSON.stringify(result.data));
                             alert('Payment intent created. Please complete payment.');
                             submitButton.disabled = false;
-                            submitButton.innerHTML = `${translations[currentLang].confirmPay} $${totals.total}`;
+                            submitButton.innerHTML = `${translations[currentLang].confirmPay} $${totals.totalAmount}`;
                         } else {
                             console.error('No redirect URL found in response');
                             alert('Payment URL not found. Please contact support.');
                             submitButton.disabled = false;
-                            submitButton.innerHTML = `${translations[currentLang].confirmPay} $${totals.total}`;
+                            submitButton.innerHTML = `${translations[currentLang].confirmPay} $${totals.totalAmount}`;
                         }
                         return;
                     }
@@ -1006,7 +1007,7 @@
                 return false;
             }
 
-            if (!data.address || !data.city || !data.state || !data.zipCode || !data.country || !data.phone) {
+            if (!data.address || !data.city || !data.state || !data.zipCode || !data.country) {
                 alert(translations[currentLang].fillShippingAddress);
                 return false;
             }

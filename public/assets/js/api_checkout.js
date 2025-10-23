@@ -228,8 +228,8 @@ function calculateTotals() {
     const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const shipping = 10;
     const tax = subtotal * 0.08;
-    const total = subtotal + shipping + tax;
-    return { subtotal, shipping, tax, total };
+    const totalAmount = subtotal + shipping + tax;
+    return { subtotal, shipping, tax, totalAmount, currency: 'USD' };
 }
 
 // Generate payment methods HTML
@@ -379,7 +379,7 @@ function renderCheckout() {
         return;
     }
 
-    const { subtotal, shipping, tax, total } = calculateTotals();
+    const { subtotal, shipping, tax, totalAmount, currency } = calculateTotals();
 
     content.innerHTML = `
         <div class="checkout-form">
@@ -403,7 +403,7 @@ function renderCheckout() {
                         <input type="email" id="email" placeholder="john@example.com" value="john@example.com">
                     </div>
                     <div class="form-group">
-                        <label><span data-i18n="phone">联系电话</span> <span class="required" data-i18n="required">*</span></label>
+                        <label><span data-i18n="phone">联系电话</span></label>
                         <input type="tel" id="phone" placeholder="+1 (555) 000-0000" value="+1 (555) 000-0000">
                     </div>
                 </div>
@@ -460,7 +460,7 @@ function renderCheckout() {
 
             <div id="apiResponse" class="api-response"></div>
 
-            <button onclick="submitCheckout()" data-i18n="confirmPay">确认并支付</button>
+            <button onclick="submitCheckout()" data-i18n="confirmPay">确认并支付 $${totalAmount.toFixed(2)}</button>
         </div>
 
         <div class="order-summary">
@@ -491,7 +491,7 @@ function renderCheckout() {
             </div>
             <div class="summary-row total">
                 <span data-i18n="orderTotal">订单总计:</span>
-                <span class="amount">$${total.toFixed(2)}</span>
+                <span class="amount">$${totalAmount.toFixed(2)}</span>
             </div>
         </div>
     `;
@@ -519,7 +519,7 @@ async function submitCheckout() {
     const zipCode = document.getElementById('zipCode')?.value;
     const country = document.getElementById('country')?.value;
 
-    if (!firstName || !lastName || !email || !phone || !address || !city || !state || !zipCode || !country) {
+    if (!firstName || !lastName || !email || !address || !city || !state || !zipCode || !country) {
         alert(translations[currentLang].fillCustomerInfo);
         return;
     }

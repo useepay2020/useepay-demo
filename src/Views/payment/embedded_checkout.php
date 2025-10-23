@@ -11,6 +11,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>内嵌收银台 - Embedded Checkout</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- UseePay SDK -->
+    <script src="https://checkout-sdk.useepay.com/1.0.1/useepay.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -396,6 +398,14 @@
         </div>
     </div>
 
+    <script>
+        // Get UseePay public key from PHP config
+        <?php
+            global $config;
+            $publicKey = $config['usee_pay']['api_public_key'];
+        ?>
+        window.USEEPAY_PUBLIC_KEY = '<?php echo $publicKey; ?>';
+    </script>
     <script src="/assets/js/embedded_checkout.js"></script>
 </body>
 </html>

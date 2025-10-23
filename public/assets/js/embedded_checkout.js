@@ -157,6 +157,11 @@ function getPaymentMethods() {
     return [];
 }
 
+// UseePay SDK instance
+let useepayInstance = null;
+let useepayElements = null;
+let useepayPaymentElement = null;
+
 // Payment method mapping
 const paymentMethodsMap = {
     'card': {
@@ -218,12 +223,20 @@ const paymentMethodsMap = {
 };
 
 // Calculate totals
+// Calculate totals
 function calculateTotals() {
     const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const shipping = 10;
-    const tax = subtotal * 0.08;
-    const total = subtotal + shipping + tax;
-    return { subtotal, shipping, tax, total };
+    const shipping = subtotal > 0 ? 9.99 : 0;
+    const tax = subtotal * 0.08; // 8% tax
+    const totalAmount = subtotal + shipping + tax;
+
+    return {
+        subtotal: subtotal.toFixed(2),
+        shipping: shipping.toFixed(2),
+        tax: tax.toFixed(2),
+        totalAmount: totalAmount.toFixed(2),
+        currency: 'USD'
+    };
 }
 
 // Generate payment methods HTML
@@ -233,10 +246,12 @@ function generatePaymentMethods() {
     
     let methodsToDisplay = [];
     if (cachedMethods && cachedMethods.length > 0) {
+        // Filter out 'card' method
         methodsToDisplay = [...cachedMethods];
-        console.log('Using cached methods:', methodsToDisplay);
+        console.log('Using cached methods (excluding card):', methodsToDisplay);
     } else {
-        methodsToDisplay = ['card', 'apple_pay'];
+        // Default methods without 'card'
+        methodsToDisplay = ['card'];
         console.log('No cached methods, using default methods:', methodsToDisplay);
     }
     
@@ -250,7 +265,7 @@ function generatePaymentMethods() {
         const methodName = currentLang === 'zh' ? methodInfo.name_zh : methodInfo.name_en;
         const methodDesc = currentLang === 'zh' ? methodInfo.desc_zh : methodInfo.desc_en;
         const isFirst = index === 0;
-        
+
         let html = `
             <div class="payment-option">
                 <input type="radio" id="method_${method}" name="paymentMethod" value="${method}" ${isFirst ? 'checked' : ''} onchange="handlePaymentMethodChange('${method}')">
@@ -263,39 +278,18 @@ function generatePaymentMethods() {
                 </label>
             </div>
         `;
-        
-        // 如果是信用卡，添加卡信息表单
+
+        // 如果是信用卡，添加 UseePay Payment Element 容器
         if (method === 'card') {
             html += `
             <div class="card-info-section ${isFirst ? 'active' : ''}" id="cardInfoSection_${method}">
-                <div class="card-row">
-                    <div class="form-group full-width">
-                        <label><span data-i18n="cardNumber">卡号</span> <span class="required" data-i18n="required">*</span></label>
-                        <input type="text" id="cardNumber" placeholder="1234 5678 9012 3456" maxlength="19" value="4532 1234 5678 9010" oninput="updateCardPreview()">
-                    </div>
-                </div>
-
-                <div class="card-row">
-                    <div class="form-group">
-                        <label><span data-i18n="cardHolder">持卡人姓名</span> <span class="required" data-i18n="required">*</span></label>
-                        <input type="text" id="cardHolder" placeholder="As shown on card" value="JOHN DOE" oninput="updateCardPreview()">
-                    </div>
-                    <div class="form-group">
-                        <label><span data-i18n="expiryDate">有效期</span> <span class="required" data-i18n="required">*</span></label>
-                        <input type="text" id="expiryDate" placeholder="MM/YY" maxlength="5" value="12/25" oninput="updateCardPreview()">
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label><span data-i18n="cvv">CVV</span> <span class="required" data-i18n="required">*</span></label>
-                        <input type="text" id="cvv" placeholder="123" maxlength="4" value="123">
-                    </div>
-                </div>
-            </div>
+                <div id="payment-element" style="margin: 20px 0;"></div>
+                <div id="payment-message" style="color: #d32f2f; margin-top: 10px; display: none;"></div>
+            </div> 
             `;
         }
-        
+
+
         return html;
     }).join('');
 }
@@ -306,13 +300,67 @@ function handlePaymentMethodChange(method) {
     document.querySelectorAll('.card-info-section').forEach(section => {
         section.classList.remove('active');
     });
-    
+
     // 如果选择信用卡，显示对应的卡信息部分
     if (method === 'card') {
         const cardSection = document.getElementById('cardInfoSection_card');
         if (cardSection) {
             cardSection.classList.add('active');
         }
+        // Execute createPaymentIntent when card payment method is selected
+    }
+}
+
+/**
+ * Initialize UseePay Elements for card payment
+ * @param {string} clientSecret - Client secret from payment intent
+ * @param {string} paymentIntentId - Payment intent ID
+ */
+function initializeUseepayElements(clientSecret, paymentIntentId) {
+    console.log('Initializing UseePay Elements...');
+    
+    // Check if UseePay SDK is loaded
+    if (!window.UseePay) {
+        console.error('UseePay SDK not loaded');
+        alert('Payment SDK failed to load. Please refresh the page.');
+        return;
+    }
+
+    try {
+        // Get public key from window config (set in PHP)
+        const publicKey = window.USEEPAY_PUBLIC_KEY;
+        if (!publicKey) {
+            console.error('UseePay public key not configured');
+            alert('Payment configuration error. Please contact support.');
+            return;
+        }
+        
+        // Initialize UseePay instance
+        useepayInstance = window.UseePay(publicKey);
+        console.log('✓ UseePay instance initialized');
+        
+        // Initialize Elements with clientSecret and paymentIntentId
+        useepayElements = useepayInstance.elements({
+            clientSecret: clientSecret,
+            paymentIntentId: paymentIntentId
+        });
+        console.log('✓ UseePay Elements initialized');
+        
+        // Create payment element
+        useepayPaymentElement = useepayElements.create('payment');
+        console.log('✓ Payment element created');
+        
+        // Mount payment element to DOM
+        const paymentElementContainer = document.getElementById('payment-element');
+        if (paymentElementContainer) {
+            useepayPaymentElement.mount('payment-element');
+            console.log('✓ Payment element mounted');
+        } else {
+            console.error('Payment element container not found');
+        }
+    } catch (error) {
+        console.error('Error initializing UseePay Elements:', error);
+        alert('Failed to initialize payment form: ' + error.message);
     }
 }
 
@@ -349,7 +397,7 @@ function renderCheckout() {
         return;
     }
 
-    const { subtotal, shipping, tax, total } = calculateTotals();
+    const { subtotal, shipping, tax, totalAmount, currency } = calculateTotals();
 
     content.innerHTML = `
         <div class="checkout-form">
@@ -360,21 +408,21 @@ function renderCheckout() {
                 <div class="form-row">
                     <div class="form-group">
                         <label><span data-i18n="firstName">名字</span> <span class="required" data-i18n="required">*</span></label>
-                        <input type="text" id="firstName" placeholder="John" value="John">
+                        <input type="text" id="firstName" placeholder="John">
                     </div>
                     <div class="form-group">
                         <label><span data-i18n="lastName">姓氏</span> <span class="required" data-i18n="required">*</span></label>
-                        <input type="text" id="lastName" placeholder="Doe" value="Doe">
+                        <input type="text" id="lastName" placeholder="Doe">
                     </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
                         <label><span data-i18n="email">电子邮箱</span> <span class="required" data-i18n="required">*</span></label>
-                        <input type="email" id="email" placeholder="john@example.com" value="john@example.com">
+                        <input type="email" id="email" placeholder="john@example.com">
                     </div>
                     <div class="form-group">
-                        <label><span data-i18n="phone">联系电话</span> <span class="required" data-i18n="required">*</span></label>
-                        <input type="tel" id="phone" placeholder="+1 (555) 000-0000" value="+1 (555) 000-0000">
+                        <label><span data-i18n="phone">联系电话</span></label>
+                        <input type="tel" id="phone" placeholder="+1 (555) 000-0000">
                     </div>
                 </div>
             </div>
@@ -384,29 +432,29 @@ function renderCheckout() {
                 <div class="form-row">
                     <div class="form-group full-width">
                         <label><span data-i18n="address">详细地址</span> <span class="required" data-i18n="required">*</span></label>
-                        <input type="text" id="address" placeholder="Street Address" value="123 Main Street">
+                        <input type="text" id="address" placeholder="Street Address">
                     </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
                         <label><span data-i18n="city">城市</span> <span class="required" data-i18n="required">*</span></label>
-                        <input type="text" id="city" placeholder="City" value="New York">
+                        <input type="text" id="city" placeholder="City">
                     </div>
                     <div class="form-group">
                         <label><span data-i18n="state">州/省</span> <span class="required" data-i18n="required">*</span></label>
-                        <input type="text" id="state" placeholder="State/Province" value="NY">
+                        <input type="text" id="state" placeholder="State/Province">
                     </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
                         <label><span data-i18n="zipCode">邮政编码</span> <span class="required" data-i18n="required">*</span></label>
-                        <input type="text" id="zipCode" placeholder="12345" value="10001">
+                        <input type="text" id="zipCode" placeholder="12345">
                     </div>
                     <div class="form-group">
                         <label><span data-i18n="country">国家</span> <span class="required" data-i18n="required">*</span></label>
                         <select id="country">
-                            <option value="">Select Country</option>
-                            <option value="US" selected>United States</option>
+                            <option value="" selected>Select Country</option>
+                            <option value="US">United States</option>
                             <option value="CN">China</option>
                             <option value="GB">United Kingdom</option>
                             <option value="CA">Canada</option>
@@ -423,7 +471,7 @@ function renderCheckout() {
                 </div>
             </div>
 
-            <button onclick="submitCheckout()" data-i18n="confirmPay">确认并支付</button>
+            <button onclick="handlePaymentSubmit()" data-i18n="confirmPay">确认并支付 $${totalAmount}</button>
         </div>
 
         <div class="order-summary">
@@ -442,19 +490,19 @@ function renderCheckout() {
             <div class="order-summary-divider"></div>
             <div class="summary-row">
                 <span data-i18n="subtotal">商品小计:</span>
-                <span>$${subtotal.toFixed(2)}</span>
+                <span>$${subtotal}</span>
             </div>
             <div class="summary-row">
                 <span data-i18n="shipping">运费:</span>
-                <span>$${shipping.toFixed(2)}</span>
+                <span>$${shipping}</span>
             </div>
             <div class="summary-row">
                 <span data-i18n="tax">税费 (8%):</span>
-                <span>$${tax.toFixed(2)}</span>
+                <span>$${tax}</span>
             </div>
             <div class="summary-row total">
                 <span data-i18n="orderTotal">订单总计:</span>
-                <span class="amount">$${total.toFixed(2)}</span>
+                <span class="amount">$${totalAmount}</span>
             </div>
         </div>
     `;
@@ -462,26 +510,29 @@ function renderCheckout() {
     updateLanguage();
 }
 
-// Submit checkout
-function submitCheckout() {
-    const selectedMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value;
-    
-    if (!selectedMethod) {
+/**
+ * Handle payment submission - orchestrates the payment flow
+ */
+function handlePaymentSubmit() {
+    const existingIntent = sessionStorage.getItem('currentPaymentIntent');
+    if (!existingIntent) {
+        // Create new payment intent
+        createPaymentIntent();
+
+    }
+    // Payment intent already exists, proceed to confirmation
+    try {
+        const paymentIntent = JSON.parse(existingIntent);
+        confirmPaymentIntent(paymentIntent);
+    } catch (e) {
+        console.error('Error parsing payment intent:', e);
         alert(translations[currentLang].paymentError);
-        return;
     }
+}
 
-    if (selectedMethod === 'card') {
-        const cardNumber = document.getElementById('cardNumber')?.value;
-        const cardHolder = document.getElementById('cardHolder')?.value;
-        const expiryDate = document.getElementById('expiryDate')?.value;
-        const cvv = document.getElementById('cvv')?.value;
-
-        if (!cardNumber || !cardHolder || !expiryDate || !cvv) {
-            alert(translations[currentLang].fillCustomerInfo);
-            return;
-        }
-    }
+// Create payment intent - Reference checkout.php handleSubmit()
+function createPaymentIntent() {
+    clearPaymentIntentCache();
 
     const firstName = document.getElementById('firstName')?.value;
     const lastName = document.getElementById('lastName')?.value;
@@ -493,23 +544,225 @@ function submitCheckout() {
     const zipCode = document.getElementById('zipCode')?.value;
     const country = document.getElementById('country')?.value;
 
-    if (!firstName || !lastName || !email || !phone || !address || !city || !state || !zipCode || !country) {
-        alert(translations[currentLang].fillCustomerInfo);
-        return;
-    }
+    // Prepare data to send to backend - Reference checkout.php
+    const totals = calculateTotals();
+    const checkoutData = {
+        firstName: firstName,
+        lastName: lastName,
+        email: email,
+        address: address,
+        city: city,
+        state: state,
+        zipCode: zipCode,
+        country: country,
+        phone: phone,
+        items: cart,
+        totals: totals
+    };
 
-    if (!email.includes('@')) {
-        alert(translations[currentLang].invalidEmail);
-        return;
-    }
+    // Submit to backend - Call PaymentController::createPayment()
+    fetch('/api/payment', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(checkoutData)
+    })
+    .then(response => {
+        console.log('Response status:', response.status);
+        console.log('Response headers:', response.headers);
+        
+        // Try to parse JSON
+        return response.text().then(text => {
+            console.log('Response text:', text);
+            try {
+                return JSON.parse(text);
+            } catch (e) {
+                console.error('JSON parse error:', e);
+                console.error('Response was:', text);
+                throw new Error('Invalid JSON response from server');
+            }
+        });
+    })
+    .then(result => {
+        console.log('Parsed result:', result);
+        
+        // Check if payment creation was successful
+        if (result.success && result.data) {
+            // Cache payment intent data to browser memory
+            console.log('Caching payment intent data:', result.data);
+            
+            // Store in sessionStorage for current session
+            sessionStorage.setItem('currentPaymentIntent', JSON.stringify(result.data));
+            console.log('✓ Payment intent created and cached:', result.data.id);
+            
+            // For card payment method, initialize UseePay Elements
+            initializeUseepayElements(result.data.client_secret, result.data.id);
 
-    console.log('Payment submitted:', {
-        method: selectedMethod,
-        customer: { firstName, lastName, email, phone },
-        shipping: { address, city, state, zipCode, country }
+        } else {
+            throw new Error(result.message || 'Failed to create payment intent');
+        }
+    })
+    .catch(error => {
+        console.error('Payment creation error:', error);
+        alert(translations[currentLang].paymentError + ': ' + error.message);
+    })
+    .finally(() => {
+        // Restore button state
+        if (submitButton) {
+            submitButton.disabled = false;
+            const totals = calculateTotals();
+            submitButton.textContent = `${translations[currentLang].confirmPay} $${totals.totalAmount}`;
+        }
     });
+}
 
-    alert('Payment processed successfully! (Demo)');
+/**
+ * Confirm payment intent - Step 2 of embedded checkout
+ * @param {object} paymentIntent - Payment intent data from backend
+ */
+async function confirmPaymentIntent(paymentIntent) {
+    console.log('Confirming payment intent:', paymentIntent.id);
+    
+    if (!paymentIntent || !paymentIntent.id) {
+        console.error('Invalid payment intent');
+        alert(translations[currentLang].paymentError);
+        return;
+    }
+
+    const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value;
+    
+    try {
+        // For card payments, use UseePay SDK to confirm
+        if (paymentMethod === 'card') {
+            if (!useepayInstance || !useepayElements) {
+                console.error('UseePay Elements not initialized');
+                alert('Payment form not ready. Please refresh the page.');
+                return;
+            }
+
+            console.log('Confirming payment with UseePay SDK...');
+            const { paymentIntent: confirmedIntent, error } = await useepayInstance.confirmPayment({
+                elements: useepayElements,
+                redirect: 'if_required'
+            });
+
+            if (error) {
+                console.error('Payment confirmation error:', error);
+                const messageElement = document.getElementById('payment-message');
+                if (messageElement) {
+                    messageElement.textContent = error.message;
+                    messageElement.style.display = 'block';
+                }
+                alert(translations[currentLang].paymentError + ': ' + error.message);
+            } else if (confirmedIntent) {
+                console.log('✓ Payment confirmed:', confirmedIntent);
+                
+                // Update cached payment intent with final status
+                sessionStorage.setItem('currentPaymentIntent', JSON.stringify(confirmedIntent));
+                
+                // Check payment status
+                if (confirmedIntent.status === 'succeeded') {
+                    console.log('✓ Payment succeeded');
+                    window.location.href = '/payment/result?status=success&payment_id=' + paymentIntent.id;
+                } else if (confirmedIntent.status === 'requires_action') {
+                    console.log('Payment requires additional action');
+                    alert('Payment requires additional action. Please complete the verification.');
+                } else {
+                    console.log('Payment status:', confirmedIntent.status);
+                    alert('Payment status: ' + confirmedIntent.status);
+                }
+            }
+        } else {
+            // For other payment methods, use backend confirmation
+            const confirmData = {
+                payment_method: paymentMethod,
+                return_url: window.location.origin + '/payment/result'
+            };
+
+            const response = await fetch(`/api/payment/${paymentIntent.id}/confirm`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(confirmData)
+            });
+
+            const result = await response.json();
+            console.log('Payment confirmation result:', result);
+            
+            if (result.status === 'succeeded' || result.payment?.status === 'succeeded') {
+                console.log('✓ Payment succeeded');
+                sessionStorage.setItem('currentPaymentIntent', JSON.stringify(result.payment || result));
+                window.location.href = '/payment/result?status=success&payment_id=' + paymentIntent.id;
+            } else if (result.status === 'requires_action' || result.payment?.status === 'requires_action') {
+                console.log('Payment requires additional action');
+                alert('Payment requires additional action. Please complete the verification.');
+            } else {
+                throw new Error(result.message || 'Payment confirmation failed');
+            }
+        }
+    } catch (error) {
+        console.error('Payment confirmation error:', error);
+        alert(translations[currentLang].paymentError + ': ' + error.message);
+    }
+}
+
+// ============================================
+// Payment Intent Cache Management Functions
+// ============================================
+
+/**
+ * Get payment intent from cache
+ * @param {string} source - 'window', 'session', or 'local' (default: 'window')
+ * @returns {object|null} Payment intent data or null if not found
+ */
+function getPaymentIntentFromCache(source = 'session') {
+    try {
+        switch(source.toLowerCase()) {
+            case 'session':
+                const sessionData = sessionStorage.getItem('currentPaymentIntent');
+                return sessionData ? JSON.parse(sessionData) : null;
+        }
+    } catch (e) {
+        console.error('Error retrieving payment intent from cache:', e);
+        return null;
+    }
+}
+
+/**
+ * Clear payment intent cache
+ * @param {string} source - 'all', 'window', 'session', or 'local' (default: 'all')
+ */
+function clearPaymentIntentCache(source = 'session') {
+    try {
+        switch(source.toLowerCase()) {
+            case 'session':
+                sessionStorage.removeItem('currentPaymentIntent');
+                console.log('✓ Cleared sessionStorage cache');
+                break;
+        }
+    } catch (e) {
+        console.error('Error clearing payment intent cache:', e);
+    }
+}
+
+/**
+ * Get payment intent ID from cache
+ * @returns {string|null} Payment intent ID or null if not found
+ */
+function getPaymentIntentId() {
+    const paymentIntent = getPaymentIntentFromCache('session');
+    return paymentIntent ? paymentIntent.id : null;
+}
+
+/**
+ * Get client secret from cache
+ * @returns {string|null} Client secret or null if not found
+ */
+function getClientSecret() {
+    const paymentIntent = getPaymentIntentFromCache('session');
+    return paymentIntent ? paymentIntent.client_secret : null;
 }
 
 // Initialize page
@@ -517,10 +770,9 @@ document.addEventListener('DOMContentLoaded', function() {
     loadCart();
     renderCheckout();
     updateLanguage();
-    
+
     // Check if card should be shown by default
-    const firstMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value;
-    if (firstMethod === 'card') {
-        handlePaymentMethodChange('card');
-    }
+    // const firstMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value;
+    // handlePaymentMethodChange(firstMethod);
+    createPaymentIntent();
 });

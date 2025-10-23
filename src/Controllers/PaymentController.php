@@ -14,7 +14,7 @@ class PaymentController extends BaseController
     {
         global $config;
         // Validate required fields
-        $requiredFields = array('firstName', 'lastName', 'email', 'address', 'city', 'state', 'zipCode', 'country', 'phone', 'paymentMethod', 'items', 'totals');
+        $requiredFields = array('items', 'totals');
         $data = $this->getRequestData();
         $missing = [];
 
@@ -26,12 +26,6 @@ class PaymentController extends BaseController
 
         if (!empty($missing)) {
             $this->errorResponse('Missing required fields: ' . implode(', ', $missing), 400);
-            return;
-        }
-
-        // Validate email
-        if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
-            $this->errorResponse('Invalid email address', 400);
             return;
         }
 
@@ -47,7 +41,8 @@ class PaymentController extends BaseController
             $orderId = 'ORD_' . time() . '_' . rand(1000, 9999);
 
             // Convert total amount to cents (USD)
-            $totalAmount = floatval($data['totals']['total']);
+            $totalAmount = floatval($data['totals']['totalAmount']);
+            $currency = $data['totals']['currency'];
             // Prepare customer information
             $customerName = $data['firstName'] . ' ' . $data['lastName'];
 
@@ -59,12 +54,12 @@ class PaymentController extends BaseController
             $description = 'Order: ' . implode(', ', $itemsDescription);
 
             // Prepare order items
-            $orderItems = array_map(function($item) {
+            $orderItems = array_map(function($item) use ($currency) {
                 return [
                     'name' => $item['name'],
                     'quantity' => $item['quantity'],
                     'price' => $item['price'],
-                    'currency' => 'USD',
+                    'currency' =>$currency,
                     'description' => $item['description']
                 ];
             }, $data['items']);
@@ -125,14 +120,31 @@ class PaymentController extends BaseController
             // Create payment intent parameters
             $paymentParams = array(
                 'amount' => $totalAmount,
-                'currency' => 'USD',
+                'currency' => $currency,
                 'description' => $description,
                 'merchant_order_id' => $orderId,
                 'device_data' => $deviceData,
-                'payment_method_types' => array($data['paymentMethod']),
                 'return_url' => $config['usee_pay']['callback_url'],
-                'customer' => array(
-                    //TODO: 需要把这块校验拿掉
+                'order' => array(
+                    'products' => $orderItems,
+                    'shipping_address' => array(
+                        'line1' => $data['address'],
+                        'city' => $data['city'],
+                        'state' => $data['state'],
+                        'postcode' => $data['zipCode'],
+                        'country' => $data['country']
+                    )
+                ),
+            );
+
+            // Only add payment_method_types if paymentMethod is provided
+            if (!empty($data['paymentMethod'])) {
+                $paymentParams['payment_method_types'] = array($data['paymentMethod']);
+            }
+
+            // Add customer info only if email or phone is not empty
+            if (!empty($data['email']) || !empty($data['phone'])) {
+                $paymentParams['customer'] = array(
                     'merchant_customer_id' => 'CUST_' . time() . '_' . substr(md5(uniqid(mt_rand(), true)), 0, 8),
                     'first_name' => $data['firstName'],
                     'last_name' => $data['lastName'],
@@ -146,19 +158,8 @@ class PaymentController extends BaseController
                         'postcode' => $data['zipCode'],
                         'country' => $data['country']
                     )
-                ),
-                'order' => array(
-                    'products' => $orderItems,
-                    'shipping_address' => array(
-                        'line1' => $data['address'],
-                        'city' => $data['city'],
-                        'state' => $data['state'],
-                        'postcode' => $data['zipCode'],
-                        'country' => $data['country']
-                    )
-                ),
-
-            );
+                );
+            }
 
             // Log API request parameters
             $this->log('UseePay API Request - createPayment', 'info', $paymentParams, 'payment');
