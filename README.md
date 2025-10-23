@@ -48,15 +48,11 @@ APP_DEBUG=true
 
 # UseePay API Credentials
 USEEPAY_API_KEY=your_api_key_here
-USEEPAY_MERCHANT_NO=your_merchant_no
-USEEPAY_STORE_NO=your_store_no
+USEEPAY_MERCHANT_NO=your_merchant_no_here
+USEEPAY_APP_ID=your_app_id_here
 USEEPAY_ENV=sandbox  # or 'production' for live environment
+USEEPAY_CALLBACK_URL=your_callback_url_here
 
-# Database configuration (if needed)
-DB_HOST=localhost
-DB_DATABASE=useepay_demo
-DB_USERNAME=root
-DB_PASSWORD=
 ```
 
 ## API Endpoints
