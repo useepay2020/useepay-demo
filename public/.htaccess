@@ -1,0 +1,34 @@
+<IfModule mod_rewrite.c>
+    Options -MultiViews
+    RewriteEngine On
+    
+    # Handle Authorization Header
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+    
+    # Redirect Trailing Slashes If Not A Folder...
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_URI} (.+)/$
+    RewriteRule ^ %1 [L,R=301]
+    
+    # Send Requests To Front Controller...
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^ index.php [L]
+</IfModule>
+
+# Disable directory browsing
+Options All -Indexes
+
+# Set default charset
+AddDefaultCharset UTF-8
+
+# Set timezone
+# php_value date.timezone Asia/Shanghai
+
+# Increase PHP memory limit (adjust as needed)
+# php_value memory_limit 256M
+
+# Enable error reporting in development
+# php_flag display_errors on
+# php_value error_reporting E_ALL

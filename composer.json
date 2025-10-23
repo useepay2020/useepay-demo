@@ -1,0 +1,5 @@
+{
+    "require": {
+        "useepay/useepay-php": "^1.0"
+    }
+}
