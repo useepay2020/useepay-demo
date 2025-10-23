@@ -240,59 +240,59 @@ function calculateTotals() {
 }
 
 // Generate payment methods HTML
-function generatePaymentMethods() {
-    const cachedMethods = getPaymentMethods();
-    console.log('Cached payment methods:', cachedMethods);
-    
-    let methodsToDisplay = [];
-    if (cachedMethods && cachedMethods.length > 0) {
-        // Filter out 'card' method
-        methodsToDisplay = [...cachedMethods];
-        console.log('Using cached methods (excluding card):', methodsToDisplay);
-    } else {
-        // Default methods without 'card'
-        methodsToDisplay = ['card'];
-        console.log('No cached methods, using default methods:', methodsToDisplay);
-    }
-    
-    return methodsToDisplay.map((method, index) => {
-        const methodInfo = paymentMethodsMap[method];
-        if (!methodInfo) {
-            console.warn('Unknown payment method:', method);
-            return '';
-        }
-        
-        const methodName = currentLang === 'zh' ? methodInfo.name_zh : methodInfo.name_en;
-        const methodDesc = currentLang === 'zh' ? methodInfo.desc_zh : methodInfo.desc_en;
-        const isFirst = index === 0;
-
-        let html = `
-            <div class="payment-option">
-                <input type="radio" id="method_${method}" name="paymentMethod" value="${method}" ${isFirst ? 'checked' : ''} onchange="handlePaymentMethodChange('${method}')">
-                <label for="method_${method}">
-                    <div class="payment-icon" style="font-size: 1.2rem;">${methodInfo.icon}</div>
-                    <div class="payment-info">
-                        <div class="payment-name">${methodName}</div>
-                        <div class="payment-desc">${methodDesc}</div>
-                    </div>
-                </label>
-            </div>
-        `;
-
-        // 如果是信用卡，添加 UseePay Payment Element 容器
-        if (method === 'card') {
-            html += `
-            <div class="card-info-section ${isFirst ? 'active' : ''}" id="cardInfoSection_${method}">
-                <div id="payment-element" style="margin: 20px 0;"></div>
-                <div id="payment-message" style="color: #d32f2f; margin-top: 10px; display: none;"></div>
-            </div> 
-            `;
-        }
-
-
-        return html;
-    }).join('');
-}
+// function generatePaymentMethods() {
+//     const cachedMethods = getPaymentMethods();
+//     console.log('Cached payment methods:', cachedMethods);
+//
+//     let methodsToDisplay = [];
+//     if (cachedMethods && cachedMethods.length > 0) {
+//         // Filter out 'card' method
+//         methodsToDisplay = [...cachedMethods];
+//         console.log('Using cached methods (excluding card):', methodsToDisplay);
+//     } else {
+//         // Default methods without 'card'
+//         methodsToDisplay = ['card'];
+//         console.log('No cached methods, using default methods:', methodsToDisplay);
+//     }
+//
+//     return methodsToDisplay.map((method, index) => {
+//         const methodInfo = paymentMethodsMap[method];
+//         if (!methodInfo) {
+//             console.warn('Unknown payment method:', method);
+//             return '';
+//         }
+//
+//         const methodName = currentLang === 'zh' ? methodInfo.name_zh : methodInfo.name_en;
+//         const methodDesc = currentLang === 'zh' ? methodInfo.desc_zh : methodInfo.desc_en;
+//         const isFirst = index === 0;
+//
+//         let html = `
+//             <div class="payment-option">
+//                 <input type="radio" id="method_${method}" name="paymentMethod" value="${method}" ${isFirst ? 'checked' : ''} onchange="handlePaymentMethodChange('${method}')">
+//                 <label for="method_${method}">
+//                     <div class="payment-icon" style="font-size: 1.2rem;">${methodInfo.icon}</div>
+//                     <div class="payment-info">
+//                         <div class="payment-name">${methodName}</div>
+//                         <div class="payment-desc">${methodDesc}</div>
+//                     </div>
+//                 </label>
+//             </div>
+//         `;
+//
+//         // 如果是信用卡，添加 UseePay Payment Element 容器
+//         if (method === 'card') {
+//             html += `
+//             <div class="card-info-section ${isFirst ? 'active' : ''}" id="cardInfoSection_${method}">
+//                 <div id="payment-element" style="margin: 20px 0;"></div>
+//                 <div id="payment-message" style="color: #d32f2f; margin-top: 10px; display: none;"></div>
+//             </div>
+//             `;
+//         }
+//
+//
+//         return html;
+//     }).join('');
+// }
 
 // Handle payment method change
 function handlePaymentMethodChange(method) {
@@ -466,9 +466,7 @@ function renderCheckout() {
 
             <div class="form-section">
                 <h3 data-i18n="paymentMethod">💳 支付方式</h3>
-                <div class="payment-methods">
-                    ${generatePaymentMethods()}
-                </div>
+                <div id="payment-element" style="margin: 20px 0;"></div>
             </div>
 
             <button onclick="handlePaymentSubmit()" data-i18n="confirmPay">确认并支付 $${totalAmount}</button>
@@ -546,6 +544,11 @@ function createPaymentIntent() {
 
     // Prepare data to send to backend - Reference checkout.php
     const totals = calculateTotals();
+    
+    // Get payment methods from local cache
+    const paymentMethods = getPaymentMethods();
+    console.log('Payment methods from cache:', paymentMethods);
+    
     const checkoutData = {
         firstName: firstName,
         lastName: lastName,
@@ -557,7 +560,8 @@ function createPaymentIntent() {
         country: country,
         phone: phone,
         items: cart,
-        totals: totals
+        totals: totals,
+        paymentMethods: paymentMethods
     };
 
     // Submit to backend - Call PaymentController::createPayment()
@@ -600,7 +604,10 @@ function createPaymentIntent() {
             initializeUseepayElements(result.data.client_secret, result.data.id);
 
         } else {
-            throw new Error(result.message || 'Failed to create payment intent');
+            console.error('Payment failed:', result.data.error.message);
+            // Show error message
+            const errorMsg = result.error?.message || result.data.error.message || translations[currentLang].paymentError || 'Payment failed. Please try again.';
+            alert(errorMsg);
         }
     })
     .catch(error => {

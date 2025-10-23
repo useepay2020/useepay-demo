@@ -870,7 +870,7 @@
                 zipCode: data.zipCode,
                 country: data.country,
                 phone: data.phone,
-                paymentMethod: data.paymentMethod,
+                paymentMethods: data.paymentMethod ? [data.paymentMethod] : [],
                 items: cart,
                 totals: totals
             };

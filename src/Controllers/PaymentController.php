@@ -127,19 +127,26 @@ class PaymentController extends BaseController
                 'return_url' => $config['usee_pay']['callback_url'],
                 'order' => array(
                     'products' => $orderItems,
-                    'shipping_address' => array(
-                        'line1' => $data['address'],
-                        'city' => $data['city'],
-                        'state' => $data['state'],
-                        'postcode' => $data['zipCode'],
-                        'country' => $data['country']
+                    'shipping' => array(
+                        'address' => array(
+                            'line1' => $data['address'],
+                            'city' => $data['city'],
+                            'state' => $data['state'],
+                            'postcode' => $data['zipCode'],
+                            'country' => $data['country']
+                        ),
+                        'first_name' => $data['firstName'],
+                        'last_name' => $data['lastName'],
+                        'name' => $customerName,
+                        'email' => $data['email'],
+                        'phone' => $data['phone']
                     )
                 ),
             );
 
             // Only add payment_method_types if paymentMethod is provided
-            if (!empty($data['paymentMethod'])) {
-                $paymentParams['payment_method_types'] = array($data['paymentMethod']);
+            if (!empty($data['paymentMethods'])) {
+                $paymentParams['payment_method_types'] = $data['paymentMethods'];
             }
 
             // Add customer info only if email or phone is not empty
