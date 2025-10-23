@@ -8,7 +8,8 @@ return [
         'debug' => getenv('APP_DEBUG') ?: true,
     ],
     'usee_pay' => [
-        'api_key' => getenv('USEEPAY_API_KEY') ?: 'UseePay_SK_............',
+        'api_public_key' => getenv('USEEPAY_PUBLIC_API_KEY') ?: 'UseePay_PK_............',
+        'api_private_key' => getenv('USEEPAY_PRIVATE_API_KEY') ?: 'UseePay_SK_............',
         'merchant_no' => getenv('USEEPAY_MERCHANT_NO') ?: '5000000000.....',
         'app_id' => getenv('USEEPAY_APP_ID') ?: 'www.xxxxx.com',
         'environment' => getenv('USEEPAY_ENV') ?: 'sandbox',

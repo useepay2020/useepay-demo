@@ -105,7 +105,7 @@ class BaseController
         $authentication = new \UseePay\Model\Authentication\Authentication(
             $config['usee_pay']['merchant_no'],
             $config['usee_pay']['app_id'],
-            $config['usee_pay']['api_key']
+            $config['usee_pay']['api_private_key']
         );
 
         $environment = $config['usee_pay']['environment'] === 'production' 

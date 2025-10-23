@@ -47,7 +47,8 @@ APP_ENV=development
 APP_DEBUG=true
 
 # UseePay API Credentials
-USEEPAY_API_KEY=your_api_key_here
+USEEPAY_PRIVATE_API_KEY=your_private_api_key_here
+USEEPAY_PUBLIC_API_KEY=your_public_api_key_here
 USEEPAY_MERCHANT_NO=your_merchant_no_here
 USEEPAY_APP_ID=your_app_id_here
 USEEPAY_ENV=sandbox  # or 'production' for live environment
