@@ -31,34 +31,33 @@ use UseePay\Net\ApiEnvironment;
 $request = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $scriptName = dirname($_SERVER['SCRIPT_NAME']);
 
+// Debug: log the raw values
+error_log("Raw REQUEST_URI: " . $_SERVER['REQUEST_URI']);
+error_log("Raw SCRIPT_NAME: " . $_SERVER['SCRIPT_NAME']);
+error_log("Parsed path: " . $request);
+error_log("Script directory: " . $scriptName);
+
 // Remove script directory from request if not in document root
 if (strpos($request, $scriptName) === 0) {
     $request = substr($request, strlen($scriptName));
+    error_log("After removing script dir: " . $request);
 }
 
 // Remove trailing slash if present
 $request = rtrim($request, '/');
+error_log("After removing trailing slash: " . $request);
 
 // Set base path for views
 $basePath = '';
 
 // Debug output (comment out in production)
-// error_log("Request: " . $request);
-// error_log("Base path: " . $basePath);
+error_log("REQUEST_URI: " . $_SERVER['REQUEST_URI']);
+error_log("SCRIPT_NAME: " . $_SERVER['SCRIPT_NAME']);
+error_log("Parsed request: " . $request);
 
-// Debug route - helps verify routing is working
-if ($request === '/debug') {
-    header('Content-Type: application/json');
-    echo json_encode([
-        'request_uri' => $_SERVER['REQUEST_URI'],
-        'script_name' => $_SERVER['SCRIPT_NAME'],
-        'php_self' => $_SERVER['PHP_SELF'],
-        'base_path' => $basePath,
-        'request' => $request,
-        'document_root' => $_SERVER['DOCUMENT_ROOT'],
-        'script_filename' => $_SERVER['SCRIPT_FILENAME']
-    ]);
-    exit;
+// Simple test endpoint
+if (strpos($request, '/api/') === 0) {
+    error_log("API request detected: " . $request);
 }
 
 // Route the request
@@ -129,8 +128,10 @@ switch ($request) {
     case '/api/payment':
         require __DIR__ . '/../src/Controllers/PaymentApiHandler.php';
         break;
-    case '/api/customer':
+    case '/api/customers/create':
         require __DIR__ . '/../src/Controllers/CustomerController.php';
+        $controller = new \UseePayDemo\Controllers\CustomerController();
+        $controller->createCustomer();
         break;
     case '/api/subscription':
         require __DIR__ . '/../src/Controllers/SubscriptionController.php';

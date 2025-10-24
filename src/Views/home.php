@@ -333,7 +333,7 @@
         <div class="container">
             <div class="logo">
                 <i class="fas fa-credit-card"></i>
-                <span data-i18n="title">UseePay Demo</span>
+                <span data-i18n="title">UseePay 支付体验站</span>
             </div>
             <p class="tagline" data-i18n="tagline">简单、安全、高效的支付解决方案</p>
         </div>
@@ -441,10 +441,38 @@
                                 <i class="fas fa-store" style="margin-right: 0.5rem; color: #EC0000; font-size: 1.1rem;"></i>
                                 <span style="font-size: 0.95rem;" data-i18n="oxxo">OXXO</span>
                             </label>
-                            <div style="display: flex; align-items: center; justify-content: center; padding: 0.6rem; background: #f8f9fa; border-radius: 6px; border: 1px dashed #dee2e6;">
-                                <i class="fas fa-ellipsis-h" style="margin-right: 0.5rem; color: #6c757d;"></i>
-                                <span style="font-size: 0.9rem; color: #6c757d; font-style: italic;" data-i18n="morePaymentMethods">更多支付方式...</span>
-                            </div>
+                            <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
+                                <input type="checkbox" name="paymentMethod" value="kakao_pay" style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
+                                <svg style="margin-right: 0.5rem; width: 24px; height: 24px;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="12" cy="12" r="11" fill="#FFE812"/>
+                                    <path d="M12 5C8.13 5 5 7.68 5 11c0 2.04 1.23 3.82 3.04 4.63L7.84 18l3.05-1.61c.5.08 1.02.12 1.54.12 3.87 0 7-2.68 7-6s-3.13-6-7-6z" fill="#000000"/>
+                                </svg>
+                                <span style="font-size: 0.95rem;" data-i18n="kakaoPay">Kakao Pay</span>
+                            </label>
+                            <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
+                                <input type="checkbox" name="paymentMethod" value="naver_pay" style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
+                                <svg style="margin-right: 0.5rem; width: 24px; height: 24px;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <rect width="24" height="24" fill="#00C73C"/>
+                                    <path d="M6 8h3v8H6V8zm5 0h3v8h-3V8zm5 0h3v8h-3V8z" fill="white"/>
+                                </svg>
+                                <span style="font-size: 0.95rem;" data-i18n="naverPay">Naver Pay</span>
+                            </label>
+                            <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
+                                <input type="checkbox" name="paymentMethod" value="payco" style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
+                                <svg style="margin-right: 0.5rem; width: 24px; height: 24px;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <rect width="24" height="24" fill="#0066FF"/>
+                                    <text x="12" y="16" font-size="14" font-weight="bold" fill="white" text-anchor="middle">P</text>
+                                </svg>
+                                <span style="font-size: 0.95rem;" data-i18n="payco">Payco</span>
+                            </label>
+                            <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
+                                <input type="checkbox" name="paymentMethod" value="toss" style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
+                                <svg style="margin-right: 0.5rem; width: 24px; height: 24px;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <rect width="24" height="24" fill="#0066FF" rx="4"/>
+                                    <path d="M12 6L8 14h3v4h2v-4h3L12 6z" fill="white"/>
+                                </svg>
+                                <span style="font-size: 0.95rem;" data-i18n="toss">Toss</span>
+                            </label>
                         </div>
                     </div>
                     
@@ -639,7 +667,7 @@
         // ===== 国际化翻译 =====
         const translations = {
             zh: {
-                title: 'UseePay Demo',
+                title: 'UseePay 支付体验站',
                 tagline: '简单、安全、高效的支付解决方案',
                 zh: '中文',
                 en: 'English',
@@ -702,7 +730,11 @@
                 alipay: '支付宝',
                 afterpay: 'Afterpay',
                 klarna: 'Klarna',
-                oxxo: 'OXXO'
+                oxxo: 'OXXO',
+                kakaoPay: 'Kakao Pay',
+                naverPay: 'Naver Pay',
+                payco: 'PAYCO',
+                toss: 'Toss'
             },
             en: {
                 title: 'UseePay Demo',
@@ -768,7 +800,11 @@
                 alipay: 'Alipay',
                 afterpay: 'Afterpay',
                 klarna: 'Klarna',
-                oxxo: 'OXXO'
+                oxxo: 'OXXO',
+                kakaoPay: 'Kakao Pay',
+                naverPay: 'Naver Pay',
+                payco: 'PAYCO',
+                toss: 'Toss'
             }
         };
 

@@ -255,10 +255,10 @@
                 });
 
                 // Log the request for debugging
-                console.log('Submitting to:', baseUrl + '/api/customer');
+                console.log('Submitting to:', baseUrl + '/api/customers/create');
                 console.log('Request data:', data);
 
-                const response = await fetch(baseUrl + '/api/customer', {
+                const response = await fetch(baseUrl + '/api/customers/create', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

@@ -35,6 +35,8 @@ class CustomerController extends BaseController
         if (!empty($missing)) {
             $errorMsg = '缺少必填字段: ' . implode(', ', $missing);
             $this->log($errorMsg, 'error', ['missing_fields' => $missing], 'customer');
+            $this->errorResponse($errorMsg, 400, ['missing_fields' => $missing]);
+            return;
         }
 
         $this->log('Initializing UseePay client', 'info', [], 'customer');
@@ -99,25 +101,4 @@ class CustomerController extends BaseController
         }
     }
 
-}
-
-// 处理请求
-$controller = new CustomerController();
-$path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-$path = trim($path, '/');
-
-// 路由
-switch ($path) {
-    case 'api/customer':
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $controller->createCustomer();
-        }
-        break;
-    case (preg_match('/^api\/customer\/([^\/]+)$/', $path, $matches) ? true : false):
-        if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-            $controller->getCustomer($matches[1]);
-        }
-        break;
-    default:
-        $controller->errorResponse('Not Found', 404);
 }
