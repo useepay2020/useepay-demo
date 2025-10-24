@@ -135,7 +135,7 @@
 
         .cards {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: repeat(2, 1fr);
             gap: 2rem;
             margin-top: 2rem;
         }
@@ -342,11 +342,35 @@
             <button class="lang-btn" onclick="setLanguage('en')" id="langEn" data-i18n="en">English</button>
         </div>
     </header>
-
-    <main class="main-content">
+    <main class="main-content" style="padding-top: 0;">
         <div class="container">
-            <h1 style="text-align: center; margin-bottom: 2rem; color: var(--primary-color);" data-i18n="welcome">欢迎使用 UseePay API 演示</h1>
+            <!-- 建站方式导航栏 - 靠左对齐 -->
+            <div style="background: white; border-bottom: 2px solid #e9ecef; margin: 0 -20px 1.5rem -20px; display: flex; padding-left: 20px;">
+                <button class="building-nav-btn" data-value="selfBuilt" style="flex: 0 0 auto; padding: 1rem 2rem; text-align: center; background: transparent; border: none; cursor: pointer; font-size: 1rem; font-weight: 600; color: var(--text-light); transition: all 0.3s ease; border-bottom: 3px solid transparent; margin-bottom: -2px; position: relative;" onclick="selectBuildingMethod(this)">
+                    <i class="fas fa-hammer" style="margin-right: 0.5rem;"></i>
+                    <span data-i18n="selfBuilt">自建站</span>
+                </button>
+                <button class="building-nav-btn" data-value="shopify" style="flex: 0 0 auto; padding: 1rem 2rem; text-align: center; background: transparent; border: none; cursor: pointer; font-size: 1rem; font-weight: 600; color: var(--text-light); transition: all 0.3s ease; border-bottom: 3px solid transparent; margin-bottom: -2px; position: relative;" onclick="selectBuildingMethod(this)">
+                    <i class="fas fa-shopping-bag" style="margin-right: 0.5rem;"></i>
+                    <span>Shopify</span>
+                </button>
+                <button class="building-nav-btn" data-value="shopline" style="flex: 0 0 auto; padding: 1rem 2rem; text-align: center; background: transparent; border: none; cursor: pointer; font-size: 1rem; font-weight: 600; color: var(--text-light); transition: all 0.3s ease; border-bottom: 3px solid transparent; margin-bottom: -2px; position: relative;" onclick="selectBuildingMethod(this)">
+                    <i class="fas fa-store" style="margin-right: 0.5rem;"></i>
+                    <span>ShopLine</span>
+                </button>
+            </div>
             
+            <style>
+                .building-nav-btn.active {
+                    color: var(--primary-color);
+                    border-bottom-color: var(--primary-color);
+                }
+                
+                .building-nav-btn:hover {
+                    color: var(--primary-color);
+                }
+            </style>
+
             <!-- 支付模式选择区域 -->
             <div class="card" style="margin-bottom: 2rem; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
                 <h2 style="text-align: center; color: var(--primary-color); margin-bottom: 1.5rem;">
@@ -379,7 +403,7 @@
             
             <div class="cards">
                 <div class="card">
-                    <h2><i class="fas fa-credit-card"></i> <span data-i18n="payment">支付处理</span></h2>
+                    <h2><i class="fas fa-credit-card"></i> <span data-i18n="payment">一次支付</span></h2>
                     <p data-i18n="paymentDesc">处理一次性支付，支持多种支付方式。请选择您需要启用的支付方式：</p>
                     
                     <div style="margin: 1.5rem 0; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
@@ -413,16 +437,6 @@
                                 <span style="font-size: 0.95rem;" data-i18n="alipay">支付宝</span>
                             </label>
                             <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
-                                <input type="checkbox" name="paymentMethod" value="afterpay" style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
-                                <i class="fas fa-calendar-check" style="margin-right: 0.5rem; color: #B2FCE4; font-size: 1.1rem;"></i>
-                                <span style="font-size: 0.95rem;" data-i18n="afterpay">Afterpay</span>
-                            </label>
-                            <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
-                                <input type="checkbox" name="paymentMethod" value="klarna" style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
-                                <i class="fas fa-shopping-bag" style="margin-right: 0.5rem; color: #FFB3C7; font-size: 1.1rem;"></i>
-                                <span style="font-size: 0.95rem;" data-i18n="klarna">Klarna</span>
-                            </label>
-                            <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
                                 <input type="checkbox" name="paymentMethod" value="oxxo" style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
                                 <i class="fas fa-store" style="margin-right: 0.5rem; color: #EC0000; font-size: 1.1rem;"></i>
                                 <span style="font-size: 0.95rem;" data-i18n="oxxo">OXXO</span>
@@ -436,6 +450,37 @@
                     
                     <a href="#" class="btn btn-success" id="createPaymentBtn">
                         <i class="fas fa-shopping-cart"></i> <span data-i18n="createPayment">创建支付</span>
+                    </a>
+                </div>
+                
+                <div class="card">
+                    <h2><i class="fas fa-calendar-alt"></i> <span data-i18n="installmentPayment">分期支付</span></h2>
+                    <p data-i18n="installmentPaymentDesc">灵活的分期付款方案，支持多种分期支付方式。请选择您需要启用的支付方式：</p>
+                    
+                    <div style="margin: 1.5rem 0; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+                        <label style="display: block; margin-bottom: 1rem; font-weight: 600; color: var(--text-color);">
+                            <i class="fas fa-wallet"></i> <span data-i18n="selectInstallmentMethod">选择支付方式：</span>
+                        </label>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.8rem;">
+                            <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
+                                <input type="checkbox" name="installmentMethod" value="afterpay" checked style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
+                                <i class="fas fa-calendar-check" style="margin-right: 0.5rem; color: #B2FCE4; font-size: 1.1rem;"></i>
+                                <span style="font-size: 0.95rem;" data-i18n="afterpay">Afterpay</span>
+                            </label>
+                            <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
+                                <input type="checkbox" name="installmentMethod" value="klarna" checked style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
+                                <i class="fas fa-shopping-bag" style="margin-right: 0.5rem; color: #FFB3C7; font-size: 1.1rem;"></i>
+                                <span style="font-size: 0.95rem;" data-i18n="klarna">Klarna</span>
+                            </label>
+                            <div style="display: flex; align-items: center; justify-content: center; padding: 0.6rem; background: #f8f9fa; border-radius: 6px; border: 1px dashed #dee2e6;">
+                                <i class="fas fa-ellipsis-h" style="margin-right: 0.5rem; color: #6c757d;"></i>
+                                <span style="font-size: 0.9rem; color: #6c757d; font-style: italic;" data-i18n="morePaymentMethods">更多支付方式...</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <a href="#" class="btn btn-success" id="createInstallmentBtn">
+                        <i class="fas fa-credit-card"></i> <span data-i18n="createInstallment">创建分期支付</span>
                     </a>
                 </div>
                 
@@ -470,8 +515,54 @@
                         </div>
                     </div>
                     
-                    <a href="#" class="btn btn-warning" id="createSubscriptionBtn">
+                    <a href="/subscription/pricing" class="btn btn-warning" id="createSubscriptionBtn">
                         <i class="fas fa-plus"></i> <span data-i18n="createSubscription">创建订阅</span>
+                    </a>
+                </div>
+                
+                <div class="card">
+                    <h2><i class="fas fa-bolt"></i> <span data-i18n="expressCheckout">Expression Checkout</span></h2>
+                    <p data-i18n="expressCheckoutDesc">快速发起支付，支持多种支付方式。请选择您需要启用的支付方式：</p>
+                    
+                    <div style="margin: 1.5rem 0; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+                        <label style="display: block; margin-bottom: 1rem; font-weight: 600; color: var(--text-color);">
+                            <i class="fas fa-wallet"></i> <span data-i18n="selectQuickPaymentMethod">选择支付方式：</span>
+                        </label>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.8rem;">
+                            <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
+                                <input type="checkbox" name="quickPaymentMethod" value="card" checked style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
+                                <i class="fas fa-credit-card" style="margin-right: 0.5rem; color: #1a73e8; font-size: 1.1rem;"></i>
+                                <span style="font-size: 0.95rem;" data-i18n="card">国际信用卡/借记卡</span>
+                            </label>
+                            <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
+                                <input type="checkbox" name="quickPaymentMethod" value="apple_pay" checked style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
+                                <i class="fab fa-apple" style="margin-right: 0.5rem; color: #000000; font-size: 1.2rem;"></i>
+                                <span style="font-size: 0.95rem;">Apple Pay</span>
+                            </label>
+                            <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
+                                <input type="checkbox" name="quickPaymentMethod" value="google_pay" checked style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
+                                <i class="fab fa-google" style="margin-right: 0.5rem; color: #4285F4; font-size: 1.1rem;"></i>
+                                <span style="font-size: 0.95rem;">Google Pay</span>
+                            </label>
+                            <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
+                                <input type="checkbox" name="quickPaymentMethod" value="wechat" checked style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
+                                <i class="fab fa-weixin" style="margin-right: 0.5rem; color: #09B83E; font-size: 1.2rem;"></i>
+                                <span style="font-size: 0.95rem;" data-i18n="wechat">微信支付</span>
+                            </label>
+                            <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
+                                <input type="checkbox" name="quickPaymentMethod" value="alipay" checked style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
+                                <i class="fab fa-alipay" style="margin-right: 0.5rem; color: #1677FF; font-size: 1.2rem;"></i>
+                                <span style="font-size: 0.95rem;" data-i18n="alipay">支付宝</span>
+                            </label>
+                            <div style="display: flex; align-items: center; justify-content: center; padding: 0.6rem; background: #f8f9fa; border-radius: 6px; border: 1px dashed #dee2e6;">
+                                <i class="fas fa-ellipsis-h" style="margin-right: 0.5rem; color: #6c757d;"></i>
+                                <span style="font-size: 0.9rem; color: #6c757d; font-style: italic;" data-i18n="morePaymentMethods">更多支付方式...</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <a href="#" class="btn btn-success" id="expressCheckoutBtn">
+                        <i class="fas fa-zap"></i> <span data-i18n="startExpressCheckout">开始 Expression Checkout</span>
                     </a>
                 </div>
             </div>
@@ -552,6 +643,11 @@
                 tagline: '简单、安全、高效的支付解决方案',
                 zh: '中文',
                 en: 'English',
+                buildingMethod: '选择建站方式',
+                selfBuilt: '自建站',
+                selfBuiltDesc: '完全自定义，独立部署，完全掌控您的在线业务',
+                shopifyDesc: '全球领先的电商平台，快速上线，专业支持',
+                shoplineDesc: '亚太地区领先的建站平台，本地化支持，易于使用',
                 welcome: '欢迎使用 UseePay API 演示',
                 selectMode: '选择集成模式',
                 redirect: '跳转收银台',
@@ -560,15 +656,23 @@
                 embeddedDesc: '在您的页面中嵌入收银台组件，保持品牌一致性',
                 api: '纯 API 模式',
                 apiDesc: '完全自定义支付流程和界面，灵活度最高',
-                payment: '支付处理',
+                payment: '一次支付',
                 paymentDesc: '处理一次性支付，支持多种支付方式。请选择您需要启用的支付方式：',
                 selectPaymentMethod: '选择支付方式：',
                 card: '信用卡/借记卡',
                 createPayment: '创建支付',
+                installmentPayment: '分期支付',
+                installmentPaymentDesc: '灵活的分期付款方案，支持多种分期支付方式。请选择您需要启用的支付方式：',
+                selectInstallmentMethod: '选择支付方式：',
+                createInstallment: '创建分期支付',
                 subscription: '订阅管理',
                 subscriptionDesc: '设置和管理定期订阅，自动处理定期扣款和账单。请选择您需要启用的支付方式：',
                 selectSubscriptionMethod: '选择支付方式：',
                 createSubscription: '创建订阅',
+                expressCheckout: '快捷支付',
+                expressCheckoutDesc: '快速发起支付，支持多种支付方式。请选择您需要启用的支付方式：',
+                selectQuickPaymentMethod: '选择支付方式：',
+                startExpressCheckout: '快捷支付',
                 features: '主要特性',
                 security: '安全可靠',
                 securityDesc: '采用银行级安全标准，保障交易安全',
@@ -605,6 +709,11 @@
                 tagline: 'Simple, Secure, and Efficient Payment Solutions',
                 zh: '中文',
                 en: 'English',
+                buildingMethod: 'Select Building Method',
+                selfBuilt: 'Self-Built',
+                selfBuiltDesc: 'Fully customizable, independent deployment, complete control of your online business',
+                shopifyDesc: 'Leading global e-commerce platform, quick launch, professional support',
+                shoplineDesc: 'Leading building platform in Asia-Pacific, localized support, easy to use',
                 welcome: 'Welcome to UseePay API Demo',
                 selectMode: 'Select Integration Mode',
                 redirect: 'Redirect Checkout',
@@ -613,15 +722,23 @@
                 embeddedDesc: 'Embed checkout component in your page, maintain brand consistency',
                 api: 'Pure API Mode',
                 apiDesc: 'Fully customize payment flow and interface, maximum flexibility',
-                payment: 'Payment Processing',
+                payment: 'One-Time Payment',
                 paymentDesc: 'Process one-time payments, support multiple payment methods. Please select the payment methods you want to enable:',
                 selectPaymentMethod: 'Select Payment Method:',
                 card: 'Credit/Debit Card',
                 createPayment: 'Create Payment',
+                installmentPayment: 'Installment Payment',
+                installmentPaymentDesc: 'Flexible installment payment plans, support multiple installment payment methods. Please select the payment methods you want to enable:',
+                selectInstallmentMethod: 'Select Payment Method:',
+                createInstallment: 'Create Installment Payment',
                 subscription: 'Subscription Management',
                 subscriptionDesc: 'Set up and manage recurring subscriptions, automatically handle recurring charges and billing. Please select the payment methods you want to enable:',
                 selectSubscriptionMethod: 'Select Payment Method:',
                 createSubscription: 'Create Subscription',
+                expressCheckout: 'Expression Checkout',
+                expressCheckoutDesc: 'Quickly initiate payments, support multiple payment methods. Please select the payment methods you want to enable:',
+                selectQuickPaymentMethod: 'Select Payment Method:',
+                startExpressCheckout: 'Start Expression Checkout',
                 features: 'Key Features',
                 security: 'Secure & Reliable',
                 securityDesc: 'Bank-level security standards to ensure transaction security',
@@ -683,7 +800,45 @@
         // 页面加载时初始化语言
         document.addEventListener('DOMContentLoaded', function() {
             updateLanguage();
+            // 初始化建站方式导航栏
+            initBuildingMethodNav();
         });
+
+        // 建站方式导航栏初始化
+        function initBuildingMethodNav() {
+            const firstBtn = document.querySelector('.building-nav-btn[data-value="selfBuilt"]');
+            if (firstBtn) {
+                firstBtn.classList.add('active');
+            }
+        }
+
+        // 选择建站方式
+        function selectBuildingMethod(button) {
+            // 移除所有按钮的active类
+            document.querySelectorAll('.building-nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // 添加active类到当前按钮
+            button.classList.add('active');
+            
+            // 更新描述文本
+            const value = button.getAttribute('data-value');
+            const descElement = document.getElementById('buildingMethodDesc');
+            
+            const descriptions = {
+                selfBuilt: currentLang === 'zh' ? translations.zh.selfBuiltDesc : translations.en.selfBuiltDesc,
+                shopify: currentLang === 'zh' ? translations.zh.shopifyDesc : translations.en.shopifyDesc,
+                shopline: currentLang === 'zh' ? translations.zh.shoplineDesc : translations.en.shoplineDesc
+            };
+            
+            if (descElement) {
+                descElement.textContent = descriptions[value] || '';
+            }
+            
+            // 保存选择到localStorage
+            localStorage.setItem('selectedBuildingMethod', value);
+        }
 
         // 添加活动类到当前导航链接
         document.addEventListener('DOMContentLoaded', function() {
@@ -748,6 +903,7 @@
                 try {
                     const cachedPaymentMethods = localStorage.getItem('paymentMethods');
                     const cachedSubscriptionMethods = localStorage.getItem('subscriptionMethods');
+                    const cachedInstallmentMethods = localStorage.getItem('installmentMethods');
                     
                     // 默认支付方式：信用卡、Apple Pay、Google Pay
                     const defaultPaymentMethods = ['card', 'apple_pay', 'google_pay'];
@@ -808,6 +964,42 @@
                         });
                         defaultPaymentMethods.forEach(method => {
                             const checkbox = document.querySelector(`input[name="subscriptionMethod"][value="${method}"]`);
+                            if (checkbox) {
+                                checkbox.checked = true;
+                            }
+                        });
+                    }
+                    
+                    // 处理分期支付方式
+                    if (cachedInstallmentMethods) {
+                        try {
+                            const methods = JSON.parse(cachedInstallmentMethods);
+                            console.log('Restoring cached installment methods:', methods);
+                            
+                            // 先取消所有分期支付方式的选中
+                            document.querySelectorAll('input[name="installmentMethod"]').forEach(cb => {
+                                cb.checked = false;
+                            });
+                            
+                            // 根据缓存恢复选中状态
+                            methods.forEach(method => {
+                                const checkbox = document.querySelector(`input[name="installmentMethod"][value="${method}"]`);
+                                if (checkbox) {
+                                    checkbox.checked = true;
+                                }
+                            });
+                        } catch (parseError) {
+                            console.warn('Failed to parse cached installment methods:', parseError);
+                        }
+                    } else {
+                        console.log('No cached installment methods, using defaults');
+                        // 分期支付方式默认选择 Afterpay 和 Klarna
+                        document.querySelectorAll('input[name="installmentMethod"]').forEach(cb => {
+                            cb.checked = false;
+                        });
+                        const defaultInstallmentMethods = ['afterpay', 'klarna'];
+                        defaultInstallmentMethods.forEach(method => {
+                            const checkbox = document.querySelector(`input[name="installmentMethod"][value="${method}"]`);
                             if (checkbox) {
                                 checkbox.checked = true;
                             }
@@ -929,14 +1121,30 @@
                 console.log(`Selected ${actionType} mode:`, selectedMode);
                 
                 // 根据操作类型获取相应的支付方式
-                const methodName = actionType === 'payment' ? 'paymentMethod' : 'subscriptionMethod';
+                let methodName = '';
+                if (actionType === 'payment') {
+                    methodName = 'paymentMethod';
+                } else if (actionType === 'subscription') {
+                    methodName = 'subscriptionMethod';
+                } else if (actionType === 'installment') {
+                    methodName = 'installmentMethod';
+                }
+                
                 const selectedMethods = Array.from(document.querySelectorAll(`input[name="${methodName}"]:checked`))
                     .map(cb => cb.value);
                 console.log(`Selected ${actionType} methods:`, selectedMethods);
                 
                 // 根据不同模式显示不同的提示
                 let message = '';
-                let actionText = actionType === 'payment' ? '支付' : '订阅';
+                let actionText = '';
+                
+                if (actionType === 'payment') {
+                    actionText = '支付';
+                } else if (actionType === 'subscription') {
+                    actionText = '订阅';
+                } else if (actionType === 'installment') {
+                    actionText = '分期支付';
+                }
                 
                 switch(selectedMode) {
                     case 'redirect':
@@ -965,10 +1173,15 @@
                 
                 // ===== 新增：支付操作跳转逻辑 =====
                 // 如果是支付操作，缓存成功后跳转到服装商城页面
-                if (actionType === 'payment') {
+                if (actionType === 'payment' || actionType === 'installment') {
                     setTimeout(() => {
                         console.log('✓ 正在跳转到服装商城页面...');
                         window.location.href = '/payment/clothing-shop';
+                    }, 500);
+                } else if (actionType === 'subscription') {
+                    setTimeout(() => {
+                        console.log('✓ 正在跳转到产品订阅页面...');
+                        window.location.href = '/subscription/pricing';
                     }, 500);
                 }
             }
@@ -998,7 +1211,14 @@
                     };
                     
                     // 根据操作类型选择缓存键
-                    const methodsKey = actionType === 'payment' ? 'paymentMethods' : 'subscriptionMethods';
+                    let methodsKey = '';
+                    if (actionType === 'payment') {
+                        methodsKey = 'paymentMethods';
+                    } else if (actionType === 'subscription') {
+                        methodsKey = 'subscriptionMethods';
+                    } else if (actionType === 'installment') {
+                        methodsKey = 'installmentMethods';
+                    }
                     
                     // 缓存集成模式
                     localStorage.setItem('paymentIntegrationMode', integrationMode);
@@ -1108,6 +1328,15 @@
                 createSubscriptionBtn.addEventListener('click', function(e) {
                     e.preventDefault();
                     handleActionClick('subscription');
+                });
+            }
+            
+            // 处理创建分期支付按钮点击
+            const createInstallmentBtn = document.getElementById('createInstallmentBtn');
+            if (createInstallmentBtn) {
+                createInstallmentBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    handleActionClick('installment');
                 });
             }
         });

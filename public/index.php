@@ -112,6 +112,14 @@ switch ($request) {
         $controller = new \UseePayDemo\Controllers\CheckoutController();
         $controller->apiCheckout();
         break;
+    case '/subscription/pricing':
+        // Load subscription pricing page
+        require __DIR__ . '/../src/Views/subscription/pricing.php';
+        break;
+    case '/subscription/checkout':
+        // Load subscription checkout page
+        require __DIR__ . '/../src/Views/subscription/checkout.php';
+        break;
     case '/payment/callback':
         // Handle payment callback
         require_once __DIR__ . '/../src/Controllers/PaymentCallbackHandler.php';

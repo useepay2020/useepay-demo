@@ -143,9 +143,23 @@ function loadCart() {
     }
 }
 
-// Load payment methods from cache
+// Load payment methods from cache based on action type
 function getPaymentMethods() {
-    const cached = localStorage.getItem('paymentMethods');
+    // 获取操作类型
+    const actionType = localStorage.getItem('paymentActionType');
+    console.log('Current action type:', actionType);
+    
+    // 根据操作类型选择对应的缓存键
+    let cacheKey = 'paymentMethods'; // 默认为支付方式
+    if (actionType === 'subscription') {
+        cacheKey = 'subscriptionMethods';
+    } else if (actionType === 'installment') {
+        cacheKey = 'installmentMethods';
+    }
+    
+    const cached = localStorage.getItem(cacheKey);
+    console.log(`Loading ${cacheKey} from cache:`, cached);
+    
     if (cached) {
         try {
             return JSON.parse(cached);
@@ -364,20 +378,6 @@ function initializeUseepayElements(clientSecret, paymentIntentId) {
     }
 }
 
-// Update card preview
-function updateCardPreview() {
-    const cardNumber = document.getElementById('cardNumber')?.value || '•••• •••• •••• ••••';
-    const cardHolder = document.getElementById('cardHolder')?.value || 'CARDHOLDER NAME';
-    const expiryDate = document.getElementById('expiryDate')?.value || 'MM/YY';
-    
-    const previewNumber = document.getElementById('previewCardNumber');
-    const previewHolder = document.getElementById('previewCardHolder');
-    const previewExpiry = document.getElementById('previewExpiryDate');
-    
-    if (previewNumber) previewNumber.textContent = cardNumber;
-    if (previewHolder) previewHolder.textContent = cardHolder.toUpperCase();
-    if (previewExpiry) previewExpiry.textContent = expiryDate;
-}
 
 // Render checkout page
 function renderCheckout() {

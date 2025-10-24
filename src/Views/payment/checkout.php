@@ -564,9 +564,23 @@
             }
         }
 
-        // Load payment methods from cache
+        // Load payment methods from cache based on action type
         function getPaymentMethods() {
-            const cached = localStorage.getItem('paymentMethods');
+            // 获取操作类型
+            const actionType = localStorage.getItem('paymentActionType');
+            console.log('Current action type:', actionType);
+            
+            // 根据操作类型选择对应的缓存键
+            let cacheKey = 'paymentMethods'; // 默认为支付方式
+            if (actionType === 'subscription') {
+                cacheKey = 'subscriptionMethods';
+            } else if (actionType === 'installment') {
+                cacheKey = 'installmentMethods';
+            }
+            
+            const cached = localStorage.getItem(cacheKey);
+            console.log(`Loading ${cacheKey} from cache:`, cached);
+            
             if (cached) {
                 try {
                     return JSON.parse(cached);
