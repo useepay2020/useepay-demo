@@ -108,7 +108,8 @@
             margin-bottom: 15px;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 15px;
+            justify-content: flex-start;
         }
 
         .form-section h3::before {
@@ -117,6 +118,12 @@
             height: 20px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             border-radius: 2px;
+        }
+
+        .payment-method-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .form-row {
@@ -225,6 +232,57 @@
         .payment-desc {
             font-size: 12px;
             color: #636e72;
+        }
+
+        /* One-Page Checkout Checkbox */
+        .one-page-checkout-section {
+            display: contents;
+        }
+
+        .checkbox-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            padding: 0;
+            background: transparent;
+            border: none;
+        }
+
+        .checkbox-wrapper:hover {
+            opacity: 0.8;
+        }
+
+        .checkbox-wrapper input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+            accent-color: #667eea;
+            flex-shrink: 0;
+            margin: 0;
+        }
+
+        .checkbox-label {
+            cursor: pointer;
+            user-select: none;
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .checkbox-title {
+            font-weight: 500;
+            color: #2d3436;
+            font-size: 12px;
+        }
+
+        .checkbox-desc {
+            font-size: 10px;
+            color: #636e72;
+            line-height: 1.2;
         }
 
         /* Order Summary */
@@ -417,6 +475,7 @@
             .order-summary {
                 padding: 20px;
             }
+
         }
     </style>
 </head>
@@ -475,6 +534,16 @@
                 fillShippingAddress: '请填写完整的收货地址',
                 invalidEmail: '请输入有效的电子邮箱地址',
                 paymentError: '支付失败，请重试',
+                kakaoPay: 'Kakao Pay',
+                kakaoPayDesc: '使用 Kakao Pay 快速支付',
+                naverPay: 'Naver Pay',
+                naverPayDesc: '使用 Naver Pay 快速支付',
+                payco: 'Payco',
+                paycoDesc: '使用 Payco 快速支付',
+                toss: 'Toss',
+                tossDesc: '使用 Toss 快速支付',
+                onePageCheckout: '一页支付',
+                onePageCheckoutDesc: '启用一页支付模式，简化结算流程',
                 products: {
                     1: { name: '经典白色T恤' },
                     2: { name: '修身牛仔裤' },
@@ -522,6 +591,16 @@
                 fillShippingAddress: 'Please fill in complete shipping address',
                 invalidEmail: 'Please enter a valid email address',
                 paymentError: 'Payment failed, please try again',
+                kakaoPay: 'Kakao Pay',
+                kakaoPayDesc: 'Pay quickly with Kakao Pay',
+                naverPay: 'Naver Pay',
+                naverPayDesc: 'Pay quickly with Naver Pay',
+                payco: 'Payco',
+                paycoDesc: 'Pay quickly with Payco',
+                toss: 'Toss',
+                tossDesc: 'Pay quickly with Toss',
+                onePageCheckout: 'One-Page Checkout',
+                onePageCheckoutDesc: 'Enable one-page checkout mode to simplify the checkout process',
                 products: {
                     1: { name: 'Classic White T-Shirt' },
                     2: { name: 'Slim Fit Jeans' },
@@ -649,6 +728,34 @@
                 name_en: 'OXXO',
                 desc_zh: '在 OXXO 便利店支付',
                 desc_en: 'Pay at OXXO convenience stores'
+            },
+            'kakao_pay': {
+                icon: '<i class="fas fa-comment" style="color: #FFE812;"></i>',
+                name_zh: 'Kakao Pay',
+                name_en: 'Kakao Pay',
+                desc_zh: '使用 Kakao Pay 快速支付',
+                desc_en: 'Pay quickly with Kakao Pay'
+            },
+            'naver_pay': {
+                icon: '<i class="fas fa-shopping-bag" style="color: #00C73C;"></i>',
+                name_zh: 'Naver Pay',
+                name_en: 'Naver Pay',
+                desc_zh: '使用 Naver Pay 快速支付',
+                desc_en: 'Pay quickly with Naver Pay'
+            },
+            'payco': {
+                icon: '<i class="fas fa-wallet" style="color: #0066FF;"></i>',
+                name_zh: 'Payco',
+                name_en: 'Payco',
+                desc_zh: '使用 Payco 快速支付',
+                desc_en: 'Pay quickly with Payco'
+            },
+            'toss': {
+                icon: '<i class="fas fa-mobile-alt" style="color: #0066FF;"></i>',
+                name_zh: 'Toss',
+                name_en: 'Toss',
+                desc_zh: '使用 Toss 快速支付',
+                desc_en: 'Pay quickly with Toss'
             }
         };
 
@@ -802,7 +909,18 @@
 
                         <!-- Payment Method -->
                         <div class="form-section">
-                            <h3>${t.paymentMethod}</h3>
+                            <h3>
+                                <div class="payment-method-title">${t.paymentMethod}</div>
+                                <!-- One-Page Checkout Checkbox -->
+                                <div class="one-page-checkout-section">
+                                    <label class="checkbox-wrapper">
+                                        <input type="checkbox" id="onePageCheckout" name="onePageCheckout" checked>
+                                        <div class="checkbox-label">
+                                            <div class="checkbox-title">${t.onePageCheckout}</div>
+                                        </div>
+                                    </label>
+                                </div>
+                            </h3>
                             <div class="payment-methods" id="paymentMethodsContainer">
                                 ${generatePaymentMethods(t)}
                             </div>
@@ -874,6 +992,7 @@
 
             // Prepare data to send to backend
             const totals = calculateTotals();
+            const onePageCheckoutEnabled = document.getElementById('onePageCheckout').checked;
             const checkoutData = {
                 firstName: data.firstName,
                 lastName: data.lastName,
@@ -886,7 +1005,8 @@
                 phone: data.phone,
                 paymentMethods: data.paymentMethod ? [data.paymentMethod] : [],
                 items: cart,
-                totals: totals
+                totals: totals,
+                onePageCheckout: onePageCheckoutEnabled
             };
 
             // Submit to backend - Call PaymentController::createPayment()
