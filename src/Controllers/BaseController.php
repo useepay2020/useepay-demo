@@ -129,4 +129,66 @@ class BaseController
 
         return $client;
     }
+    /**
+     * Get device data
+     *
+     * @return array
+     */
+    public function getDeviceData()
+    {
+        // Get client IP address
+        $ipAddress = '0.0.0.0';
+        $ipSources = array(
+            'HTTP_CLIENT_IP',
+            'HTTP_X_FORWARDED_FOR',
+            'HTTP_X_FORWARDED',
+            'HTTP_FORWARDED_FOR',
+            'HTTP_FORWARDED',
+            'REMOTE_ADDR'
+        );
+
+        foreach ($ipSources as $source) {
+            if (!empty($_SERVER[$source])) {
+                $ipAddress = $_SERVER[$source];
+                break;
+            }
+        }
+
+        // Get browser information
+        $userAgent = isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : 'Unknown';
+
+        // Try to get browser info, with fallback if browscap is not configured
+        $browserInfo = array();
+        if (function_exists('get_browser')) {
+            try {
+                $browserInfo = @get_browser(null, true);
+                if (!$browserInfo) {
+                    $browserInfo = array();
+                }
+            } catch (\Exception $e) {
+                // Silently fail if browscap is not available
+                $browserInfo = array();
+            }
+        }
+
+        // Prepare device data
+        $deviceData = array(
+            'ip_address' => $ipAddress,
+            'user_agent' => $userAgent,
+            'browser' => array(
+                'browser' => isset($browserInfo['browser']) ? $browserInfo['browser'] : 'Unknown',
+                'version' => isset($browserInfo['version']) ? $browserInfo['version'] : 'Unknown',
+                'platform' => isset($browserInfo['platform']) ? $browserInfo['platform'] : 'Unknown',
+                'device_type' => isset($browserInfo['device_type']) ? $browserInfo['device_type'] : 'Unknown',
+                'is_mobile' => isset($browserInfo['ismobiledevice']) ? (bool)$browserInfo['ismobiledevice'] : false,
+                'is_tablet' => isset($browserInfo['istablet']) ? (bool)$browserInfo['istablet'] : false,
+                'is_crawler' => isset($browserInfo['crawler']) ? (bool)$browserInfo['crawler'] : false
+            ),
+            'accept_language' => isset($_SERVER['HTTP_ACCEPT_LANGUAGE']) ? $_SERVER['HTTP_ACCEPT_LANGUAGE'] : '',
+            'request_time' => date('Y-m-d H:i:s'),
+            'request_method' => $_SERVER['REQUEST_METHOD']
+        );
+
+        return $deviceData;
+    }
 }

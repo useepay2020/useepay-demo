@@ -579,6 +579,94 @@
                 width: 40%;
             }
         }
+
+        /* Processing Modal Styles */
+        .processing-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .processing-modal.show {
+            display: flex;
+        }
+
+        .processing-modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            max-width: 400px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .processing-spinner {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 20px;
+            border: 4px solid #f0f0f0;
+            border-top: 4px solid #1e90ff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .processing-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #2d3436;
+            margin-bottom: 10px;
+        }
+
+        .processing-message {
+            font-size: 14px;
+            color: #636e72;
+            line-height: 1.6;
+        }
+
+        .processing-status {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e8eef5;
+            font-size: 12px;
+            color: #95a5a6;
+        }
+
+        .processing-status.success {
+            color: #27ae60;
+        }
+
+        .processing-status.error {
+            color: #e74c3c;
+        }
+
+        .status-icon {
+            font-size: 24px;
+            margin-right: 8px;
+        }
     </style>
 </head>
 <body>
@@ -850,6 +938,16 @@
         </div>
     </div>
 
+    <!-- Processing Modal -->
+    <div id="processingModal" class="processing-modal">
+        <div class="processing-modal-content">
+            <div class="processing-spinner"></div>
+            <div class="processing-title" id="processingTitle" data-i18n="processing">处理中...</div>
+            <div class="processing-message" id="processingMessage" data-i18n="processingMessage">正在创建您的订阅，请稍候...</div>
+            <div class="processing-status" id="processingStatus"></div>
+        </div>
+    </div>
+
     <script>
         // ===== 国际化翻译 =====
         const translations = {
@@ -924,7 +1022,11 @@
                 emailPlaceholder: '请输入邮箱地址',
                 passwordPlaceholder: '请输入密码',
                 confirmPasswordPlaceholder: '请再次输入密码',
-                personalCenter: '个人中心'
+                personalCenter: '个人中心',
+                processing: '处理中...',
+                processingMessage: '正在创建您的订阅，请稍候...',
+                processingSuccess: '订阅创建成功！',
+                processingError: '订阅创建失败，请重试'
             },
             en: {
                 backHome: 'Back to Home',
@@ -998,7 +1100,11 @@
                 emailPlaceholder: 'Please enter email address',
                 passwordPlaceholder: 'Please enter password',
                 confirmPasswordPlaceholder: 'Please enter password again',
-                personalCenter: 'Personal Center'
+                personalCenter: 'Personal Center',
+                processing: 'Processing...',
+                processingMessage: 'Creating your subscription, please wait...',
+                processingSuccess: 'Subscription created successfully!',
+                processingError: 'Failed to create subscription, please try again'
             }
         };
 
@@ -1087,6 +1193,32 @@
             document.getElementById('professional-period').innerHTML = `<span data-i18n="${billingType === 'annual' ? 'perYear' : 'perMonth'}">${periodText}</span>`;
             document.getElementById('enterprise-period').innerHTML = `<span data-i18n="${billingType === 'annual' ? 'perYear' : 'perMonth'}">${periodText}</span>`;
         }
+        function getPaymentMethods() {
+            // 获取操作类型
+            const actionType = localStorage.getItem('paymentActionType');
+            console.log('Current action type:', actionType);
+
+            // 根据操作类型选择对应的缓存键
+            let cacheKey = 'paymentMethods'; // 默认为支付方式
+            if (actionType === 'subscription') {
+                cacheKey = 'subscriptionMethods';
+            } else if (actionType === 'installment') {
+                cacheKey = 'installmentMethods';
+            }
+
+            const cached = localStorage.getItem(cacheKey);
+            console.log(`Loading ${cacheKey} from cache:`, cached);
+
+            if (cached) {
+                try {
+                    return JSON.parse(cached);
+                } catch (e) {
+                    console.error('Failed to parse payment methods:', e);
+                    return [];
+                }
+            }
+            return [];
+        }
 
         function selectPlan(plan) {
             // 检查浏览器缓存中是否有消费者对象
@@ -1113,36 +1245,87 @@
             const currency = 'USD';
 
             const interval = billingType === 'annual' ? 'year' : 'month';
-            // 构建 Subscription 对象
-            const subscription = {
+            
+            // 从浏览器缓存中获取支付方式
+
+            const paymentMethods = getPaymentMethods();
+            
+            console.log('Payment methods from cache:', paymentMethods);
+            
+            // 构建 Subscription 对象用于后端
+            const subscriptionData = {
                 customer_id: customer.id,
-                recurring:{
+                recurring: {
                     interval: interval,
                     interval_count: 1,
                     unit_amount: parseFloat(price),
                     totalBillingCycles: 10
                 },
+                currency: currency,
                 description: planName,
+                paymentMethods: paymentMethods,
                 order: {
-                    products :[
+                    products: [
                         {
                             name: planName,
                             quantity: 1,
                             price: parseFloat(price)
                         }
                     ]
-                },
-                metadata: {
                 }
             };
             
-            console.log('Subscription object created:', subscription);
-
-            // 显示确认信息
-            alert(subscription);
+            console.log('Sending subscription data to backend:', subscriptionData);
             
-            // 这里可以重定向到支付页面或订阅确认页面
-            // window.location.href = `/subscription/checkout?plan=${plan}&billing=${billingType}`;
+            // Show processing modal
+            showProcessingModal();
+            
+            // Initialize payment response handler for subscription
+            const paymentHandler = new PaymentResponseHandler({
+                translations: translations,
+                currentLang: currentLang,
+                submitButton: null,
+                totals: {}
+            });
+
+            // 通过 AJAX 调用后台 createSubscription 方法
+            fetch('/api/subscription', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(subscriptionData)
+            })
+            .then(response => paymentHandler.handleResponse(response))
+                .then(result => {
+                    // Update processing modal with success status
+                    updateProcessingStatus('success', translations[currentLang].processingSuccess);
+                    
+                    // Prepare order data for success page
+                    const orderData = {
+                        orderId: result.data.merchant_order_id,
+                        paymentIntentId: result.data.id,
+                        date: new Date().toISOString(),
+                        status: result.data.status,
+                        amount: result.data.amount
+                    };
+
+                    // Close modal after 1.5 seconds and process payment result
+                    setTimeout(() => {
+                        closeProcessingModal();
+                        paymentHandler.processPaymentResult(result, orderData);
+                    }, 1500);
+                })
+                .catch(error => {
+                    // Update processing modal with error status
+                    updateProcessingStatus('error', translations[currentLang].processingError);
+                    
+                    // Close modal after 2 seconds
+                    setTimeout(() => {
+                        closeProcessingModal();
+                        paymentHandler.handleFetchError(error);
+                    }, 2000);
+                });
         }
 
         function getPlanName(plan) {
@@ -1160,6 +1343,46 @@
                     'enterprise': 'Enterprise'
                 };
                 return names[plan] || plan;
+            }
+        }
+
+        /**
+         * Processing Modal Functions
+         */
+        function showProcessingModal() {
+            const modal = document.getElementById('processingModal');
+            const spinner = modal.querySelector('.processing-spinner');
+            const status = modal.querySelector('#processingStatus');
+            
+            // Reset modal state
+            spinner.style.display = 'block';
+            status.textContent = '';
+            status.className = 'processing-status';
+            
+            // Show modal
+            modal.classList.add('show');
+        }
+
+        function closeProcessingModal() {
+            const modal = document.getElementById('processingModal');
+            modal.classList.remove('show');
+        }
+
+        function updateProcessingStatus(type, message) {
+            const modal = document.getElementById('processingModal');
+            const spinner = modal.querySelector('.processing-spinner');
+            const status = modal.querySelector('#processingStatus');
+            
+            // Hide spinner
+            spinner.style.display = 'none';
+            
+            // Update status
+            status.className = `processing-status ${type}`;
+            
+            if (type === 'success') {
+                status.innerHTML = `<span class="status-icon"><i class="fas fa-check-circle"></i></span>${message}`;
+            } else if (type === 'error') {
+                status.innerHTML = `<span class="status-icon"><i class="fas fa-exclamation-circle"></i></span>${message}`;
             }
         }
 
@@ -1350,6 +1573,7 @@
             }
         });
     </script>
+    <script src="/assets/js/payment-response-handler.js"></script>
 
     <!-- Auth Modal -->
     <div id="authModal" class="auth-modal">

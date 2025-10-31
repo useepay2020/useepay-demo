@@ -183,6 +183,17 @@
         .payment-methods {
             display: grid;
             gap: 15px;
+            transition: all 0.3s ease;
+            max-height: 1000px;
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .payment-methods.hidden {
+            display: none;
+            max-height: 0;
+            opacity: 0;
+            visibility: hidden;
         }
 
         .payment-option {
@@ -750,7 +761,7 @@
                 desc_zh: '使用 Payco 快速支付',
                 desc_en: 'Pay quickly with Payco'
             },
-            'toss': {
+            'toss_pay': {
                 icon: '<i class="fas fa-mobile-alt" style="color: #0066FF;"></i>',
                 name_zh: 'Toss',
                 name_en: 'Toss',
@@ -971,6 +982,25 @@
 
             // Add form submit handler
             document.getElementById('checkoutForm').addEventListener('submit', handleSubmit);
+
+            // Add one-page checkout toggle handler
+            const onePageCheckbox = document.getElementById('onePageCheckout');
+            const paymentMethodsList = document.getElementById('paymentMethodsContainer');
+            
+            // Set initial state based on checkbox
+            function updatePaymentMethodsVisibility() {
+                if (onePageCheckbox.checked) {
+                    paymentMethodsList.classList.remove('hidden');
+                } else {
+                    paymentMethodsList.classList.add('hidden');
+                }
+            }
+            
+            // Initialize visibility
+            updatePaymentMethodsVisibility();
+            
+            // Add change event listener
+            onePageCheckbox.addEventListener('change', updatePaymentMethodsVisibility);
         }
 
         // Handle form submission
@@ -993,6 +1023,18 @@
             // Prepare data to send to backend
             const totals = calculateTotals();
             const onePageCheckoutEnabled = document.getElementById('onePageCheckout').checked;
+            
+            // Determine payment methods based on one-page checkout state
+            let paymentMethods = [];
+            if (onePageCheckoutEnabled) {
+                // One-page checkout enabled: use only selected payment method
+                paymentMethods = data.paymentMethod ? [data.paymentMethod] : [];
+            } else {
+                // One-page checkout disabled: use all cached payment methods
+                const cachedMethods = getPaymentMethods();
+                paymentMethods = cachedMethods && cachedMethods.length > 0 ? cachedMethods : (data.paymentMethod ? [data.paymentMethod] : []);
+            }
+            
             const checkoutData = {
                 firstName: data.firstName,
                 lastName: data.lastName,
@@ -1003,11 +1045,19 @@
                 zipCode: data.zipCode,
                 country: data.country,
                 phone: data.phone,
-                paymentMethods: data.paymentMethod ? [data.paymentMethod] : [],
+                paymentMethods: paymentMethods,
                 items: cart,
                 totals: totals,
                 onePageCheckout: onePageCheckoutEnabled
             };
+
+            // Initialize payment response handler
+            const paymentHandler = new PaymentResponseHandler({
+                translations: translations,
+                currentLang: currentLang,
+                submitButton: submitButton,
+                totals: totals
+            });
 
             // Submit to backend - Call PaymentController::createPayment()
             fetch('/api/payment', {
@@ -1017,120 +1067,25 @@
                 },
                 body: JSON.stringify(checkoutData)
             })
-            .then(response => {
-                console.log('Response status:', response.status);
-                console.log('Response headers:', response.headers);
-                
-                // Check if response is OK
-                // if (!response.ok) {
-                //     throw new Error(`HTTP error! status: ${response.status}`);
-                // }
-                
-                // Try to parse JSON
-                return response.text().then(text => {
-                    console.log('Response text:', text);
-                    try {
-                        return JSON.parse(text);
-                    } catch (e) {
-                        console.error('JSON parse error:', e);
-                        console.error('Response was:', text);
-                        throw new Error('Invalid JSON response from server');
-                    }
-                });
-            })
+            .then(response => paymentHandler.handleResponse(response))
             .then(result => {
-                console.log('Parsed result:', result);
-                
-                // Check if payment creation was successful
-                if (result.success) {
-                    // Save order data for success page
-                    const orderData = {
-                        orderId: result.data.merchant_order_id,
-                        paymentIntentId: result.data.id,
-                        customer: data,
-                        items: cart,
-                        totals: totals,
-                        date: new Date().toISOString(),
-                        status: result.data.status,
-                        amount: result.data.amount
-                    };
+                // Prepare order data for success page
+                const orderData = {
+                    orderId: result.data.merchant_order_id,
+                    paymentIntentId: result.data.id,
+                    customer: data,
+                    items: cart,
+                    totals: totals,
+                    date: new Date().toISOString(),
+                    status: result.data.status,
+                    amount: result.data.amount
+                };
 
-                    // Check payment status
-                    if (result.data.status === 'requires_payment_method' || result.data.status === 'requires_action') {
-                        console.log('Redirecting to payment page...');
-                        
-                        // Check if next_action exists with redirect URL
-                        if (result.data.next_action && result.data.next_action.redirect && result.data.next_action.redirect.url) {
-                            const redirectUrl = result.data.next_action.redirect.url;
-                            const redirectMethod = result.data.next_action.redirect.method || 'GET';
-                            
-                            console.log('Redirect method:', redirectMethod);
-                            console.log('Redirect URL:', redirectUrl);
-                            
-                            if (redirectMethod.toUpperCase() === 'GET') {
-                                // Direct redirect for GET method
-                                window.location.href = redirectUrl;
-                            } else if (redirectMethod.toUpperCase() === 'POST') {
-                                // Form submission for POST method
-                                const form = document.createElement('form');
-                                form.method = 'POST';
-                                form.action = redirectUrl;
-                                
-                                // Add form data if provided
-                                if (result.data.next_action.redirect.data) {
-                                    for (const [key, value] of Object.entries(result.data.next_action.redirect.data)) {
-                                        const input = document.createElement('input');
-                                        input.type = 'hidden';
-                                        input.name = key;
-                                        input.value = typeof value === 'string' ? value : JSON.stringify(value);
-                                        form.appendChild(input);
-                                    }
-                                }
-                                
-                                document.body.appendChild(form);
-                                form.submit();
-                            } else {
-                                console.error('Unsupported redirect method:', redirectMethod);
-                                alert('Unsupported redirect method. Please contact support.');
-                                submitButton.disabled = false;
-                                submitButton.innerHTML = `${translations[currentLang].confirmPay} $${totals.totalAmount}`;
-                            }
-                        } else if (result.data.client_secret) {
-                            // Store payment intent for later use
-                            localStorage.setItem('currentPaymentIntent', JSON.stringify(result.data));
-                            alert('Payment intent created. Please complete payment.');
-                            submitButton.disabled = false;
-                            submitButton.innerHTML = `${translations[currentLang].confirmPay} $${totals.totalAmount}`;
-                        } else {
-                            console.error('No redirect URL found in response');
-                            alert('Payment URL not found. Please contact support.');
-                            submitButton.disabled = false;
-                            submitButton.innerHTML = `${translations[currentLang].confirmPay} $${totals.totalAmount}`;
-                        }
-                        return;
-                    }
-                    
-                    localStorage.setItem('lastOrder', JSON.stringify(orderData));
-                    
-                    // Clear cart
-                    localStorage.removeItem('fashionCart');
-
-                    // Redirect to success page
-                    window.location.href = 'order_success.html';
-                } else {
-                    console.error('Payment failed:', result.data.error.message);
-                    // Show error message
-                    const errorMsg = result.error?.message || result.data.error.message || translations[currentLang].paymentError || 'Payment failed. Please try again.';
-                    alert(errorMsg);
-                    submitButton.disabled = false;
-                    submitButton.innerHTML = `${translations[currentLang].confirmPay} $${totals.total}`;
-                }
+                // Process payment result
+                paymentHandler.processPaymentResult(result, orderData);
             })
             .catch(error => {
-                console.error('Fetch error:', error);
-                alert(`Error: ${error.message}\n\nPlease check the console for details.`);
-                submitButton.disabled = false;
-                submitButton.innerHTML = `${translations[currentLang].confirmPay} $${totals.total}`;
+                paymentHandler.handleFetchError(error);
             });
         }
 
@@ -1161,5 +1116,6 @@
         updateLanguage();
         renderCheckout();
     </script>
+    <script src="/assets/js/payment-response-handler.js"></script>
 </body>
 </html>

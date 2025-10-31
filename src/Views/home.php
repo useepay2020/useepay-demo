@@ -466,7 +466,7 @@
                                 <span style="font-size: 0.95rem;" data-i18n="payco">Payco</span>
                             </label>
                             <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
-                                <input type="checkbox" name="paymentMethod" value="toss" style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
+                                <input type="checkbox" name="paymentMethod" value="toss_pay" style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
                                 <svg style="margin-right: 0.5rem; width: 24px; height: 24px;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                     <rect width="24" height="24" fill="#0066FF" rx="4"/>
                                     <path d="M12 6L8 14h3v4h2v-4h3L12 6z" fill="white"/>
