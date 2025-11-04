@@ -106,34 +106,61 @@ function initializeUseepayElements(clientSecret, paymentIntentId) {
 
 async function confirmPaymentIntent() {
     console.log('Confirming payment with UseePay SDK...');
-    const { paymentIntent, error } = await useepayInstance.confirmPayment({
-        elements: useepayElements
-    });
+    
+    try {
+        const { paymentIntent, error } = await useepayInstance.confirmPayment({
+            elements: useepayElements
+        });
 
-    if (error) {
-        console.error('Payment confirmation error:', error);
-        const messageElement = document.getElementById('payment-message');
-        if (messageElement) {
-            messageElement.textContent = error.message;
-            messageElement.style.display = 'block';
-        }
-        alert(translations[currentLang].paymentError + ': ' + error.message);
-    } else if (paymentIntent) {
-        console.log('✓ Payment confirmed:', paymentIntent);
-        // Update cached payment intent with final status
-        sessionStorage.setItem('currentPaymentIntent', JSON.stringify(paymentIntent));
+        if (error) {
+            console.error('Payment confirmation error:', error);
+            const messageElement = document.getElementById('payment-message');
+            if (messageElement) {
+                messageElement.textContent = error.message;
+                messageElement.style.display = 'block';
+            }
+            return {
+                success: false,
+                error: error.message || 'Payment confirmation failed'
+            };
+        } else if (paymentIntent) {
+            console.log('✓ Payment confirmed:', paymentIntent);
 
-        // Check payment status
-        if (paymentIntent.status === 'succeeded') {
-            console.log('✓ Payment succeeded');
-            alert('✓ Payment succeeded');
-        } else if (paymentIntent.status === 'requires_action') {
-            console.log('Payment requires additional action');
-            alert('Payment requires additional action. Please complete the verification.');
+            // Check payment status
+            if (paymentIntent.status === 'succeeded') {
+                console.log('✓ Payment succeeded');
+                return {
+                    success: true,
+                    paymentIntent: paymentIntent,
+                    status: 'succeeded'
+                };
+            } else if (paymentIntent.status === 'requires_action') {
+                console.log('Payment requires additional action');
+                return {
+                    success: false,
+                    error: 'Payment requires additional action. Please complete the verification.',
+                    status: 'requires_action'
+                };
+            } else {
+                console.log('Payment status:', paymentIntent.status);
+                return {
+                    success: false,
+                    error: 'Payment status: ' + paymentIntent.status,
+                    status: paymentIntent.status
+                };
+            }
         } else {
-            console.log('Payment status:', paymentIntent.status);
-            alert('Payment status: ' + paymentIntent.status);
+            return {
+                success: false,
+                error: 'No payment intent returned'
+            };
         }
+    } catch (error) {
+        console.error('Exception during payment confirmation:', error);
+        return {
+            success: false,
+            error: error.message || 'Payment confirmation failed'
+        };
     }
 }
 /**

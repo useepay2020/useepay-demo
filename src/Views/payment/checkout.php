@@ -1082,7 +1082,7 @@
                 };
 
                 // Process payment result
-                paymentHandler.processPaymentResult(result, orderData);
+                paymentHandler.processPaymentResultForRedirect(result, orderData);
             })
             .catch(error => {
                 paymentHandler.handleFetchError(error);

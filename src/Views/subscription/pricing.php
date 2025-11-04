@@ -1246,6 +1246,10 @@
                 processingMessage: '正在创建您的订阅，请稍候...',
                 processingSuccess: '订阅创建成功！',
                 processingError: '订阅创建失败，请重试',
+                paymentProcessing: '支付处理中...',
+                paymentProcessingMessage: '正在处理您的支付，请稍候...',
+                paymentSuccess: '支付成功！',
+                paymentError: '支付失败',
                 selectPaymentMethod: '选择支付方式',
                 cancel: '取消',
                 confirm: '确认'
@@ -1327,6 +1331,10 @@
                 processingMessage: 'Creating your subscription, please wait...',
                 processingSuccess: 'Subscription created successfully!',
                 processingError: 'Failed to create subscription, please try again',
+                paymentProcessing: 'Processing Payment...',
+                paymentProcessingMessage: 'Processing your payment, please wait...',
+                paymentSuccess: 'Payment Successful!',
+                paymentError: 'Payment Failed',
                 selectPaymentMethod: 'Select Payment Method',
                 cancel: 'Cancel',
                 confirm: 'Confirm'
@@ -1641,8 +1649,59 @@
             setTimeout(() => { window.location.reload(); }, 500); // 延迟500毫秒后刷新
         }
 
-        function confirmPaymentMethod() {
-            confirmPaymentIntent();
+        async function confirmPaymentMethod() {
+            // Close payment methods modal
+            const paymentMethodsModal = document.getElementById('paymentMethodsModal');
+            paymentMethodsModal.classList.remove('show');
+            
+            // Show processing modal
+            const processingModal = document.getElementById('processingModal');
+            const processingTitle = document.getElementById('processingTitle');
+            const processingMessage = document.getElementById('processingMessage');
+            
+            processingTitle.textContent = translations[currentLang].paymentProcessing;
+            processingMessage.textContent = translations[currentLang].paymentProcessingMessage;
+            processingModal.classList.add('show');
+            
+            try {
+                // Call the payment confirmation
+                const result = await confirmPaymentIntent();
+                
+                if (result.success) {
+                    // Payment succeeded
+                    updateProcessingStatus('success', translations[currentLang].paymentSuccess);
+                    
+                    // Close modal after 2 seconds and redirect or reload
+                    setTimeout(() => {
+                        closeProcessingModal();
+                        // Optionally redirect to success page
+                        //window.location.href = '/subscription/confirm?subscription_id=' + result.subscriptionId;
+                        window.location.href = '/payment/callback?id=' + result.paymentIntent.id +'&merchant_order_id='
+                            +result.paymentIntent.merchant_order_id+'&status=succeeded';
+                    }, 500);
+                } else {
+                    // Payment failed
+                    const errorMsg = result.error || translations[currentLang].paymentError;
+                    updateProcessingStatus('error', errorMsg);
+                    
+                    // Close modal after 3 seconds
+                    setTimeout(() => {
+                        closeProcessingModal();
+                        // Reopen payment methods modal to allow retry
+                        paymentMethodsModal.classList.add('show');
+                    }, 3000);
+                }
+            } catch (error) {
+                console.error('Payment confirmation error:', error);
+                updateProcessingStatus('error', translations[currentLang].paymentError + ': ' + error.message);
+                
+                // Close modal after 3 seconds
+                setTimeout(() => {
+                    closeProcessingModal();
+                    // Reopen payment methods modal to allow retry
+                    paymentMethodsModal.classList.add('show');
+                }, 3000);
+            }
         }
 
         function toggleFAQ(element) {
