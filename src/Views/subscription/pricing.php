@@ -11,6 +11,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>订阅计划 - UseePay Demo</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- UseePay SDK -->
+    <script src="https://checkout-sdk.useepay.com/1.0.1/useepay.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -667,6 +669,208 @@
             font-size: 24px;
             margin-right: 8px;
         }
+
+        /* Payment Methods Modal Styles */
+        .payment-methods-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 9998;
+            justify-content: center;
+            align-items: center;
+            overflow-y: auto;
+        }
+
+        .payment-methods-modal.show {
+            display: flex;
+        }
+
+        .payment-methods-modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            max-width: 500px;
+            width: 90%;
+            animation: slideIn 0.3s ease-out;
+            margin: auto;
+        }
+
+        .payment-methods-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e8eef5;
+        }
+
+        .payment-methods-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #2d3436;
+        }
+
+        .payment-methods-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #636e72;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .payment-methods-close:hover {
+            color: #2d3436;
+            transform: scale(1.1);
+        }
+
+        .payment-methods-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .payment-method-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border: 2px solid #e8eef5;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .payment-method-item:hover {
+            border-color: #1e90ff;
+            background: #f0f8ff;
+        }
+
+        .payment-method-item.selected {
+            border-color: #1e90ff;
+            background: #f0f8ff;
+        }
+
+        .payment-method-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .payment-method-icon.card {
+            background: #e3f2fd;
+            color: #1e90ff;
+        }
+
+        .payment-method-icon.alipay {
+            background: #fff3e0;
+            color: #ff9800;
+        }
+
+        .payment-method-icon.wechat {
+            background: #e8f5e9;
+            color: #4caf50;
+        }
+
+        .payment-method-info {
+            flex: 1;
+        }
+
+        .payment-method-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: #2d3436;
+            margin-bottom: 4px;
+        }
+
+        .payment-method-detail {
+            font-size: 12px;
+            color: #95a5a6;
+        }
+
+        .payment-method-check {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid #e8eef5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.3s ease;
+        }
+
+        .payment-method-item.selected .payment-method-check {
+            background: #1e90ff;
+            border-color: #1e90ff;
+            color: white;
+        }
+
+        .payment-methods-footer {
+            display: flex;
+            gap: 10px;
+            padding-top: 15px;
+            border-top: 1px solid #e8eef5;
+        }
+
+        .payment-methods-btn {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .payment-methods-btn.cancel {
+            background: #f0f0f0;
+            color: #636e72;
+        }
+
+        .payment-methods-btn.cancel:hover {
+            background: #e0e0e0;
+        }
+
+        .payment-methods-btn.confirm {
+            background: linear-gradient(135deg, #1e90ff 0%, #00d4ff 100%);
+            color: white;
+        }
+
+        .payment-methods-btn.confirm:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(30, 144, 255, 0.3);
+        }
+
+        .payment-methods-empty {
+            text-align: center;
+            padding: 40px 20px;
+            color: #95a5a6;
+        }
+
+        .payment-methods-empty-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+            opacity: 0.5;
+        }
     </style>
 </head>
 <body>
@@ -948,6 +1152,21 @@
         </div>
     </div>
 
+    <!-- Payment Methods Modal -->
+    <div id="paymentMethodsModal" class="payment-methods-modal">
+        <div class="payment-methods-modal-content">
+            <div class="payment-methods-header">
+                <h2 class="payment-methods-title" data-i18n="selectPaymentMethod">选择支付方式</h2>
+                <button class="payment-methods-close" onclick="closePaymentMethodsModal()">×</button>
+            </div>
+            <div id="payment-element" style="margin: 20px 0;"></div>
+            <div class="payment-methods-footer">
+                <button class="payment-methods-btn cancel" onclick="closePaymentMethodsModal()" data-i18n="cancel">取消</button>
+                <button class="payment-methods-btn confirm" onclick="confirmPaymentMethod()" data-i18n="confirm">确认</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // ===== 国际化翻译 =====
         const translations = {
@@ -1026,7 +1245,10 @@
                 processing: '处理中...',
                 processingMessage: '正在创建您的订阅，请稍候...',
                 processingSuccess: '订阅创建成功！',
-                processingError: '订阅创建失败，请重试'
+                processingError: '订阅创建失败，请重试',
+                selectPaymentMethod: '选择支付方式',
+                cancel: '取消',
+                confirm: '确认'
             },
             en: {
                 backHome: 'Back to Home',
@@ -1104,7 +1326,10 @@
                 processing: 'Processing...',
                 processingMessage: 'Creating your subscription, please wait...',
                 processingSuccess: 'Subscription created successfully!',
-                processingError: 'Failed to create subscription, please try again'
+                processingError: 'Failed to create subscription, please try again',
+                selectPaymentMethod: 'Select Payment Method',
+                cancel: 'Cancel',
+                confirm: 'Confirm'
             }
         };
 
@@ -1313,7 +1538,23 @@
                     // Close modal after 1.5 seconds and process payment result
                     setTimeout(() => {
                         closeProcessingModal();
-                        paymentHandler.processPaymentResult(result, orderData);
+                        
+                        // Get integration mode from cache
+                        const integrationMode = localStorage.getItem('paymentIntegrationMode') || 'redirect';
+                        console.log('Integration mode:', integrationMode);
+                        
+                        // Execute different handler based on integration mode
+                        if (integrationMode === 'redirect') {
+                            // 跳转收银台模式
+                            paymentHandler.processPaymentResultForRedirect(result, orderData);
+                        } else if (integrationMode === 'embedded') {
+                            // 内嵌收银台模式
+                            paymentHandler.processPaymentResultForEmbedded(result, orderData);
+                        } else {
+                            // Default to redirect mode
+                            console.warn('Unknown integration mode, using redirect mode');
+                            paymentHandler.processPaymentResultForRedirect(result, orderData);
+                        }
                     }, 1500);
                 })
                 .catch(error => {
@@ -1384,6 +1625,24 @@
             } else if (type === 'error') {
                 status.innerHTML = `<span class="status-icon"><i class="fas fa-exclamation-circle"></i></span>${message}`;
             }
+        }
+
+        /**
+         * Payment Methods Modal Functions
+         */
+        function showPaymentMethodsModal(paymentMethods) {
+            const modal = document.getElementById('paymentMethodsModal');
+            modal.classList.add('show');
+        }
+
+        function closePaymentMethodsModal() {
+            const modal = document.getElementById('paymentMethodsModal');
+            modal.classList.remove('show');
+            setTimeout(() => { window.location.reload(); }, 500); // 延迟500毫秒后刷新
+        }
+
+        function confirmPaymentMethod() {
+            confirmPaymentIntent();
         }
 
         function toggleFAQ(element) {
@@ -1573,6 +1832,18 @@
             }
         });
     </script>
+    <!-- UseePay Public Key Configuration -->
+    <script>
+        <?php
+            global $config;
+            $publicKey = $config['usee_pay']['api_public_key'];
+        ?>
+        window.USEEPAY_PUBLIC_KEY = '<?php echo $publicKey; ?>';
+        console.log('UseePay Public Key configured:', window.USEEPAY_PUBLIC_KEY ? '✓' : '✗');
+    </script>
+    <!-- UseePay Elements Initializer (must be loaded first) -->
+    <script src="/assets/js/useepay-elements-initializer.js"></script>
+    <!-- Payment Response Handler -->
     <script src="/assets/js/payment-response-handler.js"></script>
 
     <!-- Auth Modal -->

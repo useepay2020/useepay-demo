@@ -72,7 +72,7 @@ class PaymentResponseHandler {
      * @param {Object} orderData 订单数据
      * @returns {boolean} 是否需要继续处理
      */
-    handlePaymentSuccess(result, orderData) {
+    handlePaymentSuccessForRedirect(result, orderData) {
         this.logger.log('Payment success:', result);
 
         // 检查支付状态
@@ -258,15 +258,83 @@ class PaymentResponseHandler {
     }
 
     /**
-     * 处理完整的支付流程
+     * 处理完整的跳转收银台流程支付流程
      * @param {Object} result 支付结果
      * @param {Object} orderData 订单数据
      */
-    processPaymentResult(result, orderData) {
+    processPaymentResultForRedirect(result, orderData) {
         this.logger.log('Processing payment result:', result);
 
         if (result.success) {
-            this.handlePaymentSuccess(result, orderData);
+            this.handlePaymentSuccessForRedirect(result, orderData);
+        } else {
+            this.handlePaymentError(result);
+        }
+    }
+
+    /**
+     * 处理内嵌收银台模式的支付流程
+     * @param {Object} result 支付结果
+     * @param {Object} orderData 订单数据
+     */
+    processPaymentResultForEmbedded(result, orderData) {
+        this.logger.log('Processing embedded payment result:', result);
+
+        if (result.success) {
+            // Get payment methods from result or orderData
+            const paymentMethods = result.data?.paymentMethods || 
+                                  result.paymentMethods || 
+                                  orderData?.paymentMethods || [];
+            
+            this.logger.log('Payment methods for embedded checkout:', paymentMethods);
+            
+            // Show payment methods modal
+            if (typeof showPaymentMethodsModal === 'function') {
+                showPaymentMethodsModal(paymentMethods);
+                
+                // Initialize UseePay Elements for payment rendering
+                const clientSecret = result.data?.client_secret || result.client_secret;
+                const paymentIntentId = result.data?.id || result.id;
+                
+                if (clientSecret && paymentIntentId) {
+                    this.logger.log('Initializing UseePay Elements with clientSecret and paymentIntentId');
+                    this.logger.log('Debug info:', {
+                        clientSecret: clientSecret ? '✓ present' : '✗ missing',
+                        paymentIntentId: paymentIntentId ? '✓ present' : '✗ missing',
+                        useepaySDK: window.UseePay ? '✓ loaded' : '✗ not loaded',
+                        publicKey: window.USEEPAY_PUBLIC_KEY ? '✓ configured' : '✗ not configured'
+                    });
+                    
+                    // Call the public initializeUseepayElements function
+                    if (typeof initializeUseepayElements === 'function') {
+                        try {
+                            const success = initializeUseepayElements(clientSecret, paymentIntentId);
+                            if (success) {
+                                this.logger.log('✓ UseePay Elements initialized successfully');
+                            } else {
+                                this.logger.error('UseePay Elements initialization failed');
+                                this.showError('Payment element initialization failed. Please refresh the page.');
+                            }
+                        } catch (error) {
+                            this.logger.error('Error calling initializeUseepayElements:', error);
+                            this.showError('Payment element initialization failed: ' + error.message);
+                        }
+                    } else {
+                        this.logger.error('initializeUseepayElements function not found');
+                        this.logger.error('Make sure useepay-elements-initializer.js is loaded');
+                        this.showError('Payment element initialization failed. Please refresh the page.');
+                    }
+
+                } else {
+                    this.logger.warn('Missing clientSecret or paymentIntentId for UseePay initialization');
+                    this.logger.log('Available data:', { clientSecret, paymentIntentId, result });
+                    this.showError('Payment configuration incomplete. Please try again.');
+                }
+            } else {
+                this.logger.warn('showPaymentMethodsModal function not found');
+                // Fallback: show error message
+                this.showError(this.getTranslation('paymentMethodsNotAvailable') || 'Payment methods not available');
+            }
         } else {
             this.handlePaymentError(result);
         }

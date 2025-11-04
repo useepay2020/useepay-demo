@@ -405,7 +405,11 @@
             $publicKey = $config['usee_pay']['api_public_key'];
         ?>
         window.USEEPAY_PUBLIC_KEY = '<?php echo $publicKey; ?>';
+        console.log('UseePay Public Key configured:', window.USEEPAY_PUBLIC_KEY ? '✓' : '✗');
     </script>
+    <!-- UseePay Elements Initializer (must be loaded first) -->
+    <script src="/assets/js/useepay-elements-initializer.js"></script>
+    <!-- Embedded Checkout -->
     <script src="/assets/js/embedded_checkout.js"></script>
 </body>
 </html>

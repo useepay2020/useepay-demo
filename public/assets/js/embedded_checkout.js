@@ -171,70 +171,6 @@ function getPaymentMethods() {
     return [];
 }
 
-// UseePay SDK instance
-let useepayInstance = null;
-let useepayElements = null;
-let useepayPaymentElement = null;
-
-// Payment method mapping
-const paymentMethodsMap = {
-    'card': {
-        icon: '<i class="fas fa-credit-card" style="color: #1a73e8;"></i>',
-        name_zh: '信用卡/借记卡',
-        name_en: 'Credit/Debit Card',
-        desc_zh: '支持 Visa, MasterCard, American Express',
-        desc_en: 'Supports Visa, MasterCard, American Express'
-    },
-    'apple_pay': {
-        icon: '<i class="fab fa-apple" style="color: #000000;"></i>',
-        name_zh: 'Apple Pay',
-        name_en: 'Apple Pay',
-        desc_zh: '使用 Apple Pay 快速支付',
-        desc_en: 'Pay quickly with Apple Pay'
-    },
-    'google_pay': {
-        icon: '<i class="fab fa-google" style="color: #4285F4;"></i>',
-        name_zh: 'Google Pay',
-        name_en: 'Google Pay',
-        desc_zh: '使用 Google Pay 快速支付',
-        desc_en: 'Pay quickly with Google Pay'
-    },
-    'wechat': {
-        icon: '<i class="fab fa-weixin" style="color: #09B83E;"></i>',
-        name_zh: '微信支付',
-        name_en: 'WeChat Pay',
-        desc_zh: '使用微信支付',
-        desc_en: 'Pay with WeChat'
-    },
-    'alipay': {
-        icon: '<i class="fab fa-alipay" style="color: #1677FF;"></i>',
-        name_zh: '支付宝',
-        name_en: 'Alipay',
-        desc_zh: '使用支付宝支付',
-        desc_en: 'Pay with Alipay'
-    },
-    'afterpay': {
-        icon: '<i class="fas fa-calendar-check" style="color: #B2FCE4;"></i>',
-        name_zh: 'Afterpay',
-        name_en: 'Afterpay',
-        desc_zh: '分期支付',
-        desc_en: 'Pay in installments'
-    },
-    'klarna': {
-        icon: '<i class="fas fa-shopping-bag" style="color: #FFB3C7;"></i>',
-        name_zh: 'Klarna',
-        name_en: 'Klarna',
-        desc_zh: '分期支付',
-        desc_en: 'Pay in installments'
-    },
-    'oxxo': {
-        icon: '<i class="fas fa-store" style="color: #EC0000;"></i>',
-        name_zh: 'OXXO',
-        name_en: 'OXXO',
-        desc_zh: '便利店支付',
-        desc_en: 'Pay at convenience store'
-    }
-};
 
 // Calculate totals
 // Calculate totals
@@ -253,61 +189,6 @@ function calculateTotals() {
     };
 }
 
-// Generate payment methods HTML
-// function generatePaymentMethods() {
-//     const cachedMethods = getPaymentMethods();
-//     console.log('Cached payment methods:', cachedMethods);
-//
-//     let methodsToDisplay = [];
-//     if (cachedMethods && cachedMethods.length > 0) {
-//         // Filter out 'card' method
-//         methodsToDisplay = [...cachedMethods];
-//         console.log('Using cached methods (excluding card):', methodsToDisplay);
-//     } else {
-//         // Default methods without 'card'
-//         methodsToDisplay = ['card'];
-//         console.log('No cached methods, using default methods:', methodsToDisplay);
-//     }
-//
-//     return methodsToDisplay.map((method, index) => {
-//         const methodInfo = paymentMethodsMap[method];
-//         if (!methodInfo) {
-//             console.warn('Unknown payment method:', method);
-//             return '';
-//         }
-//
-//         const methodName = currentLang === 'zh' ? methodInfo.name_zh : methodInfo.name_en;
-//         const methodDesc = currentLang === 'zh' ? methodInfo.desc_zh : methodInfo.desc_en;
-//         const isFirst = index === 0;
-//
-//         let html = `
-//             <div class="payment-option">
-//                 <input type="radio" id="method_${method}" name="paymentMethod" value="${method}" ${isFirst ? 'checked' : ''} onchange="handlePaymentMethodChange('${method}')">
-//                 <label for="method_${method}">
-//                     <div class="payment-icon" style="font-size: 1.2rem;">${methodInfo.icon}</div>
-//                     <div class="payment-info">
-//                         <div class="payment-name">${methodName}</div>
-//                         <div class="payment-desc">${methodDesc}</div>
-//                     </div>
-//                 </label>
-//             </div>
-//         `;
-//
-//         // 如果是信用卡，添加 UseePay Payment Element 容器
-//         if (method === 'card') {
-//             html += `
-//             <div class="card-info-section ${isFirst ? 'active' : ''}" id="cardInfoSection_${method}">
-//                 <div id="payment-element" style="margin: 20px 0;"></div>
-//                 <div id="payment-message" style="color: #d32f2f; margin-top: 10px; display: none;"></div>
-//             </div>
-//             `;
-//         }
-//
-//
-//         return html;
-//     }).join('');
-// }
-
 // Handle payment method change
 function handlePaymentMethodChange(method) {
     // 隐藏所有卡信息部分
@@ -325,58 +206,8 @@ function handlePaymentMethodChange(method) {
     }
 }
 
-/**
- * Initialize UseePay Elements for card payment
- * @param {string} clientSecret - Client secret from payment intent
- * @param {string} paymentIntentId - Payment intent ID
- */
-function initializeUseepayElements(clientSecret, paymentIntentId) {
-    console.log('Initializing UseePay Elements...');
-    
-    // Check if UseePay SDK is loaded
-    if (!window.UseePay) {
-        console.error('UseePay SDK not loaded');
-        alert('Payment SDK failed to load. Please refresh the page.');
-        return;
-    }
-
-    try {
-        // Get public key from window config (set in PHP)
-        const publicKey = window.USEEPAY_PUBLIC_KEY;
-        if (!publicKey) {
-            console.error('UseePay public key not configured');
-            alert('Payment configuration error. Please contact support.');
-            return;
-        }
-        
-        // Initialize UseePay instance
-        useepayInstance = window.UseePay(publicKey);
-        console.log('✓ UseePay instance initialized');
-        
-        // Initialize Elements with clientSecret and paymentIntentId
-        useepayElements = useepayInstance.elements({
-            clientSecret: clientSecret,
-            paymentIntentId: paymentIntentId
-        });
-        console.log('✓ UseePay Elements initialized');
-        
-        // Create payment element
-        useepayPaymentElement = useepayElements.create('payment');
-        console.log('✓ Payment element created');
-        
-        // Mount payment element to DOM
-        const paymentElementContainer = document.getElementById('payment-element');
-        if (paymentElementContainer) {
-            useepayPaymentElement.mount('payment-element');
-            console.log('✓ Payment element mounted');
-        } else {
-            console.error('Payment element container not found');
-        }
-    } catch (error) {
-        console.error('Error initializing UseePay Elements:', error);
-        alert('Failed to initialize payment form: ' + error.message);
-    }
-}
+// Note: initializeUseepayElements is now provided by useepay-elements-initializer.js
+// This file uses the global function from that module
 
 
 // Render checkout page
@@ -628,92 +459,92 @@ function createPaymentIntent() {
  * Confirm payment intent - Step 2 of embedded checkout
  * @param {object} paymentIntent - Payment intent data from backend
  */
-async function confirmPaymentIntent(paymentIntent) {
-    console.log('Confirming payment intent:', paymentIntent.id);
-    
-    if (!paymentIntent || !paymentIntent.id) {
-        console.error('Invalid payment intent');
-        alert(translations[currentLang].paymentError);
-        return;
-    }
-
-    const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value;
-    
-    try {
-        // For card payments, use UseePay SDK to confirm
-        if (paymentMethod === 'card') {
-            if (!useepayInstance || !useepayElements) {
-                console.error('UseePay Elements not initialized');
-                alert('Payment form not ready. Please refresh the page.');
-                return;
-            }
-
-            console.log('Confirming payment with UseePay SDK...');
-            const { paymentIntent: confirmedIntent, error } = await useepayInstance.confirmPayment({
-                elements: useepayElements,
-                redirect: 'if_required'
-            });
-
-            if (error) {
-                console.error('Payment confirmation error:', error);
-                const messageElement = document.getElementById('payment-message');
-                if (messageElement) {
-                    messageElement.textContent = error.message;
-                    messageElement.style.display = 'block';
-                }
-                alert(translations[currentLang].paymentError + ': ' + error.message);
-            } else if (confirmedIntent) {
-                console.log('✓ Payment confirmed:', confirmedIntent);
-                
-                // Update cached payment intent with final status
-                sessionStorage.setItem('currentPaymentIntent', JSON.stringify(confirmedIntent));
-                
-                // Check payment status
-                if (confirmedIntent.status === 'succeeded') {
-                    console.log('✓ Payment succeeded');
-                    window.location.href = '/payment/result?status=success&payment_id=' + paymentIntent.id;
-                } else if (confirmedIntent.status === 'requires_action') {
-                    console.log('Payment requires additional action');
-                    alert('Payment requires additional action. Please complete the verification.');
-                } else {
-                    console.log('Payment status:', confirmedIntent.status);
-                    alert('Payment status: ' + confirmedIntent.status);
-                }
-            }
-        } else {
-            // For other payment methods, use backend confirmation
-            const confirmData = {
-                payment_method: paymentMethod,
-                return_url: window.location.origin + '/payment/result'
-            };
-
-            const response = await fetch(`/api/payment/${paymentIntent.id}/confirm`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(confirmData)
-            });
-
-            const result = await response.json();
-            console.log('Payment confirmation result:', result);
-            
-            if (result.status === 'succeeded' || result.payment?.status === 'succeeded') {
-                console.log('✓ Payment succeeded');
-                sessionStorage.setItem('currentPaymentIntent', JSON.stringify(result.payment || result));
-                window.location.href = '/payment/result?status=success&payment_id=' + paymentIntent.id;
-            } else if (result.status === 'requires_action' || result.payment?.status === 'requires_action') {
-                console.log('Payment requires additional action');
-                alert('Payment requires additional action. Please complete the verification.');
-            } else {
-                throw new Error(result.message || 'Payment confirmation failed');
-            }
-        }
-    } catch (error) {
-        console.error('Payment confirmation error:', error);
-        alert(translations[currentLang].paymentError + ': ' + error.message);
-    }
-}
+// async function confirmPaymentIntent(paymentIntent) {
+//     console.log('Confirming payment intent:', paymentIntent.id);
+//
+//     if (!paymentIntent || !paymentIntent.id) {
+//         console.error('Invalid payment intent');
+//         alert(translations[currentLang].paymentError);
+//         return;
+//     }
+//
+//     const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value;
+//
+//     try {
+//         // For card payments, use UseePay SDK to confirm
+//         if (paymentMethod === 'card') {
+//             if (!useepayInstance || !useepayElements) {
+//                 console.error('UseePay Elements not initialized');
+//                 alert('Payment form not ready. Please refresh the page.');
+//                 return;
+//             }
+//
+//             console.log('Confirming payment with UseePay SDK...');
+//             const { paymentIntent: confirmedIntent, error } = await useepayInstance.confirmPayment({
+//                 elements: useepayElements,
+//                 redirect: 'if_required'
+//             });
+//
+//             if (error) {
+//                 console.error('Payment confirmation error:', error);
+//                 const messageElement = document.getElementById('payment-message');
+//                 if (messageElement) {
+//                     messageElement.textContent = error.message;
+//                     messageElement.style.display = 'block';
+//                 }
+//                 alert(translations[currentLang].paymentError + ': ' + error.message);
+//             } else if (confirmedIntent) {
+//                 console.log('✓ Payment confirmed:', confirmedIntent);
+//
+//                 // Update cached payment intent with final status
+//                 sessionStorage.setItem('currentPaymentIntent', JSON.stringify(confirmedIntent));
+//
+//                 // Check payment status
+//                 if (confirmedIntent.status === 'succeeded') {
+//                     console.log('✓ Payment succeeded');
+//                     window.location.href = '/payment/result?status=success&payment_id=' + paymentIntent.id;
+//                 } else if (confirmedIntent.status === 'requires_action') {
+//                     console.log('Payment requires additional action');
+//                     alert('Payment requires additional action. Please complete the verification.');
+//                 } else {
+//                     console.log('Payment status:', confirmedIntent.status);
+//                     alert('Payment status: ' + confirmedIntent.status);
+//                 }
+//             }
+//         } else {
+//             // For other payment methods, use backend confirmation
+//             const confirmData = {
+//                 payment_method: paymentMethod,
+//                 return_url: window.location.origin + '/payment/result'
+//             };
+//
+//             const response = await fetch(`/api/payment/${paymentIntent.id}/confirm`, {
+//                 method: 'POST',
+//                 headers: {
+//                     'Content-Type': 'application/json',
+//                 },
+//                 body: JSON.stringify(confirmData)
+//             });
+//
+//             const result = await response.json();
+//             console.log('Payment confirmation result:', result);
+//
+//             if (result.status === 'succeeded' || result.payment?.status === 'succeeded') {
+//                 console.log('✓ Payment succeeded');
+//                 sessionStorage.setItem('currentPaymentIntent', JSON.stringify(result.payment || result));
+//                 window.location.href = '/payment/result?status=success&payment_id=' + paymentIntent.id;
+//             } else if (result.status === 'requires_action' || result.payment?.status === 'requires_action') {
+//                 console.log('Payment requires additional action');
+//                 alert('Payment requires additional action. Please complete the verification.');
+//             } else {
+//                 throw new Error(result.message || 'Payment confirmation failed');
+//             }
+//         }
+//     } catch (error) {
+//         console.error('Payment confirmation error:', error);
+//         alert(translations[currentLang].paymentError + ': ' + error.message);
+//     }
+// }
 
 // ============================================
 // Payment Intent Cache Management Functions
