@@ -34,10 +34,10 @@ class BaseController
         ];
         
         // 记录响应日志
-        $this->log('Sending JSON response', 'info', [
-            'status_code' => $statusCode,
-            'response' => $response
-        ], 'response');
+//        $this->log('Sending JSON response', 'info', [
+//            'status_code' => $statusCode,
+//            'response' => $response
+//        ], 'response');
         
         header('Content-Type: application/json; charset=utf-8');
         http_response_code($statusCode);

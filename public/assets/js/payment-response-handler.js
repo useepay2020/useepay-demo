@@ -78,19 +78,23 @@ class PaymentResponseHandler {
         // 检查支付状态
         const paymentStatus = result.data.status;
         this.logger.log('Payment status:', paymentStatus);
-
-        if (paymentStatus === 'requires_payment_method' || paymentStatus === 'requires_action') {
-            return this.handlePaymentRedirect(result);
-        }
-
         // 保存订单数据
         this.saveOrderData(orderData);
 
+        if (paymentStatus === 'requires_payment_method' || paymentStatus === 'requires_customer_action' || paymentStatus === 'requires_payment_method') {
+            return this.handlePaymentRedirect(result);
+        }else if (paymentStatus === 'succeeded' || paymentStatus === 'failed' ) {
+            window.location.href = result.data.return_url+'?id=' + result.data.paymentIntent.id +'&merchant_order_id='
+                +result.data.paymentIntent.merchant_order_id+'&status='+paymentStatus;
+        }
+
+
+
         // 清除购物车
-        localStorage.removeItem('fashionCart');
+        //localStorage.removeItem('fashionCart');
 
         // 重定向到成功页面
-        this.redirect('order_success.html');
+        //this.redirect('order_success.html');
         return true;
     }
 

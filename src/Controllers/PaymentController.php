@@ -129,11 +129,11 @@ class PaymentController extends BaseController
                     'products' => $orderItems,
                     'shipping' => array(
                         'address' => array(
-                            'line1' => $data['address'],
-                            'city' => $data['city'],
-                            'state' => $data['state'],
-                            'postcode' => $data['zipCode'],
-                            'country' => $data['country']
+                            'line1' => $data['shippingAddress']['address'],
+                            'city' => $data['shippingAddress']['city'],
+                            'state' => $data['shippingAddress']['state'],
+                            'postcode' => $data['shippingAddress']['zipCode'],
+                            'country' => $data['shippingAddress']['country']
                         ),
                         'first_name' => $data['firstName'],
                         'last_name' => $data['lastName'],
@@ -142,11 +142,39 @@ class PaymentController extends BaseController
                         'phone' => $data['phone']
                     )
                 ),
+                'payment_method_data' => array(
+                    'billing' => array(
+                        'address' => array(
+                            'line1' => $data['billingAddress']['address'],
+                            'city' => $data['billingAddress']['city'],
+                            'state' => $data['billingAddress']['state'],
+                            'postcode' => $data['billingAddress']['zipCode'],
+                            'country' => $data['billingAddress']['country']
+                        ),
+                        'first_name' => $data['firstName'],
+                        'last_name' => $data['lastName'],
+                        'name' => $customerName,
+                        'email' => $data['email'],
+                        'phone' => $data['phone']
+                    )
+                ),
+
             );
 
             // Only add payment_method_types if paymentMethod is provided
             if (!empty($data['paymentMethods'])) {
                 $paymentParams['payment_method_types'] = $data['paymentMethods'];
+                
+                // Auto-confirm for Korean payment methods when only one method is selected
+                $koreanPaymentMethods = ['kakao_pay', 'naver_pay', 'payco', 'toss_pay'];
+                if (count($data['paymentMethods']) === 1) {
+                    $selectedMethod = $data['paymentMethods'][0];
+                    if (in_array($selectedMethod, $koreanPaymentMethods)) {
+                        $paymentParams['confirm'] = true;
+                        $this->log('Auto-confirm enabled for Korean payment method: ' . $selectedMethod, 'info',  $data['paymentMethods'], 'payment');
+                    }
+                    $paymentParams['payment_method_data']['type'] = $selectedMethod;
+                }
             }
 
             // Add customer info only if email or phone is not empty
@@ -157,14 +185,7 @@ class PaymentController extends BaseController
                     'last_name' => $data['lastName'],
                     'name' => $customerName,
                     'email' => $data['email'],
-                    'phone' => $data['phone'],
-                    'address' => array(
-                        'line1' => $data['address'],
-                        'city' => $data['city'],
-                        'state' => $data['state'],
-                        'postcode' => $data['zipCode'],
-                        'country' => $data['country']
-                    )
+                    'phone' => $data['phone']
                 );
             }
 

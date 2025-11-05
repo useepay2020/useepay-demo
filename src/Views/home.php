@@ -310,6 +310,132 @@
             border-top: 1px solid rgba(255, 255, 255, 0.1);
         }
 
+        /* Under Construction Modal Styles */
+        .under-construction-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .under-construction-modal.show {
+            display: flex;
+        }
+
+        .under-construction-modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            position: relative;
+            animation: slideUp 0.3s ease;
+        }
+
+        .under-construction-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: transparent;
+            border: none;
+            font-size: 28px;
+            color: #999;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .under-construction-close:hover {
+            background: #f5f5f5;
+            color: #333;
+            transform: rotate(90deg);
+        }
+
+        .under-construction-icon {
+            font-size: 80px;
+            color: var(--warning-color);
+            margin-bottom: 20px;
+            animation: bounce 2s infinite;
+        }
+
+        .under-construction-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-color);
+            margin-bottom: 15px;
+        }
+
+        .under-construction-message {
+            font-size: 16px;
+            color: var(--text-light);
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        .under-construction-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .under-construction-btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(74, 107, 223, 0.3);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0);
+            }
+            40% {
+                transform: translateY(-20px);
+            }
+            60% {
+                transform: translateY(-10px);
+            }
+        }
+
         @media (max-width: 768px) {
             .cards {
                 grid-template-columns: 1fr;
@@ -322,6 +448,18 @@
             .feature-grid {
                 grid-template-columns: 1fr;
                 padding: 0 1rem;
+            }
+
+            .under-construction-modal-content {
+                padding: 30px 20px;
+            }
+
+            .under-construction-icon {
+                font-size: 60px;
+            }
+
+            .under-construction-title {
+                font-size: 24px;
             }
         }
     </style>
@@ -623,6 +761,19 @@
         </div>
     </main>
 
+    <!-- Under Construction Modal -->
+    <div id="underConstructionModal" class="under-construction-modal">
+        <div class="under-construction-modal-content">
+            <button class="under-construction-close" onclick="closeUnderConstructionModal()">×</button>
+            <div class="under-construction-icon">
+                <i class="fas fa-hard-hat"></i>
+            </div>
+            <h2 class="under-construction-title" data-i18n="underConstructionTitle">功能建设中</h2>
+            <p class="under-construction-message" data-i18n="underConstructionMessage">该功能正在开发中，敬请期待！我们会尽快为您提供更好的体验。</p>
+            <button class="under-construction-btn" onclick="closeUnderConstructionModal()" data-i18n="underConstructionBtn">知道了</button>
+        </div>
+    </div>
+
     <footer>
         <div class="footer-content">
             <div class="footer-section">
@@ -734,7 +885,10 @@
                 kakaoPay: 'Kakao Pay',
                 naverPay: 'Naver Pay',
                 payco: 'PAYCO',
-                toss: 'Toss'
+                toss: 'Toss',
+                underConstructionTitle: '功能建设中',
+                underConstructionMessage: '该功能正在开发中，敬请期待！我们会尽快为您提供更好的体验。',
+                underConstructionBtn: '知道了'
             },
             en: {
                 title: 'UseePay Demo',
@@ -804,7 +958,10 @@
                 kakaoPay: 'Kakao Pay',
                 naverPay: 'Naver Pay',
                 payco: 'PAYCO',
-                toss: 'Toss'
+                toss: 'Toss',
+                underConstructionTitle: 'Under Construction',
+                underConstructionMessage: 'This feature is currently under development. Stay tuned! We will provide you with a better experience soon.',
+                underConstructionBtn: 'Got it'
             }
         };
 
@@ -1374,6 +1531,34 @@
                     e.preventDefault();
                     handleActionClick('installment');
                 });
+            }
+
+            // 处理快捷支付按钮点击
+            const expressCheckoutBtn = document.getElementById('expressCheckoutBtn');
+            if (expressCheckoutBtn) {
+                expressCheckoutBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    showUnderConstructionModal();
+                });
+            }
+        });
+
+        // Under Construction Modal Functions
+        function showUnderConstructionModal() {
+            const modal = document.getElementById('underConstructionModal');
+            modal.classList.add('show');
+        }
+
+        function closeUnderConstructionModal() {
+            const modal = document.getElementById('underConstructionModal');
+            modal.classList.remove('show');
+        }
+
+        // Close modal when clicking outside
+        document.addEventListener('click', function(e) {
+            const modal = document.getElementById('underConstructionModal');
+            if (e.target === modal) {
+                closeUnderConstructionModal();
             }
         });
     </script>
