@@ -611,6 +611,29 @@
                                 </svg>
                                 <span style="font-size: 0.95rem;" data-i18n="toss">Toss</span>
                             </label>
+                            <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
+                                <input type="checkbox" name="paymentMethod" value="samsung_pay" style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
+                                <svg style="margin-right: 0.5rem; width: 24px; height: 24px;" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <rect width="512" height="512" rx="80" fill="#1428A0"/>
+                                    <path d="M256 140c-50 0-90 25-90 60 0 20 15 35 40 45-30 8-50 25-50 50 0 40 45 70 100 70s100-30 100-70c0-25-20-42-50-50 25-10 40-25 40-45 0-35-40-60-90-60zm0 35c25 0 45 12 45 30s-20 30-45 30-45-12-45-30 20-30 45-30zm0 110c30 0 55 15 55 35s-25 35-55 35-55-15-55-35 25-35 55-35z" fill="white"/>
+                                </svg>
+                                <span style="font-size: 0.95rem;" data-i18n="samsungPay">Samsung Pay</span>
+                            </label>
+                            <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
+                                <input type="checkbox" name="paymentMethod" value="tmoney" style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
+                                <svg style="margin-right: 0.5rem; width: 24px; height: 24px;" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <defs>
+                                        <linearGradient id="tmoneyGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" style="stop-color:#FF6B00;stop-opacity:1" />
+                                            <stop offset="100%" style="stop-color:#FF9500;stop-opacity:1" />
+                                        </linearGradient>
+                                    </defs>
+                                    <rect width="512" height="512" rx="80" fill="url(#tmoneyGradient)"/>
+                                    <path d="M150 180h212v40H150zm106 80c-60 0-106 35-106 85 0 45 46 80 106 80s106-35 106-80c0-50-46-85-106-85zm0 125c-35 0-60-20-60-40s25-40 60-40 60 20 60 40-25 40-60 40z" fill="white"/>
+                                    <circle cx="256" cy="200" r="25" fill="white"/>
+                                </svg>
+                                <span style="font-size: 0.95rem;" data-i18n="tmoney">T-money</span>
+                            </label>
                         </div>
                     </div>
                     
@@ -673,6 +696,14 @@
                                 <input type="checkbox" name="subscriptionMethod" value="google_pay" checked style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
                                 <i class="fab fa-google" style="margin-right: 0.5rem; color: #4285F4; font-size: 1.1rem;"></i>
                                 <span style="font-size: 0.95rem;">Google Pay</span>
+                            </label>
+                            <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
+                                <input type="checkbox" name="subscriptionMethod" value="kakao_pay" style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
+                                <svg style="margin-right: 0.5rem; width: 24px; height: 24px;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="12" cy="12" r="11" fill="#FFE812"/>
+                                    <path d="M12 5C8.13 5 5 7.68 5 11c0 2.04 1.23 3.82 3.04 4.63L7.84 18l3.05-1.61c.5.08 1.02.12 1.54.12 3.87 0 7-2.68 7-6s-3.13-6-7-6z" fill="#000000"/>
+                                </svg>
+                                <span style="font-size: 0.95rem;" data-i18n="kakaoPay">Kakao Pay</span>
                             </label>
                             <div style="display: flex; align-items: center; justify-content: center; padding: 0.6rem; background: #f8f9fa; border-radius: 6px; border: 1px dashed #dee2e6;">
                                 <i class="fas fa-ellipsis-h" style="margin-right: 0.5rem; color: #6c757d;"></i>

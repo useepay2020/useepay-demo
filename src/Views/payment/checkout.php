@@ -184,10 +184,13 @@
             });
         }
 
-        // Initialize
-        loadCart();
-        updateLanguage(currentLang);
-        renderCheckout();
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize
+            loadCart();
+            updateLanguage(currentLang);
+            renderCheckout();
+
+        });
     </script>
     <script src="/assets/js/payment-response-handler.js"></script>
 </body>

@@ -177,6 +177,24 @@ class PaymentController extends BaseController
                 }
             }
 
+            // Add card object to payment_method_data if card array exists in input
+            if (!empty($data['card']) && is_array($data['card'])) {
+                $cardData = array(
+                    'number' => $data['card']['number'],
+                    'expiry_month' => $data['card']['expireMonth'],
+                    'expiry_year' => $data['card']['expireYear'],
+                    'cvc' => $data['card']['cvc'],
+                    'number_type' => 'pan',
+                );
+                $paymentParams['payment_method_data']['card'] = $cardData;
+                $this->log('Card data added to payment_method_data', 'info', $data['card'], 'payment');
+                $paymentParams['confirm'] = true;
+                /**Specifies whether the funds should be requested automatically after the payment is authorized.
+                 * true: The funds will be requested automatically after the payment is authorized.
+                 * false: The funds will not be requested automatically after the payment is authorized.**/
+                $paymentParams['auto_capture'] = true;
+            }
+
             // Add customer info only if email or phone is not empty
             if (!empty($data['email']) || !empty($data['phone'])) {
                 $paymentParams['customer'] = array(

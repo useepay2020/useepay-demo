@@ -76,6 +76,7 @@ header {
 .checkout-form {
     background: white;
     padding: 30px;
+    padding-bottom: 40px;
     border-radius: 15px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
@@ -118,6 +119,13 @@ header {
 }
 
 .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.card-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 15px;
@@ -175,9 +183,30 @@ textarea {
     display: grid;
     gap: 15px;
     transition: all 0.3s ease;
-    max-height: 1000px;
+    max-height: 600px;
+    overflow-y: auto;
+    overflow-x: hidden;
     opacity: 1;
     visibility: visible;
+    padding-right: 5px;
+}
+
+.payment-methods::-webkit-scrollbar {
+    width: 6px;
+}
+
+.payment-methods::-webkit-scrollbar-track {
+    background: #f1f3f5;
+    border-radius: 3px;
+}
+
+.payment-methods::-webkit-scrollbar-thumb {
+    background: #667eea;
+    border-radius: 3px;
+}
+
+.payment-methods::-webkit-scrollbar-thumb:hover {
+    background: #5568d3;
 }
 
 .payment-methods.hidden {
@@ -234,6 +263,20 @@ textarea {
 .payment-desc {
     font-size: 12px;
     color: #636e72;
+}
+
+/* Card Info Section */
+.card-info-section {
+    display: none;
+    padding: 15px;
+    background: #f8f9ff;
+    border-radius: 8px;
+    margin-top: 10px;
+    border: 1px solid #e1e5e8;
+}
+
+.card-info-section.active {
+    display: block;
 }
 
 /* One-Page Checkout Checkbox */

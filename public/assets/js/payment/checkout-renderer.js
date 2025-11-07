@@ -632,7 +632,36 @@ class CheckoutRenderer {
             country: data.billingCountry
         };
 
-        return {
+        // Prepare payment method data (for card payment)
+        let card = null;
+        if (data.paymentMethod === 'card') {
+            // Get card details from form
+            const cardNumber = document.getElementById('cardNumber')?.value;
+            const expiryDate = document.getElementById('expiryDate')?.value;
+            const cvv = document.getElementById('cvv')?.value;
+            
+            // If all card details are available, create card object
+            if (cardNumber && expiryDate && cvv) {
+                // Parse expiry date (format: MM/YY)
+                const [expMonth, expYear] = expiryDate.split('/').map(s => s.trim());
+
+                card = {
+                    number: cardNumber.replace(/\s/g, ''), // Remove spaces
+                    expireMonth: expMonth,
+                    expireYear: expYear,
+                    cvc: cvv
+                };
+                
+                console.log('Card data prepared:', {
+                    number: cardNumber.replace(/\d(?=\d{4})/g, '*'), // Mask card number for logging
+                    expiryMonth: expMonth,
+                    expiryYear: expYear,
+                    cvc: '***'
+                });
+            }
+        }
+
+        const checkoutData = {
             firstName: data.firstName,
             lastName: data.lastName,
             email: data.email,
@@ -645,6 +674,13 @@ class CheckoutRenderer {
             totals: totals,
             onePageCheckout: onePageCheckoutEnabled
         };
+
+        // Add paymentMethodData if available
+        if (card) {
+            checkoutData.card = card;
+        }
+
+        return checkoutData;
     }
 
     /**

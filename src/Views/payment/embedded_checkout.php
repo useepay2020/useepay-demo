@@ -1,7 +1,7 @@
 <?php
 /**
- * Embedded Checkout Page - 内嵌收银台
- * 基于 checkout.php，增加信用卡信息收集界面
+ * Checkout Page - 结算页面
+ * 处理购物车结算和支付流程
  */
 ?>
 <!DOCTYPE html>
@@ -9,407 +9,250 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>内嵌收银台 - Embedded Checkout</title>
+    <title>结算 - Checkout</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- UseePay SDK -->
-    <script src="https://checkout-sdk.useepay.com/1.0.1/useepay.min.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        header {
-            background: white;
-            padding: 20px 40px;
-            border-radius: 15px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            margin-bottom: 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .logo {
-            font-size: 28px;
-            font-weight: bold;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .back-button {
-            background: #f1f3f5;
-            color: #2d3436;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-            transition: background 0.2s;
-            text-decoration: none;
-            display: inline-block;
-        }
-
-        .back-button:hover {
-            background: #e1e5e8;
-        }
-
-        .checkout-content {
-            display: grid;
-            grid-template-columns: 1fr 400px;
-            gap: 30px;
-        }
-
-        .checkout-form {
-            background: white;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        .section-title {
-            font-size: 24px;
-            font-weight: bold;
-            color: #2d3436;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #f1f3f5;
-        }
-
-        .form-section {
-            margin-bottom: 30px;
-        }
-
-        .form-section h3 {
-            font-size: 18px;
-            color: #2d3436;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .form-section h3::before {
-            content: '';
-            width: 4px;
-            height: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 2px;
-        }
-
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        .form-group.full-width {
-            grid-column: 1 / -1;
-        }
-
-        label {
-            display: block;
-            font-size: 14px;
-            font-weight: 600;
-            color: #2d3436;
-            margin-bottom: 8px;
-        }
-
-        label .required {
-            color: #ff4757;
-        }
-
-        input[type="text"],
-        input[type="email"],
-        input[type="tel"],
-        input[type="number"],
-        select,
-        textarea {
-            width: 100%;
-            padding: 12px 15px;
-            border: 2px solid #e1e5e8;
-            border-radius: 10px;
-            font-size: 14px;
-            transition: border-color 0.2s;
-            font-family: inherit;
-        }
-
-        input:focus,
-        select:focus,
-        textarea:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        .payment-methods {
-            display: grid;
-            gap: 15px;
-        }
-
-        .payment-option {
-            position: relative;
-        }
-
-        .payment-option input[type="radio"] {
-            position: absolute;
-            opacity: 0;
-        }
-
-        .payment-option label {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            padding: 15px;
-            border: 2px solid #e1e5e8;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .payment-option input[type="radio"]:checked + label {
-            border-color: #667eea;
-            background: #f8f9ff;
-        }
-
-        .payment-icon {
-            width: 50px;
-            height: 35px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-        }
-
-        .payment-info {
-            flex: 1;
-        }
-
-        .payment-name {
-            font-weight: 600;
-            color: #2d3436;
-            margin-bottom: 3px;
-        }
-
-        .payment-desc {
-            font-size: 12px;
-            color: #636e72;
-        }
-
-        .card-info-section {
-            display: none;
-            background: #f8f9ff;
-            padding: 20px;
-            border-radius: 10px;
-            margin-top: 0;
-            border: 2px solid #e1e5e8;
-        }
-
-        .card-info-section.active {
-            display: block;
-        }
-
-        .card-preview {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            min-height: 180px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            font-family: 'Courier New', monospace;
-        }
-
-        .card-number {
-            font-size: 22px;
-            letter-spacing: 2px;
-            margin-bottom: 20px;
-        }
-
-        .card-details {
-            display: flex;
-            justify-content: space-between;
-            font-size: 13px;
-        }
-
-        .card-row {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-
-        .order-summary {
-            background: white;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            height: fit-content;
-            position: sticky;
-            top: 20px;
-        }
-
-        .order-item {
-            display: flex;
-            gap: 15px;
-            padding: 15px 0;
-            border-bottom: 1px solid #f1f3f5;
-        }
-
-        .order-item:last-child {
-            border-bottom: none;
-        }
-
-        .order-item-image {
-            width: 60px;
-            height: 60px;
-            background: #f1f3f5;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            flex-shrink: 0;
-        }
-
-        .order-item-details {
-            flex: 1;
-        }
-
-        .order-item-name {
-            font-weight: 600;
-            color: #2d3436;
-            margin-bottom: 5px;
-        }
-
-        .order-item-price {
-            font-size: 14px;
-            color: #636e72;
-        }
-
-        .summary-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 12px;
-            font-size: 14px;
-        }
-
-        .summary-row.total {
-            font-size: 18px;
-            font-weight: bold;
-            color: #2d3436;
-            padding-top: 12px;
-            border-top: 2px solid #f1f3f5;
-            margin-top: 12px;
-        }
-
-        .summary-row.total .amount {
-            color: #667eea;
-        }
-
-        button {
-            width: 100%;
-            padding: 15px;
-            border: none;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            margin-top: 20px;
-        }
-
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 16px rgba(102, 126, 234, 0.4);
-        }
-
-        button:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        @media (max-width: 968px) {
-            .checkout-content {
-                grid-template-columns: 1fr;
-            }
-
-            .order-summary {
-                position: static;
-            }
-
-            .form-row {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        @media (max-width: 768px) {
-            header {
-                padding: 15px 20px;
-            }
-
-            .logo {
-                font-size: 22px;
-            }
-
-            .checkout-form,
-            .order-summary {
-                padding: 20px;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="/assets/css/payment/checkout.css">
 </head>
 <body>
-    <div class="container">
-        <header>
-            <div class="logo" data-i18n="logo">🛍️ 时尚服装商城</div>
-            <div style="display: flex; gap: 10px; align-items: center;">
-                <a href="/" class="back-button" data-i18n="backToHome">← 返回首页</a>
-                <a href="/payment/clothing-shop" class="back-button" data-i18n="backToShop">← 返回购物</a>
-            </div>
-        </header>
-
-        <div class="checkout-content" id="checkoutContent">
-            <!-- Content will be loaded by JavaScript -->
+<div class="container">
+    <header>
+        <div class="logo" data-i18n="logo">🛍️ 时尚服装商城</div>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <a href="/" class="back-button" data-i18n="backToHome">← 返回首页</a>
+            <a href="/payment/clothing-shop" class="back-button" data-i18n="backToShop">← 返回购物</a>
         </div>
-    </div>
+    </header>
 
-    <script>
-        // Get UseePay public key from PHP config
-        <?php
-            global $config;
-            $publicKey = $config['usee_pay']['api_public_key'];
-        ?>
-        window.USEEPAY_PUBLIC_KEY = '<?php echo $publicKey; ?>';
-        console.log('UseePay Public Key configured:', window.USEEPAY_PUBLIC_KEY ? '✓' : '✗');
-    </script>
-    <!-- UseePay Elements Initializer (must be loaded first) -->
-    <script src="/assets/js/useepay-elements-initializer.js"></script>
-    <!-- Embedded Checkout -->
-    <script src="/assets/js/embedded_checkout.js"></script>
+    <div class="checkout-content" id="checkoutContent">
+        <!-- Content will be loaded by JavaScript -->
+    </div>
+</div>
+<!-- UseePay SDK -->
+<script src="https://checkout-sdk.useepay.com/1.0.1/useepay.min.js"></script>
+<!-- Internationalization -->
+<script src="/assets/js/i18n/payment/checkout-i18n.js"></script>
+<!-- Payment Methods Configuration -->
+<script src="/assets/js/payment/payment-methods-config.js"></script>
+<!-- Checkout Renderer -->
+<script src="/assets/js/payment/checkout-renderer.js"></script>
+<script>
+    // Get UseePay public key from PHP config
+    <?php
+    global $config;
+    $publicKey = $config['usee_pay']['api_public_key'];
+    ?>
+    window.USEEPAY_PUBLIC_KEY = '<?php echo $publicKey; ?>';
+    console.log('UseePay Public Key configured:', window.USEEPAY_PUBLIC_KEY ? '✓' : '✗');
+</script>
+
+<script>
+    // Use translations from i18n file
+    const translations = checkoutTranslations;
+    let currentLang = getCurrentLanguage();
+
+    // Load cart from localStorage
+    let cart = [];
+
+    function loadCart() {
+        const saved = localStorage.getItem('fashionCart');
+        if (saved) {
+            cart = JSON.parse(saved);
+        }
+    }
+
+    // Load payment methods from cache based on action type
+    function getPaymentMethods() {
+        // 获取操作类型
+        const actionType = localStorage.getItem('paymentActionType');
+        console.log('Current action type:', actionType);
+
+        // 根据操作类型选择对应的缓存键
+        let cacheKey = 'paymentMethods'; // 默认为支付方式
+        if (actionType === 'subscription') {
+            cacheKey = 'subscriptionMethods';
+        } else if (actionType === 'installment') {
+            cacheKey = 'installmentMethods';
+        }
+
+        const cached = localStorage.getItem(cacheKey);
+        console.log(`Loading ${cacheKey} from cache:`, cached);
+
+        if (cached) {
+            try {
+                return JSON.parse(cached);
+            } catch (e) {
+                console.error('Failed to parse payment methods:', e);
+                return [];
+            }
+        }
+        return [];
+    }
+
+    // Render payment method section - 支付方式界面渲染
+    function renderPaymentMethodSection(t, generatePaymentMethods) {
+        return `
+            <div class="form-section">
+                <h3 data-i18n="paymentMethod">💳 支付方式</h3>
+                <div id="payment-element" style="margin: 20px 0;"></div>
+            </div>
+            `;
+    }
+
+    // Render checkout page using CheckoutRenderer
+    function renderCheckout() {
+        const container = document.getElementById('checkoutContent');
+
+        // Create renderer instance
+        const renderer = new CheckoutRenderer({
+            translations: translations,
+            currentLang: currentLang,
+            cart: cart,
+            paymentMethodsMap: paymentMethodsMap,
+            getPaymentMethods: getPaymentMethods,
+            calculateTotals: () => CheckoutRenderer.calculateTotals(cart),
+            getProductName: getProductName,
+            handleSubmit: handleSubmit,
+            renderPaymentMethodSection: renderPaymentMethodSection
+        });
+
+        // Render the checkout page
+        renderer.render(container);
+    }
+
+    // Handle form submission
+    function handleSubmit(e) {
+        e.preventDefault();
+        confirmPaymentMethod();
+    }
+
+    async function confirmPaymentMethod() {
+        console.log('=== Starting payment confirmation ===');
+        
+        try {
+            // Call the payment confirmation
+            const result = await confirmPaymentIntent();
+            console.log('Payment confirmation result:', result);
+            
+            if (result.success) {
+                // Payment succeeded
+                console.log('✓ Payment succeeded');
+                
+                // Redirect to callback page
+                setTimeout(() => {
+                    window.location.href = '/payment/callback?id=' + result.paymentIntent.id + 
+                        '&merchant_order_id=' + result.paymentIntent.merchant_order_id + 
+                        '&status=succeeded';
+                }, 500);
+            } else {
+                // Payment failed
+                const errorMsg = result.error || translations[currentLang].paymentError;
+                console.error('Payment failed:', errorMsg);
+                showAlertModal(errorMsg, 'error');
+            }
+        } catch (error) {
+            console.error('Payment confirmation error:', error);
+            showAlertModal(translations[currentLang].paymentError + ': ' + error.message, 'error');
+        }
+    }
+
+    function createPaymentIntent() {
+        // Get form element
+        const form = document.getElementById('checkoutForm');
+        if (!form) {
+            console.error('Checkout form not found');
+            return;
+        }
+
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData);
+
+        // Get payment methods from local cache
+        const paymentMethods = getPaymentMethods();
+        console.log('Payment methods from cache:', paymentMethods);
+
+        // Prepare checkout data using CheckoutRenderer
+        const checkoutData = CheckoutRenderer.prepareCheckoutData(
+            data,
+            cart,
+            getPaymentMethods,
+            () => CheckoutRenderer.calculateTotals(cart)
+        );
+
+
+        // Submit to backend - Call PaymentController::createPayment()
+        fetch('/api/payment', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(checkoutData)
+        })
+            .then(response => {
+                console.log('Response status:', response.status);
+                console.log('Response headers:', response.headers);
+
+                // Try to parse JSON
+                return response.text().then(text => {
+                    console.log('Response text:', text);
+                    try {
+                        return JSON.parse(text);
+                    } catch (e) {
+                        console.error('JSON parse error:', e);
+                        console.error('Response was:', text);
+                        throw new Error('Invalid JSON response from server');
+                    }
+                });
+            })
+            .then(result => {
+                console.log('Parsed result:', result);
+
+                // Check if payment creation was successful
+                if (result.success && result.data) {
+                    // Cache payment intent data to browser memory
+                    console.log('Caching payment intent data:', result.data);
+
+                    // Store in sessionStorage for current session
+                    sessionStorage.setItem('currentPaymentIntent', JSON.stringify(result.data));
+                    console.log('✓ Payment intent created and cached:', result.data.id);
+
+                    // For card payment method, initialize UseePay Elements
+                    initializeUseepayElements(result.data.client_secret, result.data.id);
+
+                } else {
+                    console.error('Payment failed:', result.data.error.message);
+                    // Show error message
+                    const errorMsg = result.error?.message || result.data.error.message || translations[currentLang].paymentError || 'Payment failed. Please try again.';
+                    alert(errorMsg);
+                }
+            })
+            .catch(error => {
+                console.error('Payment creation error:', error);
+                alert(translations[currentLang].paymentError + ': ' + error.message);
+            })
+            .finally(() => {
+                // Restore button state
+                if (submitButton) {
+                    submitButton.disabled = false;
+                    const totals = CheckoutRenderer.calculateTotals(cart);
+                    submitButton.textContent = `${translations[currentLang].confirmPay} $${totals.totalAmount}`;
+                }
+            });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        loadCart();
+        renderCheckout();
+        updateLanguage();
+        renderCheckout();
+        // Check if card should be shown by default
+        // const firstMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value;
+        // handlePaymentMethodChange(firstMethod);
+        createPaymentIntent();
+
+    });
+</script>
+<script src="/assets/js/payment-response-handler.js"></script>
+<!-- UseePay Elements Initializer (must be loaded first) -->
+<script src="/assets/js/useepay-elements-initializer.js"></script>
 </body>
 </html>
