@@ -374,18 +374,24 @@ class CheckoutRenderer {
      */
     renderOrderItems() {
         const t = this.translations[this.currentLang];
-        return this.cart.map(item => `
-            <div class="order-item">
-                <div class="order-item-image">${item.image}</div>
-                <div class="order-item-info">
-                    <div class="order-item-name">${this.getProductName(item.id, this.currentLang)}</div>
-                    <div class="order-item-details">
-                        <span>${t.quantity}: ${item.quantity}</span>
-                        <span class="order-item-price">$${(item.price * item.quantity).toFixed(2)}</span>
+        return this.cart.map(item => {
+            const productName = this.getProductName(item.id, this.currentLang);
+            const imageUrl = item.image || '/assets/images/products/placeholder.jpg';
+            return `
+                <div class="order-item">
+                    <div class="order-item-image">
+                        <img src="${imageUrl}" alt="${productName}" onerror="this.src='/assets/images/products/placeholder.jpg'">
+                    </div>
+                    <div class="order-item-info">
+                        <div class="order-item-name">${productName}</div>
+                        <div class="order-item-details">
+                            <span>${t.quantity}: ${item.quantity}</span>
+                            <span class="order-item-price">$${(item.price * item.quantity).toFixed(2)}</span>
+                        </div>
                     </div>
                 </div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
     }
 
     /**

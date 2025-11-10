@@ -67,12 +67,12 @@ class PaymentResponseHandler {
     }
 
     /**
-     * 处理支付成功
+     * 处理支付结果
      * @param {Object} result 支付结果对象
      * @param {Object} orderData 订单数据
      * @returns {boolean} 是否需要继续处理
      */
-    handlePaymentSuccessForRedirect(result, orderData) {
+    handlePaymentResult(result, orderData) {
         this.logger.log('Payment success:', result);
 
         // 检查支付状态
@@ -84,17 +84,14 @@ class PaymentResponseHandler {
         if (paymentStatus === 'requires_payment_method' || paymentStatus === 'requires_customer_action' || paymentStatus === 'requires_payment_method') {
             return this.handlePaymentRedirect(result);
         }else if (paymentStatus === 'succeeded' || paymentStatus === 'failed' ) {
-            window.location.href = result.data.return_url+'?id=' + result.data.paymentIntent.id +'&merchant_order_id='
-                +result.data.paymentIntent.merchant_order_id+'&status='+paymentStatus;
+            window.location.href = result.data.return_url+'?id=' + result.data.id +'&merchant_order_id='
+                +result.data.merchant_order_id+'&status='+paymentStatus;
+        }else if(paymentStatus === 'payment_intent_created'){
+            const errorMessage = this.currentLang === 'zh' 
+                ? '支付失败，请联系您的客户经理。' 
+                : 'Payment failed. Please contact your account manager.';
+            this.showError(errorMessage);
         }
-
-
-
-        // 清除购物车
-        //localStorage.removeItem('fashionCart');
-
-        // 重定向到成功页面
-        //this.redirect('order_success.html');
         return true;
     }
 
@@ -270,7 +267,7 @@ class PaymentResponseHandler {
         this.logger.log('Processing payment result:', result);
 
         if (result.success) {
-            this.handlePaymentSuccessForRedirect(result, orderData);
+            this.handlePaymentResult(result, orderData);
         } else {
             this.handlePaymentError(result);
         }

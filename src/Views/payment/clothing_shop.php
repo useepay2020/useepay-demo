@@ -146,13 +146,13 @@
             width: 100%;
             height: 350px;
             object-fit: cover;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 48px;
-            font-weight: bold;
+            background: #f5f5f5;
+        }
+        
+        .product-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
         .product-info {
@@ -287,14 +287,15 @@
             width: 80px;
             height: 80px;
             border-radius: 10px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-            font-size: 20px;
+            background: #f5f5f5;
             flex-shrink: 0;
+            overflow: hidden;
+        }
+        
+        .cart-item-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
         .cart-item-info {
@@ -565,14 +566,14 @@
 
         // Product Data
         const products = [
-            { id: 1, price: 18.99, image: '👕' },
-            { id: 2, price: 42.99, image: '👖' },
-            { id: 3, price: 36.99, image: '🧥' },
-            { id: 4, price: 26.99, image: '👟' },
-            { id: 5, price: 56.99, image: '🧶' },
-            { id: 6, price: 99.99, image: '🧥' },
-            { id: 7, price: 25.99, image: '👔' },
-            { id: 8, price: 21.99, image: '🩳' }
+            { id: 1, price: 18.99, image: '/assets/images/products/tshirt-white.jpg' },
+            { id: 2, price: 42.99, image: '/assets/images/products/jeans.jpg' },
+            { id: 3, price: 36.99, image: '/assets/images/products/hoodie.jpg' },
+            { id: 4, price: 26.99, image: '/assets/images/products/pants-casual.jpg' },
+            { id: 5, price: 56.99, image: '/assets/images/products/cardigan.jpg' },
+            { id: 6, price: 99.99, image: '/assets/images/products/trench-coat.jpg' },
+            { id: 7, price: 25.99, image: '/assets/images/products/shirt.jpg' },
+            { id: 8, price: 21.99, image: '/assets/images/products/shorts.jpg' }
         ];
 
         // Shopping Cart
@@ -590,7 +591,13 @@
         function getProductInfo(productId) {
             const product = products.find(p => p.id === productId);
             const info = translations[currentLang].products[productId];
-            return { ...product, ...info };
+            // Merge product data (id, price, image) with translated info (name, category, description)
+            return { 
+                id: product.id,
+                price: product.price,
+                image: product.image,
+                ...info 
+            };
         }
 
         // Render Products
@@ -601,7 +608,9 @@
                 const info = getProductInfo(product.id);
                 return `
                     <div class="product-card">
-                        <div class="product-image">${product.image}</div>
+                        <div class="product-image">
+                            <img src="${product.image}" alt="${info.name}" loading="lazy">
+                        </div>
                         <div class="product-info">
                             <div class="product-category">${info.category}</div>
                             <h3 class="product-name">${info.name}</h3>
@@ -631,6 +640,9 @@
                     quantity: 1
                 });
             }
+
+            // Debug: Verify image is included in cart item
+            console.log('Added to cart:', { id: product.id, name: product.name, image: product.image });
 
             saveCart();
             updateCartCount();
@@ -681,11 +693,18 @@
                 return;
             }
 
+            // Debug: Check cart items
+            console.log('Rendering cart with items:', cart.map(item => ({ id: item.id, image: item.image })));
+
             cartItems.innerHTML = cart.map(item => {
                 const info = getProductInfo(item.id);
+                // Use item.image from cart data (already saved)
+                const imageUrl = item.image || '/assets/images/products/placeholder.jpg';
                 return `
                     <div class="cart-item">
-                        <div class="cart-item-image">${item.image}</div>
+                        <div class="cart-item-image">
+                            <img src="${imageUrl}" alt="${info.name}" onerror="this.src='/assets/images/products/placeholder.jpg'">
+                        </div>
                         <div class="cart-item-info">
                             <div class="cart-item-name">${info.name}</div>
                             <div class="cart-item-price">$${item.price.toFixed(2)}</div>

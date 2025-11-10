@@ -281,7 +281,7 @@
                 };
 
                 // Process payment result
-                paymentHandler.processPaymentResultForRedirect(result, orderData);
+                paymentHandler.handlePaymentResult(result, orderData);
             })
             .catch(error => {
                 paymentHandler.handleFetchError(error);
