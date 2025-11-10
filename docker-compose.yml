@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  # UseePay Demo 应用（PHP-FPM + Nginx 合并容器）
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: useepay-demo
+    restart: unless-stopped
+    working_dir: /var/www/html
+    ports:
+      - "9115:9115"
+    volumes:
+      - ./:/var/www/html
+      - ./logs:/var/www/html/logs
+    networks:
+      - useepay-network
+    environment:
+      - APP_ENV=${APP_ENV:-development}
+      - APP_DEBUG=${APP_DEBUG:-true}
+      - USEEPAY_PUBLIC_API_KEY=${USEEPAY_PUBLIC_API_KEY}
+      - USEEPAY_PRIVATE_API_KEY=${USEEPAY_PRIVATE_API_KEY}
+      - USEEPAY_MERCHANT_NO=${USEEPAY_MERCHANT_NO}
+      - USEEPAY_APP_ID=${USEEPAY_APP_ID}
+      - USEEPAY_ENV=${USEEPAY_ENV:-sandbox}
+      - USEEPAY_CALLBACK_URL=${USEEPAY_CALLBACK_URL}
+      - USEEPAY_WEBHOOK_SECRET=${USEEPAY_WEBHOOK_SECRET}
+
+networks:
+  useepay-network:
+    driver: bridge
