@@ -166,14 +166,15 @@ class PaymentController extends BaseController
                 $paymentParams['payment_method_types'] = $data['paymentMethods'];
                 
                 // Auto-confirm for Korean payment methods when only one method is selected
-                $koreanPaymentMethods = ['kakao_pay', 'naver_pay', 'payco', 'toss_pay'];
+                $koreanPaymentMethods = ['kakao_pay', 'naver_pay', 'payco', 'toss_pay', 'klarna'];
                 if (count($data['paymentMethods']) === 1) {
                     $selectedMethod = $data['paymentMethods'][0];
                     if (in_array($selectedMethod, $koreanPaymentMethods)) {
                         $paymentParams['confirm'] = true;
                         $this->log('Auto-confirm enabled for Korean payment method: ' . $selectedMethod, 'info',  $data['paymentMethods'], 'payment');
+                        $paymentParams['payment_method_data']['type'] = $selectedMethod;
                     }
-                    $paymentParams['payment_method_data']['type'] = $selectedMethod;
+
                 }
             }
 
