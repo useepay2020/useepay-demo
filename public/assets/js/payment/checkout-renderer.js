@@ -653,15 +653,15 @@ class CheckoutRenderer {
 
                 card = {
                     number: cardNumber.replace(/\s/g, ''), // Remove spaces
-                    expireMonth: expMonth,
-                    expireYear: expYear,
+                    expiry_month: expMonth,
+                    expiry_year: expYear,
                     cvc: cvv
                 };
                 
                 console.log('Card data prepared:', {
                     number: cardNumber.replace(/\d(?=\d{4})/g, '*'), // Mask card number for logging
-                    expiryMonth: expMonth,
-                    expiryYear: expYear,
+                    expiry_month: expMonth,
+                    expiry_year: expYear,
                     cvc: '***'
                 });
             }

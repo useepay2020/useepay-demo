@@ -181,8 +181,8 @@ class PaymentController extends BaseController
             if (!empty($data['card']) && is_array($data['card'])) {
                 $cardData = array(
                     'number' => $data['card']['number'],
-                    'expiry_month' => $data['card']['expireMonth'],
-                    'expiry_year' => $data['card']['expireYear'],
+                    'expiry_month' => $data['card']['expiry_month'],
+                    'expiry_year' => $data['card']['expiry_year'],
                     'cvc' => $data['card']['cvc'],
                     'number_type' => 'pan',
                 );
@@ -281,47 +281,69 @@ class PaymentController extends BaseController
 
         try {
             $data = $this->getRequestData();
+
+            // Prepare payment parameters based on payment_method_data from frontend
+            $paymentParams = array();
             
-            // Log API request
-            $this->log('UseePay API Request - confirmPayment', 'info', [
-                'method' => 'paymentIntents.confirm',
-                'payment_id' => $paymentId,
-                'payment_method' => isset($data['payment_method']) ? $data['payment_method'] : 'N/A',
-                'has_return_url' => isset($data['return_url']) ? 'yes' : 'no'
-            ], 'api');
+            // Check if payment_method_data is provided
+            if (isset($data['payment_method_data']) && is_array($data['payment_method_data'])) {
+                $methodData = $data['payment_method_data'];
+                
+                // Handle card payment method
+                if (isset($methodData['type']) && $methodData['type'] === 'card') {
+                    if (isset($methodData['card']) && is_array($methodData['card'])) {
+                        $cardData = $methodData['card'];
+                        
+                        // Build payment_method_data structure
+                        $paymentParams['payment_method_data'] = array(
+                            'type' => 'card',
+                            'card' => array(
+                                'number' => $cardData['number'] ?? '',
+                                'expiry_month' => $cardData['expiry_month'] ?? '',
+                                'expiry_year' => $cardData['expiry_year'] ?? '',
+                                'cvc' => $cardData['cvc'] ?? '',
+                                'number_type' => 'pan'
+                            )
+                        );
+                        
+                        // Add cardholder name if provided
+                        if (!empty($cardData['name'])) {
+                            $paymentParams['payment_method_data']['card']['name'] = $cardData['name'];
+                        }
+
+                    }
+                } else {
+                    // Handle other payment methods
+                    $paymentParams['payment_method_data'] = array(
+                        'type' => $methodData['type'] ?? 'unknown'
+                    );
+                }
+
+            }
             
+            // Add return_url if provided
+            if (isset($data['return_url'])) {
+                $paymentParams['return_url'] = $data['return_url'];
+            }
+            
+            // Log confirm request
+            // Log API request parameters
+            $this->log('UseePay API Request - confirmPayment', 'info', $paymentParams, 'payment');
+
             $client = $this->getUseePayClient();
-            
-            $payment = $client->paymentIntents()->confirm(
+
+            $paymentIntent = $client->paymentIntents()->confirm(
                 $paymentId,
-                [
-                    'payment_method' => $data['payment_method'] ?? null,
-                    'return_url' => $data['return_url'] ?? null
-                ]
+                $paymentParams
             );
-            
             // Log API response
-            $this->log('UseePay API Response - confirmPayment', 'info', [
-                'method' => 'paymentIntents.confirm',
-                'status' => 'success',
-                'payment_id' => $paymentId,
-                'payment_status' => isset($payment['status']) ? $payment['status'] : 'N/A'
-            ], 'api');
-            
-            $this->jsonResponse([
-                'status' => $payment['status'],
-                'payment' => $payment
-            ]);
+            $this->log('UseePay API Response - confirmPayment', 'info', $paymentIntent, 'payment');
+
+            $this->jsonResponse($paymentIntent);
+
             
         } catch (\Exception $e) {
             // Log API error
-            $this->log('UseePay API Response - confirmPayment', 'error', [
-                'method' => 'paymentIntents.confirm',
-                'status' => 'failed',
-                'payment_id' => $paymentId,
-                'error_message' => $e->getMessage()
-            ], 'api');
-            
             $this->errorResponse('Payment confirmation failed: ' . $e->getMessage(), 500);
         }
     }

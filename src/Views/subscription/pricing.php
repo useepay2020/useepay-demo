@@ -16,6 +16,12 @@
     <script src="/assets/js/i18n/subscription/pricing-i18n.js"></script>
     <!-- UseePay SDK -->
     <script src="https://checkout-sdk.useepay.com/1.0.1/useepay.min.js"></script>
+    <!-- Payment Methods Configuration -->
+    <script src="/assets/js/payment/payment-methods-config.js"></script>
+    <!-- UseePay Elements Initializer (must be loaded first) -->
+    <script src="/assets/js/useepay-elements-initializer.js"></script>
+    <!-- Payment Response Handler -->
+    <script src="/assets/js/payment-response-handler.js"></script>
 </head>
 <body>
     <div class="container">
@@ -303,6 +309,7 @@
                 <h2 class="payment-methods-title" data-i18n="selectPaymentMethod">选择支付方式</h2>
                 <button class="payment-methods-close" onclick="closePaymentMethodsModal()">×</button>
             </div>
+            <div id="paymentMethodsContainer"></div>
             <div id="payment-element" style="margin: 20px 0;"></div>
             <div class="payment-methods-footer">
                 <button class="payment-methods-btn cancel" onclick="closePaymentMethodsModal()" data-i18n="cancel">取消</button>
@@ -325,6 +332,9 @@
 
         // 从 localStorage 读取语言设置，默认为中文
         let currentLang = localStorage.getItem('language') || 'zh';
+        
+        // Initialize global payment response handler
+        let paymentHandler = null;
         
         console.log('=== Pricing Page Language Initialization ===');
         console.log('Stored language:', localStorage.getItem('language'));
@@ -537,13 +547,15 @@
             // Show processing modal
             showProcessingModal();
             
-            // Initialize payment response handler for subscription
-            const paymentHandler = new PaymentResponseHandler({
-                translations: translations,
-                currentLang: currentLang,
-                submitButton: null,
-                totals: {}
-            });
+            // Initialize payment response handler for subscription (if not already initialized)
+            if (!paymentHandler) {
+                paymentHandler = new PaymentResponseHandler({
+                    translations: translations,
+                    currentLang: currentLang,
+                    submitButton: null,
+                    totals: {}
+                });
+            }
 
             // 通过 AJAX 调用后台 createSubscription 方法
             fetch('/api/subscription', {
@@ -567,6 +579,9 @@
                         amount: result.data.amount
                     };
 
+                    // Cache the response result to browser localStorage
+                    localStorage.setItem('subscriptionResponseCache', JSON.stringify(result));
+
                     // Close modal after 1.5 seconds and process payment result
                     setTimeout(() => {
                         closeProcessingModal();
@@ -583,9 +598,11 @@
                             // 内嵌收银台模式
                             paymentHandler.processPaymentResultForEmbedded(result, orderData);
                         } else {
-                            // Default to redirect mode
-                            console.warn('Unknown integration mode, using redirect mode');
-                            paymentHandler.processPaymentResultForRedirect(result, orderData);
+                            // 渲染支付方式并显示弹窗
+                            renderPaymentMethodSection();
+                            // 显示支付方式弹出窗口
+                            showPaymentMethodsModal();
+
                         }
                     }, 1500);
                 })
@@ -660,10 +677,170 @@
         }
 
         /**
+         * Load payment methods from cache based on action type
+         */
+        function getPaymentMethods() {
+            // 获取操作类型
+            const actionType = localStorage.getItem('paymentActionType');
+            console.log('Current action type:', actionType);
+
+            // 根据操作类型选择对应的缓存键
+            let cacheKey = 'paymentMethods'; // 默认为支付方式
+            if (actionType === 'subscription') {
+                cacheKey = 'subscriptionMethods';
+            } else if (actionType === 'installment') {
+                cacheKey = 'installmentMethods';
+            }
+
+            const cached = localStorage.getItem(cacheKey);
+            console.log(`Loading ${cacheKey} from cache:`, cached);
+
+            if (cached) {
+                try {
+                    return JSON.parse(cached);
+                } catch (e) {
+                    console.error('Failed to parse payment methods:', e);
+                    return [];
+                }
+            }
+            return [];
+        }
+
+        /**
+         * Generate payment methods HTML - 生成支付方式 HTML
+         */
+        function generatePaymentMethods() {
+            const cachedMethods = getPaymentMethods();
+            console.log('Cached payment methods:', cachedMethods);
+            
+            let methodsToDisplay = [];
+            if (cachedMethods && cachedMethods.length > 0) {
+                methodsToDisplay = [...cachedMethods];
+                console.log('Using cached methods:', methodsToDisplay);
+            } else {
+                methodsToDisplay = ['card', 'apple_pay'];
+                console.log('No cached methods, using default methods:', methodsToDisplay);
+            }
+            
+            return methodsToDisplay.map((method, index) => {
+                const methodInfo = paymentMethodsMap[method];
+                if (!methodInfo) {
+                    console.warn('Unknown payment method:', method);
+                    return '';
+                }
+                
+                const methodName = currentLang === 'zh' ? methodInfo.name_zh : methodInfo.name_en;
+                const methodDesc = currentLang === 'zh' ? methodInfo.desc_zh : methodInfo.desc_en;
+                const isFirst = index === 0;
+                
+                let html = `
+                    <div class="payment-option">
+                        <input type="radio" id="method_${method}" name="paymentMethod" value="${method}" ${isFirst ? 'checked' : ''} onchange="handlePaymentMethodChange('${method}')">
+                        <label for="method_${method}">
+                            <div class="payment-icon" style="font-size: 1.2rem;">${methodInfo.icon}</div>
+                            <div class="payment-info">
+                                <div class="payment-name">${methodName}</div>
+                                <div class="payment-desc">${methodDesc}</div>
+                            </div>
+                        </label>
+                    </div>
+                `;
+                
+                // 如果是信用卡，添加卡信息表单
+                if (method === 'card') {
+                    const t = translations[currentLang];
+                    html += `
+                    <div class="card-info-section ${isFirst ? 'active' : ''}" id="cardInfoSection_${method}">
+                        <div class="card-row">
+                            <div class="form-group full-width">
+                                <label><span data-i18n="cardNumber">${t.cardNumber}</span> <span class="required" data-i18n="required">*</span></label>
+                                <input type="text" id="cardNumber" placeholder="${t.cardNumberPlaceholder}" maxlength="19" value="4111 1111 1111 1111" oninput="updateCardPreview()">
+                            </div>
+                        </div>
+
+                        <div class="card-row">
+                            <div class="form-group">
+                                <label><span data-i18n="expiryDate">${t.expiryDate}</span> <span class="required" data-i18n="required">*</span></label>
+                                <input type="text" id="expiryDate" placeholder="${t.expiryPlaceholder}" maxlength="5" value="12/25" oninput="updateCardPreview()">
+                            </div>
+                            <div class="form-group">
+                                <label><span data-i18n="cvv">${t.cvv}</span> <span class="required" data-i18n="required">*</span></label>
+                                <input type="text" id="cvv" placeholder="${t.cvvPlaceholder}" maxlength="4" value="123">
+                            </div>
+                        </div>
+                    </div>
+                    `;
+                }
+                
+                return html;
+            }).join('');
+        }
+
+        /**
+         * Handle payment method change
+         */
+        function handlePaymentMethodChange(method) {
+            // 隐藏所有卡信息部分
+            document.querySelectorAll('.card-info-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // 如果选择信用卡，显示对应的卡信息部分
+            if (method === 'card') {
+                const cardSection = document.getElementById('cardInfoSection_card');
+                if (cardSection) {
+                    cardSection.classList.add('active');
+                }
+            }
+        }
+
+        /**
+         * Update card preview
+         */
+        function updateCardPreview() {
+            const cardNumber = document.getElementById('cardNumber')?.value || '•••• •••• •••• ••••';
+            const cardHolder = document.getElementById('cardHolder')?.value || 'CARDHOLDER NAME';
+            const expiryDate = document.getElementById('expiryDate')?.value || 'MM/YY';
+            
+            const previewNumber = document.getElementById('previewCardNumber');
+            const previewHolder = document.getElementById('previewCardHolder');
+            const previewExpiry = document.getElementById('previewExpiryDate');
+            
+            if (previewNumber) previewNumber.textContent = cardNumber;
+            if (previewHolder) previewHolder.textContent = cardHolder.toUpperCase();
+            if (previewExpiry) previewExpiry.textContent = expiryDate;
+        }
+
+        /**
+         * Render payment method section - 支付方式界面渲染
+         */
+        function renderPaymentMethodSection() {
+            const container = document.getElementById('paymentMethodsContainer');
+            if (!container) {
+                console.error('Payment methods container not found');
+                return;
+            }
+            
+            const t = translations[currentLang];
+            container.innerHTML = `
+                <div class="form-section">
+                    <h3>
+                        <div class="payment-method-title">${t.paymentMethod || '支付方式'}</div>
+                    </h3>
+                    <div class="payment-methods" id="paymentMethodsList">
+                        ${generatePaymentMethods()}
+                    </div>
+                </div>
+            `;
+        }
+
+        /**
          * Payment Methods Modal Functions
          */
         function showPaymentMethodsModal(paymentMethods) {
             const modal = document.getElementById('paymentMethodsModal');
+            // 渲染支付方式
+            renderPaymentMethodSection();
             modal.classList.add('show');
         }
 
@@ -687,10 +864,95 @@
             processingMessage.textContent = translations[currentLang].paymentProcessingMessage;
             processingModal.classList.add('show');
             
+            // Initialize payment handler if not already initialized
+            if (!paymentHandler) {
+                paymentHandler = new PaymentResponseHandler({
+                    translations: translations,
+                    currentLang: currentLang,
+                    submitButton: null,
+                    totals: {}
+                });
+            }
+            
+            // Get integration mode from cache
+            const integrationMode = localStorage.getItem('paymentIntegrationMode') || 'redirect';
+            console.log('Confirm payment with integration mode:', integrationMode);
+            
             try {
-                // Call the payment confirmation
-                const result = await confirmPaymentIntent();
+                let result;
                 
+                if (integrationMode === 'embedded') {
+                    // Embedded mode: Use UseePay SDK to confirm payment
+                    console.log('Using embedded mode - confirmPaymentIntent()');
+                    result = await confirmPaymentIntent();
+                } else if (integrationMode === 'api') {
+                    // API mode: Call backend PaymentController.confirmPayment() using encapsulated method
+                    console.log('Using API mode - calling confirmPaymentViaAPI()');
+                    
+                    // Get payment intent ID from localStorage or current subscription
+                    const currentSubscription = localStorage.getItem('subscriptionResponseCache');
+                    const subscriptionData = currentSubscription ? JSON.parse(currentSubscription) : null;
+                    const paymentIntentId = subscriptionData.data.id;
+
+                    // Get selected payment method from rendered UI (radio button)
+                    const selectedPaymentMethodRadio = document.querySelector('input[name="paymentMethod"]:checked');
+                    const selectedPaymentMethod = selectedPaymentMethodRadio ? selectedPaymentMethodRadio.value : 'card';
+                    console.log('Selected payment method from UI:', selectedPaymentMethod);
+
+                    // Prepare payment method data based on selected payment method
+                    let payment_method_data = null;
+                    
+                    if (selectedPaymentMethod === 'card') {
+                        // Collect card information from input fields
+                        const cardNumber = document.getElementById('cardNumber')?.value?.replace(/\s/g, '');
+                        const expiryDate = document.getElementById('expiryDate')?.value;
+                        const cvv = document.getElementById('cvv')?.value;
+                        const cardHolder = document.getElementById('cardHolder')?.value;
+                        
+                        // Parse expiry date (MM/YY format)
+                        const [expMonth, expYear] = expiryDate ? expiryDate.split('/') : ['', ''];
+                        
+                        // Validate card information
+                        if (!cardNumber || !expiryDate || !cvv) {
+                            throw new Error(translations[currentLang].pleaseEnterCardInfo || 'Please enter complete card information');
+                        }
+                        
+                        payment_method_data = {
+                            type: 'card',
+                            card: {
+                                number: cardNumber,
+                                expiry_month: expMonth,
+                                expiry_year: expYear,
+                                cvc: cvv,
+                                name: cardHolder || ''
+                            }
+                        };
+                        
+                        console.log('Card data collected:', {
+                            number: cardNumber ? '****' + cardNumber.slice(-4) : 'N/A',
+                            exp_month: expMonth,
+                            exp_year: expYear,
+                            cvc: cvv ? '***' : 'N/A',
+                            name: cardHolder
+                        });
+                    } else {
+                        // For other payment methods, use basic structure
+                        payment_method_data = {
+                            type: selectedPaymentMethod
+                        };
+                        console.log('Payment method data:', payment_method_data);
+                    }
+
+                    // Call encapsulated API method
+                    result = await paymentHandler.confirmPaymentViaAPI(paymentIntentId, {
+                        payment_method_data: payment_method_data
+                    });
+                } else {
+                    // Unknown mode, default to embedded
+                    console.warn('Unknown integration mode, defaulting to embedded');
+                }
+                
+                // Handle result
                 if (result.success) {
                     // Payment succeeded
                     updateProcessingStatus('success', translations[currentLang].paymentSuccess);
@@ -932,10 +1194,7 @@
         window.USEEPAY_PUBLIC_KEY = '<?php echo $publicKey; ?>';
         console.log('UseePay Public Key configured:', window.USEEPAY_PUBLIC_KEY ? '✓' : '✗');
     </script>
-    <!-- UseePay Elements Initializer (must be loaded first) -->
-    <script src="/assets/js/useepay-elements-initializer.js"></script>
-    <!-- Payment Response Handler -->
-    <script src="/assets/js/payment-response-handler.js"></script>
+
 
     <!-- Auth Modal -->
     <div id="authModal" class="auth-modal">

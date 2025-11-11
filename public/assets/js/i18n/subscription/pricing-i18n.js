@@ -107,8 +107,18 @@ const pricingTranslations = {
         paymentSuccess: '支付成功！',
         paymentError: '支付失败',
         selectPaymentMethod: '选择支付方式',
+        paymentMethod: '支付方式',
         cancel: '取消',
-        confirm: '确认'
+        confirm: '确认',
+        
+        // Card Payment Fields
+        cardNumber: '卡号',
+        cardNumberPlaceholder: '请输入卡号',
+        expiryDate: '有效期',
+        expiryPlaceholder: 'MM/YY',
+        cvv: 'CVV',
+        cvvPlaceholder: 'CVV',
+        required: '*'
     },
     
     en: {
@@ -214,8 +224,18 @@ const pricingTranslations = {
         paymentSuccess: 'Payment Successful!',
         paymentError: 'Payment Failed',
         selectPaymentMethod: 'Select Payment Method',
+        paymentMethod: 'Payment Method',
         cancel: 'Cancel',
-        confirm: 'Confirm'
+        confirm: 'Confirm',
+        
+        // Card Payment Fields
+        cardNumber: 'Card Number',
+        cardNumberPlaceholder: 'Enter card number',
+        expiryDate: 'Expiry Date',
+        expiryPlaceholder: 'MM/YY',
+        cvv: 'CVV',
+        cvvPlaceholder: 'CVV',
+        required: '*'
     }
 };
 

@@ -45,7 +45,13 @@ if (strpos($request, $scriptName) === 0) {
 
 // Remove trailing slash if present
 $request = rtrim($request, '/');
-error_log("After removing trailing slash: " . $request);
+
+// Ensure request starts with / for consistent routing
+if (!empty($request) && $request[0] !== '/') {
+    $request = '/' . $request;
+}
+
+error_log("After normalization: " . $request);
 
 // Set base path for views
 $basePath = '';
@@ -58,6 +64,14 @@ error_log("Parsed request: " . $request);
 // Simple test endpoint
 if (strpos($request, '/api/') === 0) {
     error_log("API request detected: " . $request);
+}
+
+// Handle dynamic API routes with parameters
+if (preg_match('#^/api/payment/confirm/([a-zA-Z0-9_-]+)$#', $request, $matches)) {
+    require_once __DIR__ . '/../src/Controllers/PaymentController.php';
+    $controller = new \UseePayDemo\Controllers\PaymentController();
+    $controller->confirmPayment($matches[1]);
+    exit;
 }
 
 // Route the request

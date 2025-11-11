@@ -839,6 +839,139 @@ header p {
     opacity: 0.5;
 }
 
+/* ===== Payment Options Styles (for renderPaymentMethodSection) ===== */
+.payment-methods {
+    display: grid;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.payment-option {
+    border: 2px solid #e8eef5;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.payment-option:hover {
+    border-color: #1e90ff;
+}
+
+.payment-option input[type="radio"] {
+    display: none;
+}
+
+.payment-option input[type="radio"]:checked + label {
+    background: #f0f8ff;
+    border-left: 4px solid #1e90ff;
+}
+
+.payment-option label {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    cursor: pointer;
+    gap: 15px;
+    transition: all 0.3s ease;
+}
+
+.payment-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f5f7fa;
+    border-radius: 8px;
+    flex-shrink: 0;
+}
+
+.payment-info {
+    flex: 1;
+}
+
+.payment-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #2d3436;
+    margin-bottom: 4px;
+}
+
+.payment-desc {
+    font-size: 12px;
+    color: #636e72;
+}
+
+/* Card Info Section */
+.card-info-section {
+    display: none;
+    padding: 20px;
+    background: #f8f9fa;
+    border-top: 1px solid #e8eef5;
+}
+
+.card-info-section.active {
+    display: block;
+}
+
+.card-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.card-row .form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+.card-info-section .form-group {
+    margin-bottom: 0;
+}
+
+.card-info-section label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #2d3436;
+    margin-bottom: 8px;
+}
+
+.card-info-section input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #e8eef5;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.card-info-section input:focus {
+    outline: none;
+    border-color: #1e90ff;
+    box-shadow: 0 0 0 3px rgba(30, 144, 255, 0.1);
+}
+
+.required {
+    color: #ff4757;
+}
+
+/* Form Section in Modal */
+.payment-methods-modal .form-section {
+    margin-bottom: 0;
+}
+
+.payment-methods-modal .form-section h3 {
+    font-size: 16px;
+    color: #2d3436;
+    margin-bottom: 15px;
+    font-weight: 600;
+}
+
+.payment-methods-modal .form-section h3::before {
+    display: none;
+}
+
 /* ===== Responsive Styles ===== */
 @media (max-width: 768px) {
     header h1 {

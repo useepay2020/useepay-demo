@@ -39,8 +39,10 @@ RUN composer install --no-dev --optimize-autoloader
 # 复制 Nginx 配置
 COPY docker/nginx/conf.d/default.conf /etc/nginx/sites-available/default
 
-# 创建 Nginx 配置软链接
-RUN ln -sf /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
+# 删除默认配置并创建软链接
+RUN rm -f /etc/nginx/sites-enabled/default \
+    && ln -sf /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default \
+    && rm -f /etc/nginx/conf.d/default.conf
 
 # 复制 Supervisor 配置
 COPY docker/supervisor/supervisord.conf /etc/supervisor/conf.d/supervisord.conf

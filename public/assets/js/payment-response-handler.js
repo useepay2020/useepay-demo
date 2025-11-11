@@ -274,6 +274,72 @@ class PaymentResponseHandler {
     }
 
     /**
+     * 调用后端 API 确认支付
+     * @param {string} paymentIntentId 支付意图 ID
+     * @param {Object} options 可选参数
+     * @param {string} options.payment_method 支付方式（默认从 localStorage 获取）
+     * @param {string} options.return_url 回调 URL（默认为当前域名 + /payment/callback）
+     * @returns {Promise<Object>} 支付确认结果
+     */
+    async confirmPaymentViaAPI(paymentIntentId, options = {}) {
+        this.logger.log('Calling /api/payment/confirm with ID:', paymentIntentId);
+        
+        if (!paymentIntentId) {
+            throw new Error('Payment Intent ID is required');
+        }
+
+        this.logger.log('Request options:', options);
+        
+        try {
+            // 调用后端 API
+            const response = await fetch(`/api/payment/confirm/${paymentIntentId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(options)
+            });
+            
+            // 解析响应
+            const apiResponse = await response.json();
+            this.logger.log('API confirm response:', apiResponse);
+
+            const apiResult = apiResponse.data;
+            // 转换 API 响应格式为统一格式
+            let result;
+            
+            if (apiResult.status === 'succeeded') {
+                result = {
+                    success: true,
+                    paymentIntent: apiResult,
+                    status: apiResult.status
+                };
+            } else if (apiResult.status === 'requires_action' || 
+                      apiResult.status === 'requires_payment_method') {
+                result = {
+                    success: false,
+                    error: 'Payment requires additional action',
+                    status: apiResult.status,
+                    paymentIntent: apiResult
+                };
+            } else {
+                result = {
+                    success: false,
+                    error: apiResult.message || 'Payment confirmation failed',
+                    status: apiResult.status
+                };
+            }
+            
+            this.logger.log('Transformed result:', result);
+            return result;
+            
+        } catch (error) {
+            this.logger.error('API confirm error:', error);
+            throw error;
+        }
+    }
+
+    /**
      * 处理内嵌收银台模式的支付流程
      * @param {Object} result 支付结果
      * @param {Object} orderData 订单数据

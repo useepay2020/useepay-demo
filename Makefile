@@ -95,10 +95,41 @@ rebuild: ## 重新构建并启动容器
 
 health-check: ## 检查服务健康状态
 	@echo "$(BLUE)检查服务健康状态...$(NC)"
-	@echo "检查Nginx..."
-	@curl -s http://localhost:8000 > /dev/null && echo "$(GREEN)✓ Nginx 正常$(NC)" || echo "$(RED)✗ Nginx 异常$(NC)"
+	@echo "检查Nginx..	@curl -s http://localhost:9115 > /dev/null && echo "$(GREEN)✓ Nginx 正常$(NC)" || echo "$(RED)✗ Nginx 异常$(NC)"
 	@echo "检查PHP-FPM..."
-	@$(DOCKER_COMPOSE) exec -T app php -v > /dev/null 2>&1 && echo "$(GREEN)✓ PHP-FPM 正常$(NC)" || echo "$(RED)✗ PHP-FPM 异常$(NC)"
+	@docker exec useepay-demo php -v > /dev/null 2>&1 && echo "$(GREEN)✓ PHP-FPM 正常$(NC)" || echo "$(RED)✗ PHP-FPM 异常$(NC)"
+
+diagnose: ## 运行完整诊断（Windows使用PowerShell）
+	@echo "$(BLUE)运行诊断脚本...$(NC)"
+	@if command -v bash > /dev/null 2>&1; then \
+		bash docker-diagnose.sh; \
+	else \
+		powershell -ExecutionPolicy Bypass -File docker-diagnose.ps1; \
+	fi
+
+logs-nginx-error: ## 查看Nginx错误日志
+	@docker exec useepay-demo tail -50 /var/log/nginx/error.log
+
+logs-nginx-access: ## 查看Nginx访问日志
+	@docker exec useepay-demo tail -50 /var/log/nginx/access.log
+
+test-routes: ## 测试主要路由
+	@echo "$(BLUE)测试路由访问...$(NC)"
+	@echo "测试首页:"
+	@curl -s -o /dev/null -w "HTTP Status: %{http_code}\n" http://localhost:9115/
+	@echo "测试 clothing-shop:"
+	@curl -s -o /dev/null -w "HTTP Status: %{http_code}\n" http://localhost:9115/payment/clothing-shop
+	@echo "测试 pricing:"
+	@curl -s -o /dev/null -w "HTTP Status: %{http_code}\n" http://localhost:9115/subscription/pricing
+
+nginx-test: ## 测试Nginx配置
+	@docker exec useepay-demo nginx -t
+
+supervisor-status: ## 查看Supervisor服务状态
+	@docker exec useepay-demo supervisorctl status
+
+supervisor-restart: ## 重启Supervisor所有服务
+	@docker exec useepay-demo supervisorctl restart all
 
 info: ## 显示项目信息
 	@echo "$(BLUE)UseePay API Demo - 项目信息$(NC)"
