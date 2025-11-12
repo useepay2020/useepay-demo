@@ -50,6 +50,8 @@ COPY docker/supervisor/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 # 设置文件权限
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html \
+    && chmod -R 644 /var/www/html/config/*.php \
+    && chmod 755 /var/www/html/config \
     && mkdir -p /var/www/html/logs \
     && chmod -R 775 /var/www/html/logs \
     && chown -R www-data:www-data /var/log/nginx \
