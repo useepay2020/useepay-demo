@@ -47,6 +47,10 @@ RUN rm -f /etc/nginx/sites-enabled/default \
 # 复制 Supervisor 配置
 COPY docker/supervisor/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
+# 复制启动脚本
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
 # 设置文件权限
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html \
@@ -60,5 +64,5 @@ RUN chown -R www-data:www-data /var/www/html \
 # 暴露端口
 EXPOSE 9115
 
-# 使用 Supervisor 启动 PHP-FPM 和 Nginx
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+# 使用自定义启动脚本
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
