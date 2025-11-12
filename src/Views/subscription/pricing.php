@@ -15,7 +15,7 @@
     <!-- Pricing Page Internationalization (must load before inline scripts) -->
     <script src="/assets/js/i18n/subscription/pricing-i18n.js"></script>
     <!-- UseePay SDK -->
-    <script src="https://checkout-sdk.useepay.com/1.0.1/useepay.min.js"></script>
+    <script src="https://checkout-sdk1.uat.useepay.com/1.0.1/useepay.min.js"></script>
     <!-- Payment Methods Configuration -->
     <script src="/assets/js/payment/payment-methods-config.js"></script>
     <!-- UseePay Elements Initializer (must be loaded first) -->
@@ -309,7 +309,7 @@
                 <h2 class="payment-methods-title" data-i18n="selectPaymentMethod">选择支付方式</h2>
                 <button class="payment-methods-close" onclick="closePaymentMethodsModal()">×</button>
             </div>
-            <div id="paymentMethodsContainer"></div>
+<!--            <div id="paymentMethodsContainer"></div>-->
             <div id="payment-element" style="margin: 20px 0;"></div>
             <div class="payment-methods-footer">
                 <button class="payment-methods-btn cancel" onclick="closePaymentMethodsModal()" data-i18n="cancel">取消</button>
@@ -813,14 +813,15 @@
 
         /**
          * Render payment method section - 支付方式界面渲染
+         * 注意：payment-element 容器将由 UseePay Elements 使用，不要添加内容
          */
         function renderPaymentMethodSection() {
-            const container = document.getElementById('paymentMethodsContainer');
+            const container = document.getElementById('payment-element');
             if (!container) {
                 console.error('Payment methods container not found');
                 return;
             }
-            
+
             const t = translations[currentLang];
             container.innerHTML = `
                 <div class="form-section">
@@ -840,7 +841,6 @@
         function showPaymentMethodsModal(paymentMethods) {
             const modal = document.getElementById('paymentMethodsModal');
             // 渲染支付方式
-            renderPaymentMethodSection();
             modal.classList.add('show');
         }
 

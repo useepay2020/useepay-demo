@@ -12,6 +12,80 @@
     <title>结算 - Checkout</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/assets/css/payment/checkout.css">
+<style>
+/* Payment Progress Modal */
+.payment-progress-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+    backdrop-filter: blur(4px);
+}
+
+.payment-progress-content {
+    background: white;
+    padding: 40px;
+    border-radius: 16px;
+    text-align: center;
+    max-width: 400px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    animation: modalFadeIn 0.3s ease-out;
+}
+
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.payment-progress-spinner {
+    width: 60px;
+    height: 60px;
+    margin: 0 auto 20px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.payment-progress-title {
+    font-size: 24px;
+    font-weight: 600;
+    color: #333;
+    margin: 0 0 10px 0;
+}
+
+.payment-progress-message {
+    font-size: 16px;
+    color: #666;
+    margin: 0;
+    line-height: 1.5;
+}
+
+.payment-progress-success {
+    color: #10b981;
+}
+
+.payment-progress-error {
+    color: #ef4444;
+}
+</style>
 </head>
 <body>
 <div class="container">
@@ -26,15 +100,20 @@
     <div class="checkout-content" id="checkoutContent">
         <!-- Content will be loaded by JavaScript -->
     </div>
+
+    <!-- Payment Progress Modal -->
+    <div id="paymentProgressModal" class="payment-progress-modal" style="display: none;">
+        <div class="payment-progress-content">
+            <div class="payment-progress-spinner"></div>
+            <h3 id="paymentProgressTitle" class="payment-progress-title">处理中...</h3>
+            <p id="paymentProgressMessage" class="payment-progress-message">正在处理您的支付，请稍候</p>
+        </div>
+    </div>
 </div>
 <!-- UseePay SDK -->
-<script src="https://checkout-sdk.useepay.com/1.0.1/useepay.min.js"></script>
-<!-- Internationalization -->
-<script src="/assets/js/i18n/payment/checkout-i18n.js"></script>
-<!-- Payment Methods Configuration -->
-<script src="/assets/js/payment/payment-methods-config.js"></script>
-<!-- Checkout Renderer -->
-<script src="/assets/js/payment/checkout-renderer.js"></script>
+<script src="https://checkout-sdk1.uat.useepay.com/1.0.1/useepay.min.js"></script>
+
+<!-- UseePay Public Key Configuration -->
 <script>
     // Get UseePay public key from PHP config
     <?php
@@ -44,6 +123,16 @@
     window.USEEPAY_PUBLIC_KEY = '<?php echo $publicKey; ?>';
     console.log('UseePay Public Key configured:', window.USEEPAY_PUBLIC_KEY ? '✓' : '✗');
 </script>
+
+<!-- UseePay Elements Initializer (must be loaded before inline scripts) -->
+<script src="/assets/js/useepay-elements-initializer.js"></script>
+
+<!-- Internationalization -->
+<script src="/assets/js/i18n/payment/checkout-i18n.js"></script>
+<!-- Payment Methods Configuration -->
+<script src="/assets/js/payment/payment-methods-config.js"></script>
+<!-- Checkout Renderer -->
+<script src="/assets/js/payment/checkout-renderer.js"></script>
 
 <script>
     // Use translations from i18n file
@@ -128,6 +217,9 @@
     async function confirmPaymentMethod() {
         console.log('=== Starting payment confirmation ===');
         
+        // Show payment progress modal
+        showPaymentProgress('processing');
+        
         try {
             // Call the payment confirmation
             const result = await confirmPaymentIntent();
@@ -137,21 +229,92 @@
                 // Payment succeeded
                 console.log('✓ Payment succeeded');
                 
+                // Update modal to success state
+                showPaymentProgress('success');
+                
                 // Redirect to callback page
                 setTimeout(() => {
                     window.location.href = '/payment/callback?id=' + result.paymentIntent.id + 
                         '&merchant_order_id=' + result.paymentIntent.merchant_order_id + 
                         '&status=succeeded';
-                }, 500);
+                }, 1500);
             } else {
                 // Payment failed
                 const errorMsg = result.error || translations[currentLang].paymentError;
                 console.error('Payment failed:', errorMsg);
-                showAlertModal(errorMsg, 'error');
+                
+                // Update modal to error state
+                showPaymentProgress('error', errorMsg);
+                
+                // Hide modal after 3 seconds
+                setTimeout(() => {
+                    hidePaymentProgress();
+                }, 3000);
             }
         } catch (error) {
             console.error('Payment confirmation error:', error);
-            showAlertModal(translations[currentLang].paymentError + ': ' + error.message, 'error');
+            const errorMsg = translations[currentLang].paymentError + ': ' + error.message;
+            
+            // Update modal to error state
+            showPaymentProgress('error', errorMsg);
+            
+            // Hide modal after 3 seconds
+            setTimeout(() => {
+                hidePaymentProgress();
+            }, 3000);
+        }
+    }
+
+    /**
+     * Show payment progress modal
+     * @param {string} status - 'processing', 'success', or 'error'
+     * @param {string} message - Optional custom message
+     */
+    function showPaymentProgress(status, message) {
+        const modal = document.getElementById('paymentProgressModal');
+        const title = document.getElementById('paymentProgressTitle');
+        const messageEl = document.getElementById('paymentProgressMessage');
+        const spinner = modal.querySelector('.payment-progress-spinner');
+        
+        if (!modal) return;
+        
+        // Reset classes
+        title.className = 'payment-progress-title';
+        messageEl.className = 'payment-progress-message';
+        
+        // Update content based on status
+        switch(status) {
+            case 'processing':
+                spinner.style.display = 'block';
+                title.textContent = translations[currentLang].processing || '处理中...';
+                messageEl.textContent = translations[currentLang].processingPayment || '正在处理您的支付，请稍候';
+                break;
+                
+            case 'success':
+                spinner.style.display = 'none';
+                title.textContent = translations[currentLang].paymentSuccess || '✓ 支付成功';
+                title.className += ' payment-progress-success';
+                messageEl.textContent = translations[currentLang].redirecting || '正在跳转到确认页面...';
+                break;
+                
+            case 'error':
+                spinner.style.display = 'none';
+                title.textContent = translations[currentLang].paymentFailed || '✗ 支付失败';
+                title.className += ' payment-progress-error';
+                messageEl.textContent = message || translations[currentLang].paymentError;
+                break;
+        }
+        
+        modal.style.display = 'flex';
+    }
+
+    /**
+     * Hide payment progress modal
+     */
+    function hidePaymentProgress() {
+        const modal = document.getElementById('paymentProgressModal');
+        if (modal) {
+            modal.style.display = 'none';
         }
     }
 
@@ -251,8 +414,5 @@
 
     });
 </script>
-<script src="/assets/js/payment-response-handler.js"></script>
-<!-- UseePay Elements Initializer (must be loaded first) -->
-<script src="/assets/js/useepay-elements-initializer.js"></script>
 </body>
 </html>

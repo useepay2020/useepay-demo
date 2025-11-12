@@ -71,6 +71,12 @@ function initializeUseepayElements(clientSecret, paymentIntentId) {
         console.log('Debug: payment-element container =', paymentElementContainer ? '✓ found' : '✗ not found');
 
         if (paymentElementContainer) {
+            // Clear any existing content in the container
+            if (paymentElementContainer.hasChildNodes()) {
+                console.log('Clearing existing content from payment-element container...');
+                paymentElementContainer.innerHTML = '';
+            }
+            
             console.log('Mounting payment element...');
             useepayPaymentElement.mount('payment-element');
             

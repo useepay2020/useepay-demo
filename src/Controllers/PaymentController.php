@@ -166,7 +166,7 @@ class PaymentController extends BaseController
                 $paymentParams['payment_method_types'] = $data['paymentMethods'];
                 
                 // Auto-confirm for Korean payment methods when only one method is selected
-                $nonDirectPaymentMethods = ['apple_pay', 'google_pay'];
+                $nonDirectPaymentMethods = ['apple_pay', 'google_pay','card'];
                 if (count($data['paymentMethods']) === 1) {
                     $selectedMethod = $data['paymentMethods'][0];
                     if (!in_array($selectedMethod, $nonDirectPaymentMethods)) {
@@ -189,6 +189,7 @@ class PaymentController extends BaseController
                 );
                 $paymentParams['payment_method_data']['card'] = $cardData;
                 $this->log('Card data added to payment_method_data', 'info', $data['card'], 'payment');
+                $paymentParams['payment_method_data']['type'] = $selectedMethod;
                 $paymentParams['confirm'] = true;
                 /**Specifies whether the funds should be requested automatically after the payment is authorized.
                  * true: The funds will be requested automatically after the payment is authorized.
