@@ -30,6 +30,11 @@ RUN docker-php-ext-install \
 # 安装Composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
+# 创建 stack 用户和组
+RUN groupadd -g 1000 stack \
+    && useradd -u 1000 -g stack -m -s /bin/bash stack \
+    && usermod -aG www-data stack
+
 # 复制项目文件到容器
 COPY . .
 
@@ -51,13 +56,14 @@ COPY docker/supervisor/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY docker-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-# 设置文件权限
-RUN chown -R www-data:www-data /var/www/html \
+# 设置文件权限（使用 stack 用户）
+RUN chown -R stack:www-data /var/www/html \
     && chmod -R 755 /var/www/html \
-    && chmod -R 644 /var/www/html/config/*.php \
+    && chmod -R 664 /var/www/html/config/*.php \
     && chmod 755 /var/www/html/config \
     && mkdir -p /var/www/html/logs \
     && chmod -R 775 /var/www/html/logs \
+    && chown -R stack:www-data /var/www/html/logs \
     && chown -R www-data:www-data /var/log/nginx \
     && chown -R www-data:www-data /var/lib/nginx
 

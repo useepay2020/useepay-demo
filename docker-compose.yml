@@ -9,6 +9,8 @@ services:
     container_name: useepay-demo
     restart: unless-stopped
     working_dir: /var/www/html
+    # 使用 stack 用户运行容器（可选，如果需要在容器内以 stack 用户身份运行）
+    # user: "1000:1000"  # stack:stack
     ports:
       - "9115:9115"
     volumes:
@@ -19,6 +21,9 @@ services:
     environment:
       - APP_ENV=${APP_ENV:-development}
       - APP_DEBUG=${APP_DEBUG:-true}
+      # 传递宿主机的 UID 和 GID 到容器
+      - HOST_UID=${HOST_UID:-1000}
+      - HOST_GID=${HOST_GID:-1000}
       - USEEPAY_PUBLIC_API_KEY=${USEEPAY_PUBLIC_API_KEY}
       - USEEPAY_PRIVATE_API_KEY=${USEEPAY_PRIVATE_API_KEY}
       - USEEPAY_MERCHANT_NO=${USEEPAY_MERCHANT_NO}
