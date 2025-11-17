@@ -54,6 +54,13 @@ const paymentMethodsMap = {
         desc_zh: '灵活的支付计划',
         desc_en: 'Flexible payment plans'
     },
+    'affirm': {
+        icon: '<i class="fas fa-check-circle" style="color: #0FA0EA;"></i>',
+        name_zh: 'Affirm',
+        name_en: 'Affirm',
+        desc_zh: '分期付款，灵活选择',
+        desc_en: 'Flexible installment payments'
+    },
     'oxxo': {
         icon: '<i class="fas fa-store" style="color: #EC0000;"></i>',
         name_zh: 'OXXO',

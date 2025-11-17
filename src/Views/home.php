@@ -661,6 +661,11 @@
                                 <i class="fas fa-shopping-bag" style="margin-right: 0.5rem; color: #FFB3C7; font-size: 1.1rem;"></i>
                                 <span style="font-size: 0.95rem;" data-i18n="klarna">Klarna</span>
                             </label>
+                            <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
+                                <input type="checkbox" name="installmentMethod" value="affirm" checked style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
+                                <i class="fas fa-check-circle" style="margin-right: 0.5rem; color: #0FA0EA; font-size: 1.1rem;"></i>
+                                <span style="font-size: 0.95rem;" data-i18n="affirm">Affirm</span>
+                            </label>
                             <div style="display: flex; align-items: center; justify-content: center; padding: 0.6rem; background: #f8f9fa; border-radius: 6px; border: 1px dashed #dee2e6;">
                                 <i class="fas fa-ellipsis-h" style="margin-right: 0.5rem; color: #6c757d;"></i>
                                 <span style="font-size: 0.9rem; color: #6c757d; font-style: italic;" data-i18n="morePaymentMethods">更多支付方式...</span>
@@ -912,6 +917,7 @@
                 alipay: '支付宝',
                 afterpay: 'Afterpay',
                 klarna: 'Klarna',
+                affirm: 'Affirm',
                 oxxo: 'OXXO',
                 kakaoPay: 'Kakao Pay',
                 naverPay: 'Naver Pay',
@@ -985,6 +991,7 @@
                 alipay: 'Alipay',
                 afterpay: 'Afterpay',
                 klarna: 'Klarna',
+                affirm: 'Affirm',
                 oxxo: 'OXXO',
                 kakaoPay: 'Kakao Pay',
                 naverPay: 'Naver Pay',
@@ -1217,11 +1224,11 @@
                         }
                     } else {
                         console.log('No cached installment methods, using defaults');
-                        // 分期支付方式默认选择 Afterpay 和 Klarna
+                        // 分期支付方式默认选择 Afterpay、Klarna 和 Affirm
                         document.querySelectorAll('input[name="installmentMethod"]').forEach(cb => {
                             cb.checked = false;
                         });
-                        const defaultInstallmentMethods = ['afterpay', 'klarna'];
+                        const defaultInstallmentMethods = ['afterpay', 'klarna', 'affirm'];
                         defaultInstallmentMethods.forEach(method => {
                             const checkbox = document.querySelector(`input[name="installmentMethod"][value="${method}"]`);
                             if (checkbox) {
