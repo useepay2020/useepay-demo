@@ -511,7 +511,7 @@ class PaymentController extends BaseController
             
             $this->jsonResponse([
                 'applePaySession' => [
-                    'merchantSession' => $response['applePaySession']['merchantSession'] ?? $response
+                    'merchantSession' => $response['paymentSession']
                 ]
             ]);
             
