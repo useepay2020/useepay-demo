@@ -494,7 +494,7 @@ class PaymentController extends BaseController
             ];
             
             // 记录请求日志
-            $this->log('Apple Pay Session Validate Request', 'info', $requestParams, 'payment');
+            $this->log('Apple Pay Session Validate aa Request', 'info', $requestParams, 'payment');
             
             // 构建 API URL
             $environment = $config['usee_pay']['environment'] === 'production' 
