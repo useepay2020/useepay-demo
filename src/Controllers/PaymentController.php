@@ -431,6 +431,8 @@ class PaymentController extends BaseController
                 ? 'https://openapi.useepay.com'
                 : 'https://openapi1.uat.useepay.com';
             $apiUrl = $environment . '/api/v1/payment_method_configurations';
+
+            $this->log('Apple Pay Configuration url', 'info', $apiUrl, 'payment');
             
             // 发送请求
             $response = $this->sendUseePayRequest($apiUrl, $requestParams);

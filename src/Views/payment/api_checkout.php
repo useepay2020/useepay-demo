@@ -340,6 +340,8 @@
     // 必填参数: currency, host, merchant_name, os_type, amount
     async function fetchApplePayConfiguration() {
         const totals = CheckoutRenderer.calculateTotals(cart);
+        // totals.totalAmount 已经是字符串 (toFixed(2))，需要转为数字
+        const amount = parseFloat(totals.totalAmount) || 0;
         try {
             const response = await fetch('/api/payment/apple-pay/configuration', {
                 method: 'POST',
@@ -349,7 +351,7 @@
                     host: window.location.hostname,
                     merchant_name: 'Fashion Store',
                     os_type: 'WEB',
-                    amount: totals.totalAmount
+                    amount: amount
                 })
             });
             const result = await response.json();
@@ -420,6 +422,7 @@
     // 步骤 3: 构建 ApplePayPaymentRequest
     function getApplePayRequest() {
         const totals = CheckoutRenderer.calculateTotals(cart);
+        // totals.totalAmount 已经是字符串格式
         return {
             countryCode: 'US',
             currencyCode: totals.currency || 'USD',
@@ -427,7 +430,7 @@
             supportedNetworks: applePayConfig.supportedNetworks,
             total: {
                 label: applePayConfig.merchantName,
-                amount: totals.totalAmount.toFixed(2),
+                amount: totals.totalAmount, // 已经是 "xx.xx" 格式
                 type: 'final'
             }
         };
@@ -503,7 +506,7 @@
                 session.completePaymentMethodSelection({
                     newTotal: {
                         label: applePayConfig.merchantName,
-                        amount: totals.totalAmount.toFixed(2),
+                        amount: totals.totalAmount, // 已经是字符串格式
                         type: 'final'
                     },
                     newLineItems: []
