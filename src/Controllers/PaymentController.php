@@ -428,8 +428,8 @@ class PaymentController extends BaseController
             
             // 构建 API URL
             $environment = $config['usee_pay']['environment'] === 'production' 
-                ? 'https://api.useepay.com' 
-                : 'https://api.uat.useepay.com';
+                ? 'https://openapi.useepay.com'
+                : 'https://openapi1.uat.useepay.com';
             $apiUrl = $environment . '/api/v1/payment_method_configurations';
             
             // 发送请求
