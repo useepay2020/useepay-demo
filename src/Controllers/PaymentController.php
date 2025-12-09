@@ -500,7 +500,7 @@ class PaymentController extends BaseController
             $environment = $config['usee_pay']['environment'] === 'production' 
                 ? 'https://openapi.useepay.com'
                 : 'https://openapi1.uat.useepay.com';
-            $apiUrl = $environment . '/api/v1/payment_methods/apple_pay/validate';
+            $apiUrl = $environment . '/api/v1/payment_methods/apple_pay/merchant_session';
             
             // 发送请求
             $response = $this->sendUseePayRequest($apiUrl, $requestParams);
