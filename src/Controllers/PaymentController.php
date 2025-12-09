@@ -486,9 +486,9 @@ class PaymentController extends BaseController
             
             // 准备请求参数
             $requestParams = [
-                'displayName' => $data['displayName'],
-                'domainName' => $data['domainName'],
-                'merchantIdentifier' => $data['merchantIdentifier'],
+                'display_name' => $data['displayName'],
+                'host' => $data['domainName'],
+                'merchant_identifier' => $data['merchantIdentifier'],
                 'merchant_id' => $config['usee_pay']['merchant_no'],
                 'validationURL' => $data['validationURL']
             ];
@@ -501,7 +501,8 @@ class PaymentController extends BaseController
                 ? 'https://openapi.useepay.com'
                 : 'https://openapi1.uat.useepay.com';
             $apiUrl = $environment . '/api/v1/payment_methods/apple_pay/merchant_session';
-            
+            $this->log('Apple Pay Session Validate url', 'info', $apiUrl, 'payment');
+
             // 发送请求
             $response = $this->sendUseePayRequest($apiUrl, $requestParams);
             
