@@ -347,7 +347,7 @@ class PaymentController extends BaseController
                         'type' => 'apple_pay',
                         'apple_pay' => array(
                             'merchant_identifier' => $applePayData['merchant_identifier'] ?? '',
-                            'encrypted_payment_token' => $applePayData['encrypted_payment_token'] ?? $applePayData['payment'] ?? ''
+                            'payment' => $applePayData['encrypted_payment_token'] ?? $applePayData['payment'] ?? ''
                         )
                     );
                     
