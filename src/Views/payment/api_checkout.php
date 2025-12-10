@@ -164,6 +164,17 @@
                 </div>
                 `;
             }
+
+            // 如果是 Google Pay，添加 Google Pay 按钮区域
+            if (method === 'google_pay') {
+                html += `
+                <div class="google-pay-section" id="googlePaySection" style="display: none; padding: 15px; margin-top: 10px;">
+                    <div id="googlePayStatus" style="margin-bottom: 10px; color: #666;"></div>
+                    <div id="googlePayButtonContainer" style="display: flex; justify-content: center; width: 100%; height: 44px;"></div>
+                    <div id="googlePayError" style="margin-top: 10px; color: #dc3545; display: none;"></div>
+                </div>
+                `;
+            }
             
             return html;
         }).join('');
@@ -180,6 +191,12 @@
         const applePaySection = document.getElementById('applePaySection');
         if (applePaySection) {
             applePaySection.style.display = 'none';
+        }
+        
+        // 隐藏 Google Pay 区域
+        const googlePaySection = document.getElementById('googlePaySection');
+        if (googlePaySection) {
+            googlePaySection.style.display = 'none';
         }
         
         // 获取原始提交按钮
@@ -207,8 +224,19 @@
             }
         }
         
+        // 如果选择 Google Pay，显示 Google Pay 区域，隐藏原始提交按钮
+        if (method === 'google_pay') {
+            if (googlePaySection) {
+                googlePaySection.style.display = 'block';
+                checkGooglePayAvailability();
+            }
+            if (submitButton) {
+                submitButton.style.display = 'none';
+            }
+        }
+        
         // 其他支付方式，显示原始提交按钮
-        if (method !== 'card' && method !== 'apple_pay') {
+        if (method !== 'card' && method !== 'apple_pay' && method !== 'google_pay') {
             if (submitButton) {
                 submitButton.style.display = 'block';
             }
@@ -348,15 +376,9 @@
         merchantCapabilities: ['supports3DS', 'supportsDebit', 'supportsCredit']
     };
     
-    // 当前 Payment Intent ID (用于 confirm)
-    let currentPaymentIntentId = null;
-    
-    // 步骤 1: 获取 Apple Pay 配置
-    // POST /v1/payment_method_configurations
-    // 必填参数: currency, host, merchant_name, os_type, amount
+    // 获取 Apple Pay 配置
     async function fetchApplePayConfiguration() {
         const totals = CheckoutRenderer.calculateTotals(cart);
-        // totals.totalAmount 已经是字符串 (toFixed(2))，需要转为数字
         const amount = parseFloat(totals.totalAmount) || 0;
         try {
             const response = await fetch('/api/payment/apple-pay/configuration', {
@@ -378,18 +400,15 @@
                 applePayConfig.supportedNetworks = result.data.allowed_card_networks || applePayConfig.supportedNetworks;
                 applePayConfig.merchantCapabilities = result.data.allowed_card_auth_methods || applePayConfig.merchantCapabilities;
                 applePayConfig.domain = result.data.domain || window.location.hostname;
-                localStorage.setItem('applePayConfig', JSON.stringify(applePayConfig));
             }
             return applePayConfig;
         } catch (err) {
             console.error('Failed to fetch Apple Pay config:', err);
-            const cached = localStorage.getItem('applePayConfig');
-            if (cached) applePayConfig = JSON.parse(cached);
             return applePayConfig;
         }
     }
     
-    // 步骤 2: 检测 Apple Pay 设备能力
+    // 检测 Apple Pay 可用性
     async function checkApplePayAvailability() {
         const statusEl = document.getElementById('applePayStatus');
         const buttonContainer = document.getElementById('applePayButtonContainer');
@@ -403,7 +422,6 @@
             return;
         }
         
-        // 获取配置
         statusEl.textContent = currentLang === 'zh' ? '正在加载 Apple Pay...' : 'Loading Apple Pay...';
         await fetchApplePayConfiguration();
         
@@ -413,8 +431,6 @@
                 : 'Failed to get Apple Pay configuration';
             return;
         }
-        
-        console.log('Checking Apple Pay with merchant:', applePayConfig.merchantIdentifier);
         
         try {
             const canMakePayments = await ApplePaySession.canMakePaymentsWithActiveCard(applePayConfig.merchantIdentifier);
@@ -435,10 +451,9 @@
         }
     }
     
-    // 步骤 3: 构建 ApplePayPaymentRequest
+    // 构建 ApplePayPaymentRequest
     function getApplePayRequest() {
         const totals = CheckoutRenderer.calculateTotals(cart);
-        // totals.totalAmount 已经是字符串格式
         return {
             countryCode: 'US',
             currencyCode: totals.currency || 'USD',
@@ -446,13 +461,13 @@
             supportedNetworks: applePayConfig.supportedNetworks,
             total: {
                 label: applePayConfig.merchantName,
-                amount: totals.totalAmount, // 已经是 "xx.xx" 格式
+                amount: totals.totalAmount,
                 type: 'final'
             }
         };
     }
     
-    // 步骤 4-6: 发起 Apple Pay 支付
+    // 发起 Apple Pay 支付
     async function initiateApplePay() {
         console.log('Initiating Apple Pay...');
         
@@ -478,17 +493,15 @@
         }
         
         try {
-            // 步骤 4: 创建 ApplePaySession
             const applePayRequest = getApplePayRequest();
             console.log('Apple Pay Request:', applePayRequest);
             const session = new ApplePaySession(14, applePayRequest);
             
-            // 步骤 5: Apple Pay Session 验证 (onvalidatemerchant)
+            // 商户验证回调
             session.onvalidatemerchant = async (event) => {
                 console.log('onvalidatemerchant - validationURL:', event.validationURL);
                 
                 try {
-                    // 调用后端 -> UseePay: POST /v1/payment_methods/apple_pay/validate
                     const response = await fetch('/api/payment/apple-pay/validate', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -522,7 +535,7 @@
                 session.completePaymentMethodSelection({
                     newTotal: {
                         label: applePayConfig.merchantName,
-                        amount: totals.totalAmount, // 已经是字符串格式
+                        amount: totals.totalAmount,
                         type: 'final'
                     },
                     newLineItems: []
@@ -541,17 +554,15 @@
                 session.completeShippingContactSelection({});
             };
             
-            // 步骤 6: 用户授权后获取支付 token (onpaymentauthorized)
+            // 支付授权回调
             session.onpaymentauthorized = async (event) => {
                 console.log('onpaymentauthorized - payment:', event.payment);
                 
                 try {
-                    // 获取表单数据
                     const form = document.getElementById('checkoutForm');
                     const formData = new FormData(form);
                     const data = Object.fromEntries(formData);
                     
-                    // 准备支付数据 - 先创建 PaymentIntent
                     const checkoutData = CheckoutRenderer.prepareCheckoutData(
                         data, cart, getPaymentMethods,
                         () => CheckoutRenderer.calculateTotals(cart)
@@ -573,7 +584,7 @@
                     
                     const paymentIntentId = createResult.data.id;
                     
-                    // 调用 Confirm 接口: POST /v1/payment_intent/{id}/confirm
+                    // Confirm 支付
                     console.log('Confirming payment with Apple Pay token...');
                     const confirmResponse = await fetch(`/api/payment/confirm/${paymentIntentId}`, {
                         method: 'POST',
@@ -592,13 +603,11 @@
                     const confirmResult = await confirmResponse.json();
                     console.log('Confirm response:', confirmResult);
                     
-                    // 完成 Apple Pay 支付
                     const paymentStatus = confirmResult.success && confirmResult.data.status === 'succeeded';
                     session.completePayment({
                         status: paymentStatus ? ApplePaySession.STATUS_SUCCESS : ApplePaySession.STATUS_FAILURE
                     });
                     
-                    // 处理支付结果
                     if (paymentStatus) {
                         const orderData = {
                             orderId: confirmResult.data.merchant_order_id,
@@ -634,7 +643,6 @@
                 console.log('Apple Pay cancelled');
             };
             
-            // 开始 Apple Pay 会话
             session.begin();
             
         } catch (err) {
@@ -651,6 +659,314 @@
             errorEl.style.display = 'block';
         }
     }
+
+    // ==================== Google Pay 相关函数 ====================
+    
+    // Google Pay 配置
+    let googlePayConfig = {
+        allowedCardNetworks: ['DISCOVER', 'MASTERCARD', 'VISA', 'AMEX'],
+        allowedCardAuthMethods: ['PAN_ONLY', 'CRYPTOGRAM_3DS'],
+        baseRequest: {
+            apiVersion: 2,
+            apiVersionMinor: 0
+        },
+        tokenizationSpecification: {
+            type: 'PAYMENT_GATEWAY',
+            parameters: {
+                gateway: 'useepay',
+                gatewayMerchantId: 'BCR2DN4T7LTNVTBU'
+            }
+        },
+        merchantName: 'Fashion Store',
+        merchantId: 'BCR2DN4T7LTNVTBU'
+    };
+    
+    // Google Pay 客户端
+    let googlePaymentsClient = null;
+    
+    // 获取 Google Pay 配置
+    async function fetchGooglePayConfiguration() {
+        const totals = CheckoutRenderer.calculateTotals(cart);
+        const amount = parseFloat(totals.totalAmount) || 0;
+        try {
+            const response = await fetch('/api/payment/google-pay/configuration', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    currency: totals.currency || 'USD',
+                    host: window.location.hostname,
+                    merchant_name: 'Fashion Store',
+                    os_type: 'WEB',
+                    amount: amount
+                })
+            });
+            const result = await response.json();
+            console.log('Google Pay Configuration:', result);
+            if (result.success && result.data) {
+                if (result.data.allowed_card_networks) {
+                    googlePayConfig.allowedCardNetworks = result.data.allowed_card_networks;
+                }
+                if (result.data.allowed_card_auth_methods) {
+                    googlePayConfig.allowedCardAuthMethods = result.data.allowed_card_auth_methods;
+                }
+            }
+            return googlePayConfig;
+        } catch (err) {
+            console.error('Failed to fetch Google Pay config:', err);
+            return googlePayConfig;
+        }
+    }
+    
+    // 获取基础卡支付方式配置
+    function getBaseCardPaymentMethod() {
+        return {
+            type: 'CARD',
+            parameters: {
+                allowedAuthMethods: googlePayConfig.allowedCardAuthMethods,
+                allowedCardNetworks: googlePayConfig.allowedCardNetworks
+            }
+        };
+    }
+    
+    // 获取完整卡支付方式配置
+    function getCardPaymentMethod() {
+        return {
+            ...getBaseCardPaymentMethod(),
+            tokenizationSpecification: googlePayConfig.tokenizationSpecification
+        };
+    }
+    
+    // 获取 Google Pay 客户端
+    function getGooglePaymentsClient() {
+        if (!googlePaymentsClient && window.google?.payments?.api) {
+            const environment = window.location.hostname.includes('localhost') || 
+                               window.location.hostname.includes('dev') || 
+                               window.location.hostname.includes('uat') ? 'TEST' : 'PRODUCTION';
+            console.log('Google Pay environment:', environment);
+            googlePaymentsClient = new google.payments.api.PaymentsClient({ environment });
+        }
+        return googlePaymentsClient;
+    }
+    
+    // 检测 Google Pay 可用性
+    async function checkGooglePayAvailability() {
+        const statusEl = document.getElementById('googlePayStatus');
+        const buttonContainer = document.getElementById('googlePayButtonContainer');
+        if (!statusEl || !buttonContainer) return;
+        
+        if (!window.google?.payments?.api) {
+            statusEl.textContent = currentLang === 'zh' 
+                ? 'Google Pay SDK 加载中...'
+                : 'Loading Google Pay SDK...';
+            return;
+        }
+        
+        statusEl.textContent = currentLang === 'zh' ? '正在检查 Google Pay...' : 'Checking Google Pay...';
+        
+        await fetchGooglePayConfiguration();
+        
+        const client = getGooglePaymentsClient();
+        if (!client) {
+            statusEl.textContent = currentLang === 'zh' 
+                ? 'Google Pay 初始化失败'
+                : 'Failed to initialize Google Pay';
+            return;
+        }
+        
+        try {
+            const isReadyToPayRequest = {
+                ...googlePayConfig.baseRequest,
+                allowedPaymentMethods: [getBaseCardPaymentMethod()]
+            };
+            
+            const response = await client.isReadyToPay(isReadyToPayRequest);
+            console.log('Google Pay isReadyToPay:', response);
+            
+            if (response.result) {
+                statusEl.textContent = currentLang === 'zh' 
+                    ? '点击下方按钮使用 Google Pay 支付'
+                    : 'Click the button below to pay with Google Pay';
+                addGooglePayButton();
+            } else {
+                statusEl.textContent = currentLang === 'zh' 
+                    ? 'Google Pay 在此设备不可用'
+                    : 'Google Pay is not available on this device';
+            }
+        } catch (err) {
+            console.error('Google Pay check error:', err);
+            statusEl.textContent = currentLang === 'zh' 
+                ? '检查 Google Pay 状态时出错'
+                : 'Error checking Google Pay status';
+        }
+    }
+    
+    // 添加 Google Pay 按钮
+    function addGooglePayButton() {
+        const container = document.getElementById('googlePayButtonContainer');
+        if (!container) return;
+        
+        container.innerHTML = '';
+        
+        const client = getGooglePaymentsClient();
+        if (!client) return;
+        
+        const button = client.createButton({
+            buttonColor: 'black',
+            buttonType: 'plain',
+            buttonSizeMode: 'fill',
+            onClick: onGooglePayButtonClicked,
+            allowedPaymentMethods: [getBaseCardPaymentMethod()]
+        });
+        
+        container.appendChild(button);
+        console.log('Google Pay button added');
+    }
+    
+    // Google Pay 按钮点击处理
+    function onGooglePayButtonClicked() {
+        console.log('Google Pay button clicked');
+        
+        const errorEl = document.getElementById('googlePayError');
+        if (errorEl) {
+            errorEl.style.display = 'none';
+            errorEl.textContent = '';
+        }
+        
+        // 验证表单数据
+        const form = document.getElementById('checkoutForm');
+        if (form) {
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData);
+            if (!CheckoutRenderer.validateForm(data, translations, currentLang)) {
+                return;
+            }
+        }
+        
+        const client = getGooglePaymentsClient();
+        if (!client) {
+            showGooglePayError(currentLang === 'zh' ? 'Google Pay 未初始化' : 'Google Pay not initialized');
+            return;
+        }
+        
+        const totals = CheckoutRenderer.calculateTotals(cart);
+        
+        // 判断环境
+        const isTestEnv = window.location.hostname.includes('localhost') || 
+                         window.location.hostname.includes('dev') || 
+                         window.location.hostname.includes('uat');
+        
+        const paymentDataRequest = {
+            ...googlePayConfig.baseRequest,
+            allowedPaymentMethods: [getCardPaymentMethod()],
+            transactionInfo: {
+                countryCode: 'US',
+                currencyCode: totals.currency || 'USD',
+                totalPriceStatus: 'FINAL',
+                totalPrice: totals.totalAmount
+            },
+            merchantInfo: {
+                ...(isTestEnv ? {} : { merchantId: googlePayConfig.merchantId }),
+                merchantName: googlePayConfig.merchantName
+            }
+        };
+        
+        console.log('Google Pay payment request:', paymentDataRequest);
+        
+        // loadPaymentData 必须在同步上下文中调用
+        client.loadPaymentData(paymentDataRequest)
+            .then(paymentData => {
+                console.log('Google Pay payment data:', paymentData);
+                return processGooglePayPayment(paymentData);
+            })
+            .catch(err => {
+                console.error('Google Pay error:', err);
+                if (err.statusCode !== 'CANCELED') {
+                    showGooglePayError(currentLang === 'zh' ? 'Google Pay 支付失败: ' + (err.statusMessage || err.message) : 'Google Pay failed: ' + (err.statusMessage || err.message));
+                }
+            });
+    }
+    
+    // 处理 Google Pay 支付
+    async function processGooglePayPayment(paymentData) {
+        try {
+            const form = document.getElementById('checkoutForm');
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData);
+            
+            const checkoutData = CheckoutRenderer.prepareCheckoutData(
+                data, cart, getPaymentMethods,
+                () => CheckoutRenderer.calculateTotals(cart)
+            );
+            
+            // 创建 PaymentIntent
+            console.log('Creating PaymentIntent for Google Pay...');
+            const createResponse = await fetch('/api/payment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(checkoutData)
+            });
+            const createResult = await createResponse.json();
+            console.log('PaymentIntent created:', createResult);
+            
+            if (!createResult.success || !createResult.data.id) {
+                throw new Error(createResult.error?.message || 'Failed to create payment');
+            }
+            
+            const paymentIntentId = createResult.data.id;
+            
+            // Confirm 支付
+            console.log('Confirming payment with Google Pay token...');
+            const confirmResponse = await fetch(`/api/payment/confirm/${paymentIntentId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    payment_method_data: {
+                        type: 'google_pay',
+                        google_pay: paymentData
+                    }
+                })
+            });
+            
+            const confirmResult = await confirmResponse.json();
+            console.log('Confirm response:', confirmResult);
+            
+            if (confirmResult.success && confirmResult.data.status === 'succeeded') {
+                const orderData = {
+                    orderId: confirmResult.data.merchant_order_id,
+                    paymentIntentId: confirmResult.data.id,
+                    customer: data,
+                    items: cart,
+                    totals: checkoutData.totals,
+                    date: new Date().toISOString(),
+                    status: confirmResult.data.status,
+                    amount: confirmResult.data.amount
+                };
+                
+                const paymentHandler = new PaymentResponseHandler({
+                    translations: translations,
+                    currentLang: currentLang,
+                    submitButton: document.getElementById('submitButton'),
+                    totals: checkoutData.totals
+                });
+                paymentHandler.handlePaymentResult(confirmResult, orderData);
+            } else {
+                showGooglePayError(confirmResult.error?.message || (currentLang === 'zh' ? '支付失败' : 'Payment failed'));
+            }
+            
+        } catch (err) {
+            console.error('Google Pay payment error:', err);
+            showGooglePayError(currentLang === 'zh' ? '支付处理失败: ' + err.message : 'Payment failed: ' + err.message);
+        }
+    }
+    
+    // 显示 Google Pay 错误
+    function showGooglePayError(message) {
+        const errorEl = document.getElementById('googlePayError');
+        if (errorEl) {
+            errorEl.textContent = message;
+            errorEl.style.display = 'block';
+        }
+    }
     
     // ==================== 初始化 ====================
 
@@ -659,6 +975,7 @@
         updateLanguage(currentLang);
         renderCheckout();
         loadApplePaySDK();
+        loadGooglePaySDK();
     });
     
     // 动态加载 Apple Pay SDK
@@ -676,6 +993,24 @@
             }
         };
         script.onerror = (err) => console.error('Failed to load Apple Pay SDK:', err);
+        document.head.appendChild(script);
+    }
+    
+    // 动态加载 Google Pay SDK
+    function loadGooglePaySDK() {
+        if (document.querySelector('script[src*="pay.google.com"]')) return;
+        
+        const script = document.createElement('script');
+        script.src = 'https://pay.google.com/gp/p/js/pay.js';
+        script.async = true;
+        script.onload = () => {
+            console.log('Google Pay SDK loaded');
+            const selectedMethod = document.querySelector('input[name="paymentMethod"]:checked');
+            if (selectedMethod && selectedMethod.value === 'google_pay') {
+                checkGooglePayAvailability();
+            }
+        };
+        script.onerror = (err) => console.error('Failed to load Google Pay SDK:', err);
         document.head.appendChild(script);
     }
 </script>
