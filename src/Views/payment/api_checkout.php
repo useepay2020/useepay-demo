@@ -182,19 +182,35 @@
             applePaySection.style.display = 'none';
         }
         
-        // 如果选择信用卡，显示对应的卡信息部分
+        // 获取原始提交按钮
+        const submitButton = document.getElementById('submitButton');
+        
+        // 如果选择信用卡，显示对应的卡信息部分，显示原始提交按钮
         if (method === 'card') {
             const cardSection = document.getElementById('cardInfoSection_card');
             if (cardSection) {
                 cardSection.classList.add('active');
             }
+            if (submitButton) {
+                submitButton.style.display = 'block';
+            }
         }
         
-        // 如果选择 Apple Pay，显示 Apple Pay 区域并检查可用性
+        // 如果选择 Apple Pay，显示 Apple Pay 区域，隐藏原始提交按钮
         if (method === 'apple_pay') {
             if (applePaySection) {
                 applePaySection.style.display = 'block';
                 checkApplePayAvailability();
+            }
+            if (submitButton) {
+                submitButton.style.display = 'none';
+            }
+        }
+        
+        // 其他支付方式，显示原始提交按钮
+        if (method !== 'card' && method !== 'apple_pay') {
+            if (submitButton) {
+                submitButton.style.display = 'block';
             }
         }
     }
