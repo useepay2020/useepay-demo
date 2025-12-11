@@ -1,0 +1,51 @@
+{
+    "name": "useepay/useepay-php",
+    "description": "Official UseePay PHP SDK for payment processing. Supports PHP 5.4+ with comprehensive payment gateway integration.",
+    "type": "library",
+    "license": "Apache-2.0",
+    "keywords": [
+        "useepay",
+        "payment",
+        "payment gateway",
+        "sdk",
+        "api",
+        "php5",
+        "payment processing",
+        "credit card",
+        "checkout"
+    ],
+    "homepage": "https://github.com/useepay2020/useepay-php",
+    "support": {
+        "email": "technology@useepay.com",
+        "issues": "https://github.com/useepay2020/useepay-php/issues",
+        "docs": "https://docs-v2.useepay.com"
+    },
+    "authors": [
+        {
+            "name": "UseePay Development Team",
+            "email": "technology@useepay.com",
+            "homepage": "https://www.useepay.com"
+        }
+    ],
+    "require": {
+        "php": ">=5.4.0",
+        "ext-json": "*",
+        "ext-curl": "*",
+        "ext-mbstring": "*"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^4.8 || ^5.7"
+    },
+    "autoload": {
+        "psr-4": {
+            "UseePay\\": "src/UseePay/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "UseePay\\Tests\\": "tests/"
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
