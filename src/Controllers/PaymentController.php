@@ -347,13 +347,26 @@ class PaymentController extends BaseController
                         'type' => 'apple_pay',
                         'apple_pay' => array(
                             'merchant_identifier' => $applePayData['merchant_identifier'] ?? '',
-                            'encrypted_payment_token' => $applePayData['encrypted_payment_token'] ?? $applePayData['payment'] ?? ''
+                            'payment' => $applePayData['encrypted_payment_token'] ?? $applePayData['payment'] ?? ''
                         )
                     );
                     
                     $this->log('Apple Pay Confirm - payment_method_data', 'info', [
                         'type' => 'apple_pay',
                         'merchant_identifier' => $applePayData['merchant_identifier'] ?? 'N/A'
+                    ], 'payment');
+                }
+                // Handle Google Pay payment method
+                else if (isset($methodData['type']) && $methodData['type'] === 'google_pay') {
+                    $googlePayData = $methodData['google_pay'] ?? [];
+                    
+                    $paymentParams['payment_method_data'] = array(
+                        'type' => 'google_pay',
+                        'google_pay' => $googlePayData
+                    );
+                    
+                    $this->log('Google Pay Confirm - payment_method_data', 'info', [
+                        'type' => 'google_pay'
                     ], 'payment');
                 }
                 else {
@@ -428,9 +441,11 @@ class PaymentController extends BaseController
             
             // 构建 API URL
             $environment = $config['usee_pay']['environment'] === 'production' 
-                ? 'https://api.useepay.com' 
-                : 'https://api.uat.useepay.com';
+                ? 'https://openapi.useepay.com'
+                : 'https://openapi1.uat.useepay.com';
             $apiUrl = $environment . '/api/v1/payment_method_configurations';
+
+            $this->log('Apple Pay Configuration url', 'info', (array)$apiUrl, 'payment');
             
             // 发送请求
             $response = $this->sendUseePayRequest($apiUrl, $requestParams);
@@ -462,6 +477,82 @@ class PaymentController extends BaseController
     }
 
     /**
+     * 获取 Google Pay 配置
+     * POST /v1/payment_method_configurations
+     * 用于获取 Google Pay 必要参数：allowedCardNetworks, allowedCardAuthMethods, tokenizationSpecification 等
+     * 必填参数: currency, host, merchant_name, os_type, amount
+     */
+    public function getGooglePayConfiguration()
+    {
+        global $config;
+        
+        try {
+            $data = $this->getRequestData();
+            
+            // 验证必需参数
+            $requiredFields = ['currency', 'host', 'merchant_name', 'os_type', 'amount'];
+            foreach ($requiredFields as $field) {
+                if (!isset($data[$field]) || $data[$field] === '') {
+                    $this->errorResponse("$field is required", 400);
+                    return;
+                }
+            }
+            
+            // 准备请求参数 - 5个必填参数
+            $requestParams = [
+                'currency' => $data['currency'],
+                'host' => $data['host'],
+                'merchant_name' => $data['merchant_name'],
+                'os_type' => $data['os_type'], // WEB 或 ANDROID
+                'amount' => floatval($data['amount'])
+            ];
+            
+            // 记录请求日志
+            $this->log('Google Pay Configuration Request', 'info', $requestParams, 'payment');
+            
+            // 构建 API URL - 复用同一个配置接口
+            $environment = $config['usee_pay']['environment'] === 'production' 
+                ? 'https://openapi.useepay.com'
+                : 'https://openapi1.uat.useepay.com';
+            $apiUrl = $environment . '/api/v1/payment_method_configurations';
+            
+            // 发送请求
+            $response = $this->sendUseePayRequest($apiUrl, $requestParams);
+            
+            // 记录响应日志
+            $this->log('Google Pay Configuration Response', 'info', $response, 'payment');
+            
+            // 格式化返回数据，方便前端使用
+            $googlePayData = $response['google_pay'] ?? [];
+            
+            $formattedResponse = [
+                'payment_method' => 'googlepay',
+                'merchant_no' => $response['merchantNo'] ?? $config['usee_pay']['merchant_no'],
+                'app_id' => $response['appId'] ?? $config['usee_pay']['app_id'],
+                'domain' => $response['domain'] ?? $data['host'],
+                'merchant_name' => $data['merchant_name'],
+                // Google Pay 特有配置
+                'allowed_card_networks' => $googlePayData['allowed_card_networks'] ?? ['AMEX', 'DISCOVER', 'JCB', 'MASTERCARD', 'VISA'],
+                'allowed_card_auth_methods' => $googlePayData['allowed_card_auth_methods'] ?? ['PAN_ONLY', 'CRYPTOGRAM_3DS'],
+                'tokenization_specification' => $googlePayData['tokenization_specification'] ?? null,
+                'base_request' => [
+                    'apiVersion' => 2,
+                    'apiVersionMinor' => 0
+                ]
+            ];
+            
+            $this->jsonResponse($formattedResponse);
+            
+        } catch (\Exception $e) {
+            $this->log('Google Pay Configuration Error', 'error', [
+                'error' => $e->getMessage()
+            ], 'payment');
+            
+            $this->errorResponse('Failed to get Google Pay configuration: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
      * Apple Pay Session 验证
      * POST /v1/payment_methods/apple_pay/validate
      * 用于向 Apple 获取有效 session
@@ -484,22 +575,23 @@ class PaymentController extends BaseController
             
             // 准备请求参数
             $requestParams = [
-                'displayName' => $data['displayName'],
-                'domainName' => $data['domainName'],
-                'merchantIdentifier' => $data['merchantIdentifier'],
+                'display_name' => $data['displayName'],
+                'host' => $data['domainName'],
+                'merchant_identifier' => $data['merchantIdentifier'],
                 'merchant_id' => $config['usee_pay']['merchant_no'],
                 'validationURL' => $data['validationURL']
             ];
             
             // 记录请求日志
-            $this->log('Apple Pay Session Validate Request', 'info', $requestParams, 'payment');
+            $this->log('Apple Pay Session Validate aa Request', 'info', $requestParams, 'payment');
             
             // 构建 API URL
             $environment = $config['usee_pay']['environment'] === 'production' 
-                ? 'https://api.useepay.com' 
-                : 'https://api.uat.useepay.com';
-            $apiUrl = $environment . '/api/v1/payment_methods/apple_pay/validate';
-            
+                ? 'https://openapi.useepay.com'
+                : 'https://openapi1.uat.useepay.com';
+            $apiUrl = $environment . '/api/v1/payment_methods/apple_pay/merchant_session';
+            $this->log('Apple Pay Session Validate url', 'info', (array)$apiUrl, 'payment');
+
             // 发送请求
             $response = $this->sendUseePayRequest($apiUrl, $requestParams);
             
@@ -508,7 +600,7 @@ class PaymentController extends BaseController
             
             $this->jsonResponse([
                 'applePaySession' => [
-                    'merchantSession' => $response['applePaySession']['merchantSession'] ?? $response
+                    'merchantSession' => $response['paymentSession']
                 ]
             ]);
             

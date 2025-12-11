@@ -81,12 +81,18 @@ class PaymentResponseHandler {
         // 保存订单数据
         this.saveOrderData(orderData);
 
-        if (paymentStatus === 'requires_payment_method' || paymentStatus === 'requires_customer_action' || paymentStatus === 'requires_payment_method') {
+        // 优先检查是否有 next_action（3DS 验证）
+        if (result.data.next_action && result.data.next_action.redirect) {
+            this.logger.log('3DS verification required, redirecting...');
             return this.handlePaymentRedirect(result);
-        }else if (paymentStatus === 'succeeded' || paymentStatus === 'failed' ) {
+        }
+
+        if (paymentStatus === 'requires_payment_method' || paymentStatus === 'requires_customer_action' || paymentStatus === 'requires_action') {
+            return this.handlePaymentRedirect(result);
+        } else if (paymentStatus === 'succeeded' || paymentStatus === 'failed') {
             window.location.href = result.data.return_url+'?id=' + result.data.id +'&merchant_order_id='
                 +result.data.merchant_order_id+'&status='+paymentStatus;
-        }else if(paymentStatus === 'payment_intent_created'){
+        } else if (paymentStatus === 'payment_intent_created') {
             const errorMessage = this.currentLang === 'zh' 
                 ? '支付失败，请联系您的客户经理。' 
                 : 'Payment failed. Please contact your account manager.';
@@ -136,43 +142,191 @@ class PaymentResponseHandler {
     }
 
     /**
-     * 处理 GET 重定向
+     * 处理 GET 重定向 - 使用 iframe 内嵌 3DS 验证
      * @param {string} url 重定向 URL
      * @returns {boolean} 成功标志
      */
     handleGetRedirect(url) {
-        this.logger.log('Performing GET redirect to:', url);
-        window.location.href = url;
-        return true;
+        this.logger.log('Performing GET redirect via iframe to:', url);
+        return this.show3DSIframe(url, 'GET');
     }
 
     /**
-     * 处理 POST 重定向
+     * 处理 POST 重定向 - 使用 iframe 内嵌 3DS 验证
      * @param {string} url 重定向 URL
      * @param {Object} data 表单数据
      * @returns {boolean} 成功标志
      */
     handlePostRedirect(url, data = {}) {
-        this.logger.log('Performing POST redirect to:', url);
+        this.logger.log('Performing POST redirect via iframe to:', url);
+        return this.show3DSIframe(url, 'POST', data);
+    }
 
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = url;
+    /**
+     * 显示 3DS 验证 iframe
+     * @param {string} url 3DS 验证 URL
+     * @param {string} method 请求方法 (GET/POST)
+     * @param {Object} data POST 数据
+     * @returns {boolean} 成功标志
+     */
+    show3DSIframe(url, method = 'GET', data = {}) {
+        this.logger.log('Creating 3DS iframe:', { url, method });
 
-        // 添加表单数据
-        if (data && typeof data === 'object') {
-            for (const [key, value] of Object.entries(data)) {
-                const input = document.createElement('input');
-                input.type = 'hidden';
-                input.name = key;
-                input.value = typeof value === 'string' ? value : JSON.stringify(value);
-                form.appendChild(input);
+        // 创建遮罩层
+        const overlay = document.createElement('div');
+        overlay.id = 'threeds-overlay';
+        overlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 9998;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        `;
+
+        // 创建 iframe 容器
+        const container = document.createElement('div');
+        container.id = 'threeds-container';
+        container.style.cssText = `
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            width: 90%;
+            max-width: 500px;
+            height: 80%;
+            max-height: 600px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        `;
+
+        // 创建头部
+        const header = document.createElement('div');
+        header.style.cssText = `
+            padding: 16px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f8f9fa;
+        `;
+        header.innerHTML = `
+            <span style="font-weight: 600; color: #333;">
+                ${this.currentLang === 'zh' ? '安全验证' : '3D Secure Verification'}
+            </span>
+            <button id="threeds-close" style="
+                background: none;
+                border: none;
+                font-size: 24px;
+                cursor: pointer;
+                color: #666;
+                padding: 0;
+                line-height: 1;
+            ">&times;</button>
+        `;
+
+        // 创建 iframe
+        const iframe = document.createElement('iframe');
+        iframe.id = 'threeds-iframe';
+        iframe.name = 'threeds-iframe';
+        iframe.style.cssText = `
+            flex: 1;
+            width: 100%;
+            border: none;
+        `;
+
+        // 组装 DOM
+        container.appendChild(header);
+        container.appendChild(iframe);
+        overlay.appendChild(container);
+        document.body.appendChild(overlay);
+
+        // 关闭按钮事件
+        const closeBtn = document.getElementById('threeds-close');
+        closeBtn.addEventListener('click', () => {
+            this.close3DSIframe();
+        });
+
+        // 点击遮罩关闭
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) {
+                this.close3DSIframe();
             }
+        });
+
+        // 监听 iframe 消息（用于接收 3DS 完成回调）
+        window.addEventListener('message', this.handle3DSMessage.bind(this));
+
+        // 根据方法提交
+        if (method.toUpperCase() === 'GET') {
+            iframe.src = url;
+        } else {
+            // POST 方式：创建表单提交到 iframe
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = url;
+            form.target = 'threeds-iframe';
+            form.style.display = 'none';
+
+            if (data && typeof data === 'object') {
+                for (const [key, value] of Object.entries(data)) {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = key;
+                    input.value = typeof value === 'string' ? value : JSON.stringify(value);
+                    form.appendChild(input);
+                }
+            }
+
+            document.body.appendChild(form);
+            form.submit();
+            document.body.removeChild(form);
         }
 
-        document.body.appendChild(form);
-        form.submit();
         return true;
+    }
+
+    /**
+     * 处理 3DS iframe 消息
+     * @param {MessageEvent} event 消息事件
+     */
+    handle3DSMessage(event) {
+        this.logger.log('Received message from iframe:', event.data);
+
+        // 验证消息来源（可根据实际情况调整）
+        if (event.data && (event.data.type === '3ds_complete' || event.data.status)) {
+            this.logger.log('3DS verification completed:', event.data);
+            this.close3DSIframe();
+
+            // 处理 3DS 结果
+            if (event.data.status === 'succeeded' || event.data.success) {
+                // 支付成功，跳转到成功页面
+                if (event.data.return_url) {
+                    window.location.href = event.data.return_url;
+                } else {
+                    window.location.reload();
+                }
+            } else {
+                // 支付失败
+                this.showError(event.data.message || (this.currentLang === 'zh' ? '3DS 验证失败' : '3DS verification failed'));
+            }
+        }
+    }
+
+    /**
+     * 关闭 3DS iframe
+     */
+    close3DSIframe() {
+        const overlay = document.getElementById('threeds-overlay');
+        if (overlay) {
+            overlay.remove();
+        }
+        window.removeEventListener('message', this.handle3DSMessage.bind(this));
+        this.logger.log('3DS iframe closed');
     }
 
     /**
