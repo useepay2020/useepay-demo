@@ -284,6 +284,7 @@ const GooglePay = (function() {
 
     /**
      * 处理 Google Pay 支付
+     * 直接在 createPayment 时传递 Google Pay 数据，不需要单独 confirm
      */
     async function processPayment(paymentData) {
         try {
@@ -296,47 +297,37 @@ const GooglePay = (function() {
                 () => CheckoutRenderer.calculateTotals(cart)
             );
             
-            // 创建 PaymentIntent
-            console.log('Creating PaymentIntent for Google Pay...');
-            const createResponse = await fetch('/api/payment', {
+            // 添加 Google Pay 支付数据到请求中
+            checkoutData.payment_method_data = {
+                type: 'google_pay',
+                google_pay: {
+                    encrypt_payment_data: paymentData.paymentMethodData.tokenizationData.token
+                }
+            };
+            
+            // 创建并确认支付（一步完成）
+            console.log('Creating and confirming payment with Google Pay...');
+            const response = await fetch('/api/payment', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(checkoutData)
             });
-            const createResult = await createResponse.json();
-            console.log('PaymentIntent created:', createResult);
+            const result = await response.json();
+            console.log('Payment response:', result);
             
-            if (!createResult.success || !createResult.data.id) {
-                throw new Error(createResult.error?.message || 'Failed to create payment');
+            if (!result.success) {
+                throw new Error(result.error?.message || 'Payment failed');
             }
             
-            const paymentIntentId = createResult.data.id;
-            
-            // Confirm 支付
-            console.log('Confirming payment with Google Pay token...');
-            const confirmResponse = await fetch(`/api/payment/confirm/${paymentIntentId}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    payment_method_data: {
-                        type: 'google_pay',
-                        google_pay: paymentData
-                    }
-                })
-            });
-            
-            const confirmResult = await confirmResponse.json();
-            console.log('Confirm response:', confirmResult);
-            
             const orderData = {
-                orderId: confirmResult.data.merchant_order_id,
-                paymentIntentId: confirmResult.data.id,
+                orderId: result.data.merchant_order_id,
+                paymentIntentId: result.data.id,
                 customer: data,
                 items: cart,
                 totals: checkoutData.totals,
                 date: new Date().toISOString(),
-                status: confirmResult.data.status,
-                amount: confirmResult.data.amount
+                status: result.data.status,
+                amount: result.data.amount
             };
             
             const paymentHandler = new PaymentResponseHandler({
@@ -347,15 +338,14 @@ const GooglePay = (function() {
             });
             
             // 检查是否需要 3DS 验证
-            if (confirmResult.data.next_action && confirmResult.data.next_action.redirect) {
-                console.log('3DS verification required:', confirmResult.data.next_action);
-                // 使用 PaymentResponseHandler 处理 3DS 重定向（会在 iframe 中打开）
-                paymentHandler.handlePaymentResult(confirmResult, orderData);
-            } else if (confirmResult.success && confirmResult.data.status === 'succeeded') {
+            if (result.data.next_action && result.data.next_action.redirect) {
+                console.log('3DS verification required:', result.data.next_action);
+                paymentHandler.handlePaymentResult(result, orderData);
+            } else if (result.data.status === 'succeeded') {
                 // 支付成功
-                paymentHandler.handlePaymentResult(confirmResult, orderData);
+                paymentHandler.handlePaymentResult(result, orderData);
             } else {
-                showError(confirmResult.error?.message || (currentLang === 'zh' ? '支付失败' : 'Payment failed'));
+                showError(result.error?.message || (currentLang === 'zh' ? '支付失败' : 'Payment failed'));
             }
             
         } catch (err) {

@@ -197,10 +197,11 @@ class PaymentController extends BaseController
                 $paymentParams['auto_capture'] = true;
             }
 
-            // Handle Apple Pay payment_method_data
+            // Handle Apple Pay / Google Pay payment_method_data
             if (!empty($data['payment_method_data']) && is_array($data['payment_method_data'])) {
                 $methodData = $data['payment_method_data'];
                 
+                // Apple Pay
                 if (isset($methodData['type']) && $methodData['type'] === 'apple_pay') {
                     $paymentParams['payment_method_data']['type'] = 'apple_pay';
                     
@@ -217,6 +218,24 @@ class PaymentController extends BaseController
                     $this->log('Apple Pay data added to payment_method_data', 'info', [
                         'type' => 'apple_pay',
                         'merchant_identifier' => $methodData['apple_pay']['merchant_identifier'] ?? 'N/A'
+                    ], 'payment');
+                }
+                // Google Pay
+                else if (isset($methodData['type']) && $methodData['type'] === 'google_pay') {
+                    $paymentParams['payment_method_data']['type'] = 'google_pay';
+                    
+                    if (!empty($methodData['google_pay'])) {
+                        $paymentParams['payment_method_data']['google_pay'] = array(
+                            'encrypt_payment_data' => $methodData['google_pay']['encrypt_payment_data'] ?? ''
+                        );
+                    }
+                    
+                    $paymentParams['confirm'] = true;
+                    $paymentParams['auto_capture'] = true;
+                    
+                    $this->log('Google Pay data added to payment_method_data', 'info', [
+                        'type' => 'google_pay',
+                        'has_encrypt_payment_data' => !empty($methodData['google_pay']['encrypt_payment_data'])
                     ], 'payment');
                 }
             }
@@ -362,11 +381,14 @@ class PaymentController extends BaseController
                     
                     $paymentParams['payment_method_data'] = array(
                         'type' => 'google_pay',
-                        'google_pay' => $googlePayData
+                        'google_pay' => array(
+                            'encrypt_payment_data' => $googlePayData['encrypt_payment_data'] ?? ''
+                        )
                     );
                     
                     $this->log('Google Pay Confirm - payment_method_data', 'info', [
-                        'type' => 'google_pay'
+                        'type' => 'google_pay',
+                        'has_encrypt_payment_data' => !empty($googlePayData['encrypt_payment_data'])
                     ], 'payment');
                 }
                 else {

@@ -248,6 +248,7 @@ const ApplePay = (function() {
             };
             
             // 支付授权回调
+            // 直接在 createPayment 时传递 Apple Pay 数据，不需要单独 confirm
             session.onpaymentauthorized = async (event) => {
                 console.log('onpaymentauthorized - payment:', event.payment);
                 
@@ -261,56 +262,40 @@ const ApplePay = (function() {
                         () => CheckoutRenderer.calculateTotals(cart)
                     );
                     
-                    // 创建 PaymentIntent
-                    console.log('Creating PaymentIntent...');
-                    const createResponse = await fetch('/api/payment', {
+                    // 添加 Apple Pay 支付数据到请求中
+                    checkoutData.payment_method_data = {
+                        type: 'apple_pay',
+                        apple_pay: {
+                            merchant_identifier: config.merchantIdentifier,
+                            payment: event.payment
+                        }
+                    };
+                    
+                    // 创建并确认支付（一步完成）
+                    console.log('Creating and confirming payment with Apple Pay...');
+                    const response = await fetch('/api/payment', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(checkoutData)
                     });
-                    const createResult = await createResponse.json();
-                    console.log('PaymentIntent created:', createResult);
+                    const result = await response.json();
+                    console.log('Payment response:', result);
                     
-                    if (!createResult.success || !createResult.data.id) {
-                        throw new Error(createResult.error?.message || 'Failed to create payment');
-                    }
-                    
-                    const paymentIntentId = createResult.data.id;
-                    
-                    // Confirm 支付
-                    console.log('Confirming payment with Apple Pay token...');
-                    const confirmResponse = await fetch(`/api/payment/confirm/${paymentIntentId}`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            payment_method_data: {
-                                type: 'apple_pay',
-                                apple_pay: {
-                                    merchant_identifier: config.merchantIdentifier,
-                                    encrypted_payment_token: event.payment
-                                }
-                            }
-                        })
-                    });
-                    
-                    const confirmResult = await confirmResponse.json();
-                    console.log('Confirm response:', confirmResult);
-                    
-                    const paymentStatus = confirmResult.success && confirmResult.data.status === 'succeeded';
+                    const paymentStatus = result.success && result.data.status === 'succeeded';
                     session.completePayment({
                         status: paymentStatus ? ApplePaySession.STATUS_SUCCESS : ApplePaySession.STATUS_FAILURE
                     });
                     
                     if (paymentStatus) {
                         const orderData = {
-                            orderId: confirmResult.data.merchant_order_id,
-                            paymentIntentId: confirmResult.data.id,
+                            orderId: result.data.merchant_order_id,
+                            paymentIntentId: result.data.id,
                             customer: data,
                             items: cart,
                             totals: checkoutData.totals,
                             date: new Date().toISOString(),
-                            status: confirmResult.data.status,
-                            amount: confirmResult.data.amount
+                            status: result.data.status,
+                            amount: result.data.amount
                         };
                         
                         const paymentHandler = new PaymentResponseHandler({
@@ -319,9 +304,9 @@ const ApplePay = (function() {
                             submitButton: document.getElementById('submitButton'),
                             totals: checkoutData.totals
                         });
-                        paymentHandler.handlePaymentResult(confirmResult, orderData);
+                        paymentHandler.handlePaymentResult(result, orderData);
                     } else {
-                        showError(confirmResult.error?.message || (currentLang === 'zh' ? '支付失败' : 'Payment failed'));
+                        showError(result.error?.message || (currentLang === 'zh' ? '支付失败' : 'Payment failed'));
                     }
                     
                 } catch (err) {
