@@ -73,6 +73,16 @@ if (preg_match('#^/api/payment/confirm/([a-zA-Z0-9_-]+)$#', $request, $matches))
     $controller->confirmPayment($matches[1]);
     exit;
 }
+// Handling dynamic routing of Shopify and Shopify plugin documents
+// /plugin-docs/{lang}/{slug} eg:/plugin-docs/en/shopify-embedded
+if (preg_match('#^/plugin-docs/(zh|en)/([a-zA-Z0-9_-]+)$#', $request, $matches)) {
+    $lang = $matches[1];   // zh or en
+    $slug = $matches[2];   // shopify-embedded ...
+    require_once __DIR__ . '/../src/Controllers/DocController.php';
+    $controller = new \UseePayDemo\Controllers\DocController();
+    $controller->show($slug, $lang);
+    exit;
+}
 
 // Route the request
 switch ($request) {
