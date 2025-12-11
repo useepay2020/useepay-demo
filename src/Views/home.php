@@ -404,6 +404,23 @@
             box-shadow: 0 4px 12px rgba(74, 107, 223, 0.3);
         }
 
+        .doc-section .doc-card {
+            border-radius: 10px;
+            padding: 1.2rem 1.5rem;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.04);
+            border: 1px solid #edf2f7;
+            background: #ffffff;
+        }
+
+        .doc-section .doc-card:nth-child(1) { background: #f5f7ff; }
+        .doc-section .doc-card:nth-child(2) { background: #f5f7ff; }
+        .doc-section .doc-card:nth-child(3) { background: #f5f7ff; }
+
+        .doc-section .doc-card h3 { ... }
+        .doc-section .doc-card p  { ... }
+        .doc-section .doc-tags { ... }
+        .doc-section .doc-tags .tag { ... }
+
         @keyframes fadeIn {
             from {
                 opacity: 0;
@@ -483,289 +500,414 @@
     <main class="main-content" style="padding-top: 0;">
         <div class="container">
             <!-- 建站方式导航栏 - 靠左对齐 -->
-            <div style="background: white; border-bottom: 2px solid #e9ecef; margin: 0 -20px 1.5rem -20px; display: flex; padding-left: 20px;">
-                <button class="building-nav-btn" data-value="selfBuilt" style="flex: 0 0 auto; padding: 1rem 2rem; text-align: center; background: transparent; border: none; cursor: pointer; font-size: 1rem; font-weight: 600; color: var(--text-light); transition: all 0.3s ease; border-bottom: 3px solid transparent; margin-bottom: -2px; position: relative;" onclick="selectBuildingMethod(this)">
+            <div style="background: white; border-bottom: 2px solid #e9ecef; margin: 0 -20px 1.5rem -20px; display: flex; padding-left: 20px; height: 56px; align-items: center; box-sizing: border-box; overflow: visible; position: relative;">
+                <button class="building-nav-btn" data-value="selfBuilt" style="flex: 0 0 auto; padding: 8px 20px; text-align: center; background: white; border: 1px solid #e9ecef; border-radius: 8px; cursor: pointer; font-size: 0.95rem; font-weight: 600; color: #666; transition: all 0.3s ease; margin-right: 8px; position: relative;" onclick="selectBuildingMethod(this)">
                     <i class="fas fa-hammer" style="margin-right: 0.5rem;"></i>
                     <span data-i18n="selfBuilt">自建站</span>
                 </button>
-                <button class="building-nav-btn" data-value="shopify" style="flex: 0 0 auto; padding: 1rem 2rem; text-align: center; background: transparent; border: none; cursor: pointer; font-size: 1rem; font-weight: 600; color: var(--text-light); transition: all 0.3s ease; border-bottom: 3px solid transparent; margin-bottom: -2px; position: relative;" onclick="selectBuildingMethod(this)">
+                <button class="building-nav-btn" data-value="shopify" style="flex: 0 0 auto; padding: 8px 20px; text-align: center; background: white; border: 1px solid #e9ecef; border-radius: 8px; cursor: pointer; font-size: 0.95rem; font-weight: 600; color: #666; transition: all 0.3s ease; margin-right: 8px; position: relative;" onclick="selectBuildingMethod(this)">
                     <i class="fas fa-shopping-bag" style="margin-right: 0.5rem;"></i>
                     <span>Shopify</span>
                 </button>
-                <button class="building-nav-btn" data-value="shopline" style="flex: 0 0 auto; padding: 1rem 2rem; text-align: center; background: transparent; border: none; cursor: pointer; font-size: 1rem; font-weight: 600; color: var(--text-light); transition: all 0.3s ease; border-bottom: 3px solid transparent; margin-bottom: -2px; position: relative;" onclick="selectBuildingMethod(this)">
+                <button class="building-nav-btn" data-value="shopline" style="flex: 0 0 auto; padding: 8px 20px; text-align: center; background: white; border: 1px solid #e9ecef; border-radius: 8px; cursor: pointer; font-size: 0.95rem; font-weight: 600; color: #666; transition: all 0.3s ease; margin-right: 8px; position: relative;" onclick="selectBuildingMethod(this)">
                     <i class="fas fa-store" style="margin-right: 0.5rem;"></i>
                     <span>ShopLine</span>
                 </button>
             </div>
-            
+
             <style>
-                .building-nav-btn.active {
-                    color: var(--primary-color);
-                    border-bottom-color: var(--primary-color);
+                .building-nav-btn {
+                    position: relative !important;
+                    transition: all 0.3s ease !important;
+                    border: 1px solid #e9ecef !important;
+                    border-radius: 8px !important;
+                    background: white !important;
                 }
-                
+
+                .building-nav-btn.active {
+                    color: var(--primary-color, #1890ff) !important;
+                    border-color: var(--primary-color, #1890ff) !important;
+                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+                }
+
+                .building-nav-btn.active::after {
+                    content: '';
+                    position: absolute;
+                    bottom: -10px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    width: 80px;
+                    height: 3px;
+                    background-color: var(--primary-color, #1890ff);
+                    border-radius: 2px;
+                    z-index: 2;
+                }
+
                 .building-nav-btn:hover {
-                    color: var(--primary-color);
+                    color: #666 !important;
+                    border-color: #e9ecef !important;
+                    box-shadow: none !important;
+                    transform: none !important;
+                }
+
+                .building-nav-btn.active:hover {
+                    color: var(--primary-color, #1890ff) !important;
+                    border-color: var(--primary-color, #1890ff) !important;
+                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
                 }
             </style>
 
-            <!-- 支付模式选择区域 -->
-            <div class="card" style="margin-bottom: 2rem; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
-                <h2 style="text-align: center; color: var(--primary-color); margin-bottom: 1.5rem;">
-                    <i class="fas fa-cog"></i> <span data-i18n="selectMode">选择集成模式</span>
-                </h2>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
-                    <label class="payment-mode-option" style="display: flex; flex-direction: column; cursor: pointer; padding: 1.2rem; background: white; border: 2px solid #dee2e6; border-radius: 8px; transition: all 0.3s ease;">
-                        <div style="display: flex; align-items: center; margin-bottom: 0.5rem;">
-                            <input type="radio" name="paymentMode" value="redirect" checked style="margin-right: 0.8rem; cursor: pointer; width: 18px; height: 18px;">
-                            <strong style="font-size: 1.1rem; color: var(--text-color);" data-i18n="redirect">跳转收银台</strong>
+            <!-- 自建站板块：放置自建站的支付体验内容 -->
+            <div id="selfBuiltSection">
+                <!-- 支付模式选择区域 -->
+                <div class="card" style="margin-bottom: 2rem; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+                    <h2 style="text-align: center; color: var(--primary-color); margin-bottom: 1.5rem;">
+                        <i class="fas fa-cog"></i> <span data-i18n="selectMode">选择集成模式</span>
+                    </h2>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+                        <label class="payment-mode-option" style="display: flex; flex-direction: column; cursor: pointer; padding: 1.2rem; background: white; border: 2px solid #dee2e6; border-radius: 8px; transition: all 0.3s ease;">
+                            <div style="display: flex; align-items: center; margin-bottom: 0.5rem;">
+                                <input type="radio" name="paymentMode" value="redirect" checked style="margin-right: 0.8rem; cursor: pointer; width: 18px; height: 18px;">
+                                <strong style="font-size: 1.1rem; color: var(--text-color);" data-i18n="redirect">跳转收银台</strong>
+                            </div>
+                            <small style="color: var(--text-light); line-height: 1.5;" data-i18n="redirectDesc">跳转到 UseePay 托管的收银台页面，快速集成，安全可靠</small>
+                        </label>
+                        <label class="payment-mode-option" style="display: flex; flex-direction: column; cursor: pointer; padding: 1.2rem; background: white; border: 2px solid #dee2e6; border-radius: 8px; transition: all 0.3s ease;">
+                            <div style="display: flex; align-items: center; margin-bottom: 0.5rem;">
+                                <input type="radio" name="paymentMode" value="embedded" style="margin-right: 0.8rem; cursor: pointer; width: 18px; height: 18px;">
+                                <strong style="font-size: 1.1rem; color: var(--text-color);" data-i18n="embedded">内嵌收银台</strong>
+                            </div>
+                            <small style="color: var(--text-light); line-height: 1.5;" data-i18n="embeddedDesc">在您的页面中嵌入收银台组件，保持品牌一致性</small>
+                        </label>
+                        <label class="payment-mode-option" style="display: flex; flex-direction: column; cursor: pointer; padding: 1.2rem; background: white; border: 2px solid #dee2e6; border-radius: 8px; transition: all 0.3s ease;">
+                            <div style="display: flex; align-items: center; margin-bottom: 0.5rem;">
+                                <input type="radio" name="paymentMode" value="api" style="margin-right: 0.8rem; cursor: pointer; width: 18px; height: 18px;">
+                                <strong style="font-size: 1.1rem; color: var(--text-color);" data-i18n="api">纯 API 模式</strong>
+                            </div>
+                            <small style="color: var(--text-light); line-height: 1.5;" data-i18n="apiDesc">完全自定义支付流程和界面，灵活度最高</small>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="cards">
+                    <div class="card">
+                        <h2><i class="fas fa-credit-card"></i> <span data-i18n="payment">一次支付</span></h2>
+                        <p data-i18n="paymentDesc">处理一次性支付，支持多种支付方式。请选择您需要启用的支付方式：</p>
+
+                        <div style="margin: 1.5rem 0; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+                            <label style="display: block; margin-bottom: 1rem; font-weight: 600; color: var(--text-color);">
+                                <i class="fas fa-wallet"></i> <span data-i18n="selectPaymentMethod">选择支付方式：</span>
+                            </label>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.8rem;">
+                                <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
+                                    <input type="checkbox" name="paymentMethod" value="card" checked style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
+                                    <i class="fas fa-credit-card" style="margin-right: 0.5rem; color: #1a73e8; font-size: 1.1rem;"></i>
+                                    <span style="font-size: 0.95rem;" data-i18n="card">国际信用卡/借记卡</span>
+                                </label>
+                                <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
+                                    <input type="checkbox" name="paymentMethod" value="apple_pay" checked style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
+                                    <i class="fab fa-apple" style="margin-right: 0.5rem; color: #000000; font-size: 1.2rem;"></i>
+                                    <span style="font-size: 0.95rem;">Apple Pay</span>
+                                </label>
+                                <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
+                                    <input type="checkbox" name="paymentMethod" value="google_pay" checked style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
+                                    <i class="fab fa-google" style="margin-right: 0.5rem; color: #4285F4; font-size: 1.1rem;"></i>
+                                    <span style="font-size: 0.95rem;">Google Pay</span>
+                                </label>
+                                <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
+                                    <input type="checkbox" name="paymentMethod" value="wechat" checked style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
+                                    <i class="fab fa-weixin" style="margin-right: 0.5rem; color: #09B83E; font-size: 1.2rem;"></i>
+                                    <span style="font-size: 0.95rem;" data-i18n="wechat">微信支付</span>
+                                </label>
+                                <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
+                                    <input type="checkbox" name="paymentMethod" value="alipay" checked style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
+                                    <i class="fab fa-alipay" style="margin-right: 0.5rem; color: #1677FF; font-size: 1.2rem;"></i>
+                                    <span style="font-size: 0.95rem;" data-i18n="alipay">支付宝</span>
+                                </label>
+                                <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
+                                    <input type="checkbox" name="paymentMethod" value="oxxo" style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
+                                    <i class="fas fa-store" style="margin-right: 0.5rem; color: #EC0000; font-size: 1.1rem;"></i>
+                                    <span style="font-size: 0.95rem;" data-i18n="oxxo">OXXO</span>
+                                </label>
+                                <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
+                                    <input type="checkbox" name="paymentMethod" value="kakao_pay" style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
+                                    <svg style="margin-right: 0.5rem; width: 24px; height: 24px;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <circle cx="12" cy="12" r="11" fill="#FFE812"/>
+                                        <path d="M12 5C8.13 5 5 7.68 5 11c0 2.04 1.23 3.82 3.04 4.63L7.84 18l3.05-1.61c.5.08 1.02.12 1.54.12 3.87 0 7-2.68 7-6s-3.13-6-7-6z" fill="#000000"/>
+                                    </svg>
+                                    <span style="font-size: 0.95rem;" data-i18n="kakaoPay">Kakao Pay</span>
+                                </label>
+                                <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
+                                    <input type="checkbox" name="paymentMethod" value="naver_pay" style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
+                                    <svg style="margin-right: 0.5rem; width: 24px; height: 24px;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <rect width="24" height="24" fill="#00C73C"/>
+                                        <path d="M6 8h3v8H6V8zm5 0h3v8h-3V8zm5 0h3v8h-3V8z" fill="white"/>
+                                    </svg>
+                                    <span style="font-size: 0.95rem;" data-i18n="naverPay">Naver Pay</span>
+                                </label>
+                                <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
+                                    <input type="checkbox" name="paymentMethod" value="payco" style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
+                                    <svg style="margin-right: 0.5rem; width: 24px; height: 24px;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <rect width="24" height="24" fill="#0066FF"/>
+                                        <text x="12" y="16" font-size="14" font-weight="bold" fill="white" text-anchor="middle">P</text>
+                                    </svg>
+                                    <span style="font-size: 0.95rem;" data-i18n="payco">Payco</span>
+                                </label>
+                                <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
+                                    <input type="checkbox" name="paymentMethod" value="toss_pay" style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
+                                    <svg style="margin-right: 0.5rem; width: 24px; height: 24px;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <rect width="24" height="24" fill="#0066FF" rx="4"/>
+                                        <path d="M12 6L8 14h3v4h2v-4h3L12 6z" fill="white"/>
+                                    </svg>
+                                    <span style="font-size: 0.95rem;" data-i18n="toss">Toss</span>
+                                </label>
+                                <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
+                                    <input type="checkbox" name="paymentMethod" value="samsung_pay" style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
+                                    <svg style="margin-right: 0.5rem; width: 24px; height: 24px;" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <rect width="512" height="512" rx="80" fill="#1428A0"/>
+                                        <path d="M256 140c-50 0-90 25-90 60 0 20 15 35 40 45-30 8-50 25-50 50 0 40 45 70 100 70s100-30 100-70c0-25-20-42-50-50 25-10 40-25 40-45 0-35-40-60-90-60zm0 35c25 0 45 12 45 30s-20 30-45 30-45-12-45-30 20-30 45-30zm0 110c30 0 55 15 55 35s-25 35-55 35-55-15-55-35 25-35 55-35z" fill="white"/>
+                                    </svg>
+                                    <span style="font-size: 0.95rem;" data-i18n="samsungPay">Samsung Pay</span>
+                                </label>
+                                <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
+                                    <input type="checkbox" name="paymentMethod" value="tmoney" style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
+                                    <svg style="margin-right: 0.5rem; width: 24px; height: 24px;" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <defs>
+                                            <linearGradient id="tmoneyGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                                <stop offset="0%" style="stop-color:#FF6B00;stop-opacity:1" />
+                                                <stop offset="100%" style="stop-color:#FF9500;stop-opacity:1" />
+                                            </linearGradient>
+                                        </defs>
+                                        <rect width="512" height="512" rx="80" fill="url(#tmoneyGradient)"/>
+                                        <path d="M150 180h212v40H150zm106 80c-60 0-106 35-106 85 0 45 46 80 106 80s106-35 106-80c0-50-46-85-106-85zm0 125c-35 0-60-20-60-40s25-40 60-40 60 20 60 40-25 40-60 40z" fill="white"/>
+                                        <circle cx="256" cy="200" r="25" fill="white"/>
+                                    </svg>
+                                    <span style="font-size: 0.95rem;" data-i18n="tmoney">T-money</span>
+                                </label>
+                            </div>
                         </div>
-                        <small style="color: var(--text-light); line-height: 1.5;" data-i18n="redirectDesc">跳转到 UseePay 托管的收银台页面，快速集成，安全可靠</small>
-                    </label>
-                    <label class="payment-mode-option" style="display: flex; flex-direction: column; cursor: pointer; padding: 1.2rem; background: white; border: 2px solid #dee2e6; border-radius: 8px; transition: all 0.3s ease;">
-                        <div style="display: flex; align-items: center; margin-bottom: 0.5rem;">
-                            <input type="radio" name="paymentMode" value="embedded" style="margin-right: 0.8rem; cursor: pointer; width: 18px; height: 18px;">
-                            <strong style="font-size: 1.1rem; color: var(--text-color);" data-i18n="embedded">内嵌收银台</strong>
+
+                        <a href="#" class="btn btn-success" id="createPaymentBtn">
+                            <i class="fas fa-shopping-cart"></i> <span data-i18n="createPayment">创建支付</span>
+                        </a>
+                    </div>
+
+                    <div class="card">
+                        <h2><i class="fas fa-calendar-alt"></i> <span data-i18n="installmentPayment">分期支付</span></h2>
+                        <p data-i18n="installmentPaymentDesc">灵活的分期付款方案，支持多种分期支付方式。请选择您需要启用的支付方式：</p>
+
+                        <div style="margin: 1.5rem 0; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+                            <label style="display: block; margin-bottom: 1rem; font-weight: 600; color: var(--text-color);">
+                                <i class="fas fa-wallet"></i> <span data-i18n="selectInstallmentMethod">选择支付方式：</span>
+                            </label>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.8rem;">
+                                <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
+                                    <input type="checkbox" name="installmentMethod" value="afterpay" checked style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
+                                    <i class="fas fa-calendar-check" style="margin-right: 0.5rem; color: #B2FCE4; font-size: 1.1rem;"></i>
+                                    <span style="font-size: 0.95rem;" data-i18n="afterpay">Afterpay</span>
+                                </label>
+                                <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
+                                    <input type="checkbox" name="installmentMethod" value="klarna" checked style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
+                                    <i class="fas fa-shopping-bag" style="margin-right: 0.5rem; color: #FFB3C7; font-size: 1.1rem;"></i>
+                                    <span style="font-size: 0.95rem;" data-i18n="klarna">Klarna</span>
+                                </label>
+                                <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
+                                    <input type="checkbox" name="installmentMethod" value="affirm" checked style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
+                                    <i class="fas fa-check-circle" style="margin-right: 0.5rem; color: #0FA0EA; font-size: 1.1rem;"></i>
+                                    <span style="font-size: 0.95rem;" data-i18n="affirm">Affirm</span>
+                                </label>
+                                <div style="display: flex; align-items: center; justify-content: center; padding: 0.6rem; background: #f8f9fa; border-radius: 6px; border: 1px dashed #dee2e6;">
+                                    <i class="fas fa-ellipsis-h" style="margin-right: 0.5rem; color: #6c757d;"></i>
+                                    <span style="font-size: 0.9rem; color: #6c757d; font-style: italic;" data-i18n="morePaymentMethods">更多支付方式...</span>
+                                </div>
+                            </div>
                         </div>
-                        <small style="color: var(--text-light); line-height: 1.5;" data-i18n="embeddedDesc">在您的页面中嵌入收银台组件，保持品牌一致性</small>
-                    </label>
-                    <label class="payment-mode-option" style="display: flex; flex-direction: column; cursor: pointer; padding: 1.2rem; background: white; border: 2px solid #dee2e6; border-radius: 8px; transition: all 0.3s ease;">
-                        <div style="display: flex; align-items: center; margin-bottom: 0.5rem;">
-                            <input type="radio" name="paymentMode" value="api" style="margin-right: 0.8rem; cursor: pointer; width: 18px; height: 18px;">
-                            <strong style="font-size: 1.1rem; color: var(--text-color);" data-i18n="api">纯 API 模式</strong>
+
+                        <a href="#" class="btn btn-success" id="createInstallmentBtn">
+                            <i class="fas fa-credit-card"></i> <span data-i18n="createInstallment">创建分期支付</span>
+                        </a>
+                    </div>
+
+                    <div class="card">
+                        <h2><i class="fas fa-sync"></i> <span data-i18n="subscription">订阅管理</span></h2>
+                        <p data-i18n="subscriptionDesc">设置和管理定期订阅，自动处理定期扣款和账单。请选择您需要启用的支付方式：</p>
+
+                        <div style="margin: 1.5rem 0; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+                            <label style="display: block; margin-bottom: 1rem; font-weight: 600; color: var(--text-color);">
+                                <i class="fas fa-wallet"></i> <span data-i18n="selectSubscriptionMethod">选择支付方式：</span>
+                            </label>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.8rem;">
+                                <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
+                                    <input type="checkbox" name="subscriptionMethod" value="card" checked style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
+                                    <i class="fas fa-credit-card" style="margin-right: 0.5rem; color: #1a73e8; font-size: 1.1rem;"></i>
+                                    <span style="font-size: 0.95rem;" data-i18n="card">国际信用卡/借记卡</span>
+                                </label>
+                                <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
+                                    <input type="checkbox" name="subscriptionMethod" value="apple_pay" checked style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
+                                    <i class="fab fa-apple" style="margin-right: 0.5rem; color: #000000; font-size: 1.2rem;"></i>
+                                    <span style="font-size: 0.95rem;">Apple Pay</span>
+                                </label>
+                                <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
+                                    <input type="checkbox" name="subscriptionMethod" value="google_pay" checked style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
+                                    <i class="fab fa-google" style="margin-right: 0.5rem; color: #4285F4; font-size: 1.1rem;"></i>
+                                    <span style="font-size: 0.95rem;">Google Pay</span>
+                                </label>
+                                <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
+                                    <input type="checkbox" name="subscriptionMethod" value="kakao_pay" style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
+                                    <svg style="margin-right: 0.5rem; width: 24px; height: 24px;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <circle cx="12" cy="12" r="11" fill="#FFE812"/>
+                                        <path d="M12 5C8.13 5 5 7.68 5 11c0 2.04 1.23 3.82 3.04 4.63L7.84 18l3.05-1.61c.5.08 1.02.12 1.54.12 3.87 0 7-2.68 7-6s-3.13-6-7-6z" fill="#000000"/>
+                                    </svg>
+                                    <span style="font-size: 0.95rem;" data-i18n="kakaoPay">Kakao Pay</span>
+                                </label>
+                                <div style="display: flex; align-items: center; justify-content: center; padding: 0.6rem; background: #f8f9fa; border-radius: 6px; border: 1px dashed #dee2e6;">
+                                    <i class="fas fa-ellipsis-h" style="margin-right: 0.5rem; color: #6c757d;"></i>
+                                    <span style="font-size: 0.9rem; color: #6c757d; font-style: italic;" data-i18n="morePaymentMethods">更多支付方式...</span>
+                                </div>
+                            </div>
                         </div>
-                        <small style="color: var(--text-light); line-height: 1.5;" data-i18n="apiDesc">完全自定义支付流程和界面，灵活度最高</small>
-                    </label>
+
+                        <a href="/subscription/pricing" class="btn btn-warning" id="createSubscriptionBtn">
+                            <i class="fas fa-plus"></i> <span data-i18n="createSubscription">创建订阅</span>
+                        </a>
+                    </div>
+
+                    <div class="card">
+                        <h2><i class="fas fa-bolt"></i> <span data-i18n="expressCheckout">Expression Checkout</span></h2>
+                        <p data-i18n="expressCheckoutDesc">快速发起支付，支持多种支付方式。请选择您需要启用的支付方式：</p>
+
+                        <div style="margin: 1.5rem 0; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+                            <label style="display: block; margin-bottom: 1rem; font-weight: 600; color: var(--text-color);">
+                                <i class="fas fa-wallet"></i> <span data-i18n="selectQuickPaymentMethod">选择支付方式：</span>
+                            </label>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.8rem;">
+                                <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
+                                    <input type="checkbox" name="quickPaymentMethod" value="card" checked style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
+                                    <i class="fas fa-credit-card" style="margin-right: 0.5rem; color: #1a73e8; font-size: 1.1rem;"></i>
+                                    <span style="font-size: 0.95rem;" data-i18n="card">国际信用卡/借记卡</span>
+                                </label>
+                                <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
+                                    <input type="checkbox" name="quickPaymentMethod" value="apple_pay" checked style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
+                                    <i class="fab fa-apple" style="margin-right: 0.5rem; color: #000000; font-size: 1.2rem;"></i>
+                                    <span style="font-size: 0.95rem;">Apple Pay</span>
+                                </label>
+                                <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
+                                    <input type="checkbox" name="quickPaymentMethod" value="google_pay" checked style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
+                                    <i class="fab fa-google" style="margin-right: 0.5rem; color: #4285F4; font-size: 1.1rem;"></i>
+                                    <span style="font-size: 0.95rem;">Google Pay</span>
+                                </label>
+                                <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
+                                    <input type="checkbox" name="quickPaymentMethod" value="wechat" checked style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
+                                    <i class="fab fa-weixin" style="margin-right: 0.5rem; color: #09B83E; font-size: 1.2rem;"></i>
+                                    <span style="font-size: 0.95rem;" data-i18n="wechat">微信支付</span>
+                                </label>
+                                <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
+                                    <input type="checkbox" name="quickPaymentMethod" value="alipay" checked style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
+                                    <i class="fab fa-alipay" style="margin-right: 0.5rem; color: #1677FF; font-size: 1.2rem;"></i>
+                                    <span style="font-size: 0.95rem;" data-i18n="alipay">支付宝</span>
+                                </label>
+                                <div style="display: flex; align-items: center; justify-content: center; padding: 0.6rem; background: #f8f9fa; border-radius: 6px; border: 1px dashed #dee2e6;">
+                                    <i class="fas fa-ellipsis-h" style="margin-right: 0.5rem; color: #6c757d;"></i>
+                                    <span style="font-size: 0.9rem; color: #6c757d; font-style: italic;" data-i18n="morePaymentMethods">更多支付方式...</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <a href="#" class="btn btn-success" id="expressCheckoutBtn">
+                            <i class="fas fa-zap"></i> <span data-i18n="startExpressCheckout">开始 Expression Checkout</span>
+                        </a>
+                    </div>
                 </div>
             </div>
-            
-            <div class="cards">
+
+            <!-- Shopify板块：默认隐藏，放置shopify插件教程 -->
+            <div id="shopifySection" class="doc-section" style="display:none;">
                 <div class="card">
-                    <h2><i class="fas fa-credit-card"></i> <span data-i18n="payment">一次支付</span></h2>
-                    <p data-i18n="paymentDesc">处理一次性支付，支持多种支付方式。请选择您需要启用的支付方式：</p>
-                    
-                    <div style="margin: 1.5rem 0; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
-                        <label style="display: block; margin-bottom: 1rem; font-weight: 600; color: var(--text-color);">
-                            <i class="fas fa-wallet"></i> <span data-i18n="selectPaymentMethod">选择支付方式：</span>
-                        </label>
-                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.8rem;">
-                            <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
-                                <input type="checkbox" name="paymentMethod" value="card" checked style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
-                                <i class="fas fa-credit-card" style="margin-right: 0.5rem; color: #1a73e8; font-size: 1.1rem;"></i>
-                                <span style="font-size: 0.95rem;" data-i18n="card">国际信用卡/借记卡</span>
-                            </label>
-                            <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
-                                <input type="checkbox" name="paymentMethod" value="apple_pay" checked style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
-                                <i class="fab fa-apple" style="margin-right: 0.5rem; color: #000000; font-size: 1.2rem;"></i>
-                                <span style="font-size: 0.95rem;">Apple Pay</span>
-                            </label>
-                            <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
-                                <input type="checkbox" name="paymentMethod" value="google_pay" checked style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
-                                <i class="fab fa-google" style="margin-right: 0.5rem; color: #4285F4; font-size: 1.1rem;"></i>
-                                <span style="font-size: 0.95rem;">Google Pay</span>
-                            </label>
-                            <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
-                                <input type="checkbox" name="paymentMethod" value="wechat" checked style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
-                                <i class="fab fa-weixin" style="margin-right: 0.5rem; color: #09B83E; font-size: 1.2rem;"></i>
-                                <span style="font-size: 0.95rem;" data-i18n="wechat">微信支付</span>
-                            </label>
-                            <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
-                                <input type="checkbox" name="paymentMethod" value="alipay" checked style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
-                                <i class="fab fa-alipay" style="margin-right: 0.5rem; color: #1677FF; font-size: 1.2rem;"></i>
-                                <span style="font-size: 0.95rem;" data-i18n="alipay">支付宝</span>
-                            </label>
-                            <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
-                                <input type="checkbox" name="paymentMethod" value="oxxo" style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
-                                <i class="fas fa-store" style="margin-right: 0.5rem; color: #EC0000; font-size: 1.1rem;"></i>
-                                <span style="font-size: 0.95rem;" data-i18n="oxxo">OXXO</span>
-                            </label>
-                            <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
-                                <input type="checkbox" name="paymentMethod" value="kakao_pay" style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
-                                <svg style="margin-right: 0.5rem; width: 24px; height: 24px;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <circle cx="12" cy="12" r="11" fill="#FFE812"/>
-                                    <path d="M12 5C8.13 5 5 7.68 5 11c0 2.04 1.23 3.82 3.04 4.63L7.84 18l3.05-1.61c.5.08 1.02.12 1.54.12 3.87 0 7-2.68 7-6s-3.13-6-7-6z" fill="#000000"/>
-                                </svg>
-                                <span style="font-size: 0.95rem;" data-i18n="kakaoPay">Kakao Pay</span>
-                            </label>
-                            <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
-                                <input type="checkbox" name="paymentMethod" value="naver_pay" style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
-                                <svg style="margin-right: 0.5rem; width: 24px; height: 24px;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <rect width="24" height="24" fill="#00C73C"/>
-                                    <path d="M6 8h3v8H6V8zm5 0h3v8h-3V8zm5 0h3v8h-3V8z" fill="white"/>
-                                </svg>
-                                <span style="font-size: 0.95rem;" data-i18n="naverPay">Naver Pay</span>
-                            </label>
-                            <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
-                                <input type="checkbox" name="paymentMethod" value="payco" style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
-                                <svg style="margin-right: 0.5rem; width: 24px; height: 24px;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <rect width="24" height="24" fill="#0066FF"/>
-                                    <text x="12" y="16" font-size="14" font-weight="bold" fill="white" text-anchor="middle">P</text>
-                                </svg>
-                                <span style="font-size: 0.95rem;" data-i18n="payco">Payco</span>
-                            </label>
-                            <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
-                                <input type="checkbox" name="paymentMethod" value="toss_pay" style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
-                                <svg style="margin-right: 0.5rem; width: 24px; height: 24px;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <rect width="24" height="24" fill="#0066FF" rx="4"/>
-                                    <path d="M12 6L8 14h3v4h2v-4h3L12 6z" fill="white"/>
-                                </svg>
-                                <span style="font-size: 0.95rem;" data-i18n="toss">Toss</span>
-                            </label>
-                            <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
-                                <input type="checkbox" name="paymentMethod" value="samsung_pay" style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
-                                <svg style="margin-right: 0.5rem; width: 24px; height: 24px;" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <rect width="512" height="512" rx="80" fill="#1428A0"/>
-                                    <path d="M256 140c-50 0-90 25-90 60 0 20 15 35 40 45-30 8-50 25-50 50 0 40 45 70 100 70s100-30 100-70c0-25-20-42-50-50 25-10 40-25 40-45 0-35-40-60-90-60zm0 35c25 0 45 12 45 30s-20 30-45 30-45-12-45-30 20-30 45-30zm0 110c30 0 55 15 55 35s-25 35-55 35-55-15-55-35 25-35 55-35z" fill="white"/>
-                                </svg>
-                                <span style="font-size: 0.95rem;" data-i18n="samsungPay">Samsung Pay</span>
-                            </label>
-                            <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
-                                <input type="checkbox" name="paymentMethod" value="tmoney" style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
-                                <svg style="margin-right: 0.5rem; width: 24px; height: 24px;" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <defs>
-                                        <linearGradient id="tmoneyGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                                            <stop offset="0%" style="stop-color:#FF6B00;stop-opacity:1" />
-                                            <stop offset="100%" style="stop-color:#FF9500;stop-opacity:1" />
-                                        </linearGradient>
-                                    </defs>
-                                    <rect width="512" height="512" rx="80" fill="url(#tmoneyGradient)"/>
-                                    <path d="M150 180h212v40H150zm106 80c-60 0-106 35-106 85 0 45 46 80 106 80s106-35 106-80c0-50-46-85-106-85zm0 125c-35 0-60-20-60-40s25-40 60-40 60 20 60 40-25 40-60 40z" fill="white"/>
-                                    <circle cx="256" cy="200" r="25" fill="white"/>
-                                </svg>
-                                <span style="font-size: 0.95rem;" data-i18n="tmoney">T-money</span>
-                            </label>
-                        </div>
-                    </div>
-                    
-                    <a href="#" class="btn btn-success" id="createPaymentBtn">
-                        <i class="fas fa-shopping-cart"></i> <span data-i18n="createPayment">创建支付</span>
-                    </a>
-                </div>
-                
-                <div class="card">
-                    <h2><i class="fas fa-calendar-alt"></i> <span data-i18n="installmentPayment">分期支付</span></h2>
-                    <p data-i18n="installmentPaymentDesc">灵活的分期付款方案，支持多种分期支付方式。请选择您需要启用的支付方式：</p>
-                    
-                    <div style="margin: 1.5rem 0; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
-                        <label style="display: block; margin-bottom: 1rem; font-weight: 600; color: var(--text-color);">
-                            <i class="fas fa-wallet"></i> <span data-i18n="selectInstallmentMethod">选择支付方式：</span>
-                        </label>
-                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.8rem;">
-                            <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
-                                <input type="checkbox" name="installmentMethod" value="afterpay" checked style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
-                                <i class="fas fa-calendar-check" style="margin-right: 0.5rem; color: #B2FCE4; font-size: 1.1rem;"></i>
-                                <span style="font-size: 0.95rem;" data-i18n="afterpay">Afterpay</span>
-                            </label>
-                            <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
-                                <input type="checkbox" name="installmentMethod" value="klarna" checked style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
-                                <i class="fas fa-shopping-bag" style="margin-right: 0.5rem; color: #FFB3C7; font-size: 1.1rem;"></i>
-                                <span style="font-size: 0.95rem;" data-i18n="klarna">Klarna</span>
-                            </label>
-                            <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
-                                <input type="checkbox" name="installmentMethod" value="affirm" checked style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
-                                <i class="fas fa-check-circle" style="margin-right: 0.5rem; color: #0FA0EA; font-size: 1.1rem;"></i>
-                                <span style="font-size: 0.95rem;" data-i18n="affirm">Affirm</span>
-                            </label>
-                            <div style="display: flex; align-items: center; justify-content: center; padding: 0.6rem; background: #f8f9fa; border-radius: 6px; border: 1px dashed #dee2e6;">
-                                <i class="fas fa-ellipsis-h" style="margin-right: 0.5rem; color: #6c757d;"></i>
-                                <span style="font-size: 0.9rem; color: #6c757d; font-style: italic;" data-i18n="morePaymentMethods">更多支付方式...</span>
+                    <h2>
+                        <i class="fas fa-shopping-bag"></i>
+                        <span data-i18n="shopifyDocTitle">Shopify 集成教程</span>
+                    </h2>
+                    <p data-i18n="shopifyDocIntro">Shopify 商户通过安装 UseePay 插件完成收付款，请点击下方链接查看完整集成步骤：</p>
+
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem;margin-top:1rem;">
+                        <div class="doc-card">
+                            <h3 data-i18n="shopifyEmbeddedTitle">内嵌收银台</h3>
+                            <div class="doc-tags">
+                                <span class="tag" data-i18n="shopifyEmbeddedTag">适用于：信用卡</span>
                             </div>
+                            <p data-i18n="shopifyEmbeddedDesc">将 UseePay 收银台直接嵌入 Shopify 结算流程，提升转化率，体验更自然。</p>
+                            <a href="/plugin-docs/zh/shopify-embedded"
+                               data-doc-slug="shopify-embedded"
+                               class="btn btn-outline"
+                                <span data-i18n="pluginDocButton">查看插件安装教程</span>
+                            </a>
                         </div>
-                    </div>
-                    
-                    <a href="#" class="btn btn-success" id="createInstallmentBtn">
-                        <i class="fas fa-credit-card"></i> <span data-i18n="createInstallment">创建分期支付</span>
-                    </a>
-                </div>
-                
-                <div class="card">
-                    <h2><i class="fas fa-sync"></i> <span data-i18n="subscription">订阅管理</span></h2>
-                    <p data-i18n="subscriptionDesc">设置和管理定期订阅，自动处理定期扣款和账单。请选择您需要启用的支付方式：</p>
-                    
-                    <div style="margin: 1.5rem 0; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
-                        <label style="display: block; margin-bottom: 1rem; font-weight: 600; color: var(--text-color);">
-                            <i class="fas fa-wallet"></i> <span data-i18n="selectSubscriptionMethod">选择支付方式：</span>
-                        </label>
-                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.8rem;">
-                            <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
-                                <input type="checkbox" name="subscriptionMethod" value="card" checked style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
-                                <i class="fas fa-credit-card" style="margin-right: 0.5rem; color: #1a73e8; font-size: 1.1rem;"></i>
-                                <span style="font-size: 0.95rem;" data-i18n="card">国际信用卡/借记卡</span>
-                            </label>
-                            <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
-                                <input type="checkbox" name="subscriptionMethod" value="apple_pay" checked style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
-                                <i class="fab fa-apple" style="margin-right: 0.5rem; color: #000000; font-size: 1.2rem;"></i>
-                                <span style="font-size: 0.95rem;">Apple Pay</span>
-                            </label>
-                            <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
-                                <input type="checkbox" name="subscriptionMethod" value="google_pay" checked style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
-                                <i class="fab fa-google" style="margin-right: 0.5rem; color: #4285F4; font-size: 1.1rem;"></i>
-                                <span style="font-size: 0.95rem;">Google Pay</span>
-                            </label>
-                            <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
-                                <input type="checkbox" name="subscriptionMethod" value="kakao_pay" style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
-                                <svg style="margin-right: 0.5rem; width: 24px; height: 24px;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <circle cx="12" cy="12" r="11" fill="#FFE812"/>
-                                    <path d="M12 5C8.13 5 5 7.68 5 11c0 2.04 1.23 3.82 3.04 4.63L7.84 18l3.05-1.61c.5.08 1.02.12 1.54.12 3.87 0 7-2.68 7-6s-3.13-6-7-6z" fill="#000000"/>
-                                </svg>
-                                <span style="font-size: 0.95rem;" data-i18n="kakaoPay">Kakao Pay</span>
-                            </label>
-                            <div style="display: flex; align-items: center; justify-content: center; padding: 0.6rem; background: #f8f9fa; border-radius: 6px; border: 1px dashed #dee2e6;">
-                                <i class="fas fa-ellipsis-h" style="margin-right: 0.5rem; color: #6c757d;"></i>
-                                <span style="font-size: 0.9rem; color: #6c757d; font-style: italic;" data-i18n="morePaymentMethods">更多支付方式...</span>
+
+                        <div class="doc-card">
+                            <h3 data-i18n="shopifyRedirectTitle">跳转收银台</h3>
+                            <div class="doc-tags">
+                                <span class="tag" data-i18n="shopifyRedirectTag">适用于：信用卡, GooglePay, ApplePay</span>
                             </div>
+                            <p data-i18n="shopifyRedirectDesc">在 Shopify 结算页引导用户跳转到 UseePay 托管收银台，快速完成多种支付。</p>
+                            <a href="/plugin-docs/zh/shopify-redirect"
+                               class="btn btn-outline"
+                               data-doc-slug="shopify-redirect">
+                                <span data-i18n="pluginDocButton">查看插件安装教程</span>
+                            </a>
                         </div>
-                    </div>
-                    
-                    <a href="/subscription/pricing" class="btn btn-warning" id="createSubscriptionBtn">
-                        <i class="fas fa-plus"></i> <span data-i18n="createSubscription">创建订阅</span>
-                    </a>
-                </div>
-                
-                <div class="card">
-                    <h2><i class="fas fa-bolt"></i> <span data-i18n="expressCheckout">Expression Checkout</span></h2>
-                    <p data-i18n="expressCheckoutDesc">快速发起支付，支持多种支付方式。请选择您需要启用的支付方式：</p>
-                    
-                    <div style="margin: 1.5rem 0; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
-                        <label style="display: block; margin-bottom: 1rem; font-weight: 600; color: var(--text-color);">
-                            <i class="fas fa-wallet"></i> <span data-i18n="selectQuickPaymentMethod">选择支付方式：</span>
-                        </label>
-                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.8rem;">
-                            <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
-                                <input type="checkbox" name="quickPaymentMethod" value="card" checked style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
-                                <i class="fas fa-credit-card" style="margin-right: 0.5rem; color: #1a73e8; font-size: 1.1rem;"></i>
-                                <span style="font-size: 0.95rem;" data-i18n="card">国际信用卡/借记卡</span>
-                            </label>
-                            <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
-                                <input type="checkbox" name="quickPaymentMethod" value="apple_pay" checked style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
-                                <i class="fab fa-apple" style="margin-right: 0.5rem; color: #000000; font-size: 1.2rem;"></i>
-                                <span style="font-size: 0.95rem;">Apple Pay</span>
-                            </label>
-                            <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
-                                <input type="checkbox" name="quickPaymentMethod" value="google_pay" checked style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
-                                <i class="fab fa-google" style="margin-right: 0.5rem; color: #4285F4; font-size: 1.1rem;"></i>
-                                <span style="font-size: 0.95rem;">Google Pay</span>
-                            </label>
-                            <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
-                                <input type="checkbox" name="quickPaymentMethod" value="wechat" checked style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
-                                <i class="fab fa-weixin" style="margin-right: 0.5rem; color: #09B83E; font-size: 1.2rem;"></i>
-                                <span style="font-size: 0.95rem;" data-i18n="wechat">微信支付</span>
-                            </label>
-                            <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
-                                <input type="checkbox" name="quickPaymentMethod" value="alipay" checked style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
-                                <i class="fab fa-alipay" style="margin-right: 0.5rem; color: #1677FF; font-size: 1.2rem;"></i>
-                                <span style="font-size: 0.95rem;" data-i18n="alipay">支付宝</span>
-                            </label>
-                            <div style="display: flex; align-items: center; justify-content: center; padding: 0.6rem; background: #f8f9fa; border-radius: 6px; border: 1px dashed #dee2e6;">
-                                <i class="fas fa-ellipsis-h" style="margin-right: 0.5rem; color: #6c757d;"></i>
-                                <span style="font-size: 0.9rem; color: #6c757d; font-style: italic;" data-i18n="morePaymentMethods">更多支付方式...</span>
+
+                        <div class="doc-card">
+                            <h3 data-i18n="shopifyLocalizedTitle">本地化收银台</h3>
+                            <div class="doc-tags">
+                                <span class="tag" data-i18n="shopifyLocalizedTag">适用于：本地化支付方式</span>
                             </div>
+                            <p data-i18n="shopifyLocalizedDesc">如：ApplePay, GooglePay, Klarna, Afterpay, Pix, OXXO等本地化支付</p>
+                            <a href="/plugin-docs/zh/shopify-localized"
+                               class="btn btn-outline"
+                               data-doc-slug="shopify-localized">
+                                <span data-i18n="pluginDocButton">查看插件安装教程</span>
+                            </a>
                         </div>
                     </div>
-                    
-                    <a href="#" class="btn btn-success" id="expressCheckoutBtn">
-                        <i class="fas fa-zap"></i> <span data-i18n="startExpressCheckout">开始 Expression Checkout</span>
-                    </a>
+                </div>
+            </div>
+
+            <!-- ShopLine板块：默认隐藏，放置shopline插件教程 -->
+            <div id="shoplineSection" class="doc-section" style="display:none;">
+                <div class="card">
+                    <h2>
+                        <i class="fas fa-store"></i>
+                        <span data-i18n="shoplineDocTitle">ShopLine 集成教程</span>
+                    </h2>
+                    <p data-i18n="shoplineDocIntro">ShopLine 商户通过安装 UseePay 插件完成收付款，请点击下方链接查看完整集成步骤：</p>
+
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem;margin-top:1rem;">
+                        <div class="doc-card">
+                            <h3 data-i18n="shoplineEmbeddedTitle">内嵌收银台</h3>
+                            <div class="doc-tags">
+                                <span class="tag" data-i18n="shoplineEmbeddedTag">适用于：信用卡</span>
+                            </div>
+                            <p data-i18n="shoplineEmbeddedDesc">在 ShopLine 结算页面内嵌 UseePay 收银台，适用于信用卡支付。</p>
+                            <a href="/plugin-docs/zh/shopline-embedded"
+                               class="btn btn-outline"
+                               data-doc-slug="shopline-embedded">
+                                <span data-i18n="pluginDocButton">查看插件安装教程</span>
+                            </a>
+                        </div>
+
+                        <div class="doc-card">
+                            <h3 data-i18n="shoplineRedirectTitle">跳转收银台</h3>
+                            <div class="doc-tags">
+                                <span class="tag" data-i18n="shoplineRedirectTag">适用于：GooglePay, ApplePay</span>
+                            </div>
+                            <p data-i18n="shoplineRedirectDesc">在 ShopLine 结算页引导用户跳转到 UseePay 托管收银台，支持 Google Pay / Apple Pay。</p>
+                            <a href="/plugin-docs/zh/shopline-redirect"
+                               class="btn btn-outline"
+                               data-doc-slug="shopline-redirect">
+                                <span data-i18n="pluginDocButton">查看插件安装教程</span>
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -861,6 +1003,8 @@
                 buildingMethod: '选择建站方式',
                 selfBuilt: '自建站',
                 selfBuiltDesc: '完全自定义，独立部署，完全掌控您的在线业务',
+                shopifyTab: 'Shopify',
+                shoplineTab: 'ShopLine',
                 shopifyDesc: '全球领先的电商平台，快速上线，专业支持',
                 shoplineDesc: '亚太地区领先的建站平台，本地化支持，易于使用',
                 welcome: '欢迎使用 UseePay API 演示',
@@ -886,6 +1030,7 @@
                 createSubscription: '创建订阅',
                 expressCheckout: '快捷支付',
                 expressCheckoutDesc: '快速发起支付，支持多种支付方式。请选择您需要启用的支付方式：',
+                selectQuickPaymentMethod: '选择支付方式：',
                 selectQuickPaymentMethod: '选择支付方式：',
                 startExpressCheckout: '快捷支付',
                 features: '主要特性',
@@ -925,7 +1070,31 @@
                 toss: 'Toss',
                 underConstructionTitle: '功能建设中',
                 underConstructionMessage: '该功能正在开发中，敬请期待！我们会尽快为您提供更好的体验。',
-                underConstructionBtn: '知道了'
+                underConstructionBtn: '知道了',
+
+                // Shopify / ShopLine 插件文档区
+                shopifyDocTitle: 'Shopify 集成教程',
+                shopifyDocIntro: 'Shopify 商户通过安装 UseePay 插件完成收付款，请点击下方链接查看完整集成步骤：',
+                shopifyEmbeddedTitle: '内嵌收银台',
+                shopifyEmbeddedTag: '适用于：信用卡',
+                shopifyEmbeddedDesc: '将 UseePay 收银台直接嵌入 Shopify 结算流程，提升转化率，体验更自然。',
+                shopifyRedirectTitle: '跳转收银台',
+                shopifyRedirectTag: '适用于：信用卡, GooglePay, ApplePay',
+                shopifyRedirectDesc: '在 Shopify 结算页引导用户跳转到 UseePay 托管收银台，快速完成多种支付。',
+                shopifyLocalizedTitle: '本地化收银台',
+                shopifyLocalizedTag: '适用于：本地化支付方式',
+                shopifyLocalizedDesc: '如：ApplePay, GooglePay, Klarna, Afterpay, Pix, OXXO等本地化支付',
+
+                shoplineDocTitle: 'ShopLine 集成教程',
+                shoplineDocIntro: 'ShopLine 商户通过安装 UseePay 插件完成收付款，请点击下方链接查看完整集成步骤：',
+                shoplineEmbeddedTitle: '内嵌收银台',
+                shoplineEmbeddedTag: '适用于：信用卡',
+                shoplineEmbeddedDesc: '在 ShopLine 结算页面内嵌 UseePay 收银台，适用于信用卡支付。',
+                shoplineRedirectTitle: '跳转收银台',
+                shoplineRedirectTag: '适用于：GooglePay, ApplePay',
+                shoplineRedirectDesc: '在 ShopLine 结算页引导用户跳转到 UseePay 托管收银台，支持 Google Pay / Apple Pay。',
+
+                pluginDocButton: '查看插件安装教程'
             },
             en: {
                 title: 'UseePay Demo',
@@ -935,8 +1104,10 @@
                 buildingMethod: 'Select Building Method',
                 selfBuilt: 'Self-Built',
                 selfBuiltDesc: 'Fully customizable, independent deployment, complete control of your online business',
+                shopifyTab: 'Shopify',
+                shoplineTab: 'ShopLine',
                 shopifyDesc: 'Leading global e-commerce platform, quick launch, professional support',
-                shoplineDesc: 'Leading building platform in Asia-Pacific, localized support, easy to use',
+                shoplineDesc: 'Leading website builder in Asia-Pacific, localized support, easy to use',
                 welcome: 'Welcome to UseePay API Demo',
                 selectMode: 'Select Integration Mode',
                 redirect: 'Redirect Checkout',
@@ -999,7 +1170,31 @@
                 toss: 'Toss',
                 underConstructionTitle: 'Under Construction',
                 underConstructionMessage: 'This feature is currently under development. Stay tuned! We will provide you with a better experience soon.',
-                underConstructionBtn: 'Got it'
+                underConstructionBtn: 'Got it',
+
+                // Shopify / ShopLine plugin docs section
+                shopifyDocTitle: 'Shopify Integration Guide',
+                shopifyDocIntro: 'Shopify merchants can accept payments by installing the UseePay plugin. Click the cards below to view detailed integration steps.',
+                shopifyEmbeddedTitle: 'Embedded Checkout',
+                shopifyEmbeddedTag: 'Supported: Card',
+                shopifyEmbeddedDesc: 'Embed the UseePay checkout page directly into your Shopify checkout flow for a smoother experience.',
+                shopifyRedirectTitle: 'Redirect Checkout',
+                shopifyRedirectTag: 'Supported: Card, Google Pay, Apple Pay',
+                shopifyRedirectDesc: 'Redirect customers from Shopify checkout to the hosted UseePay checkout page to support multiple payment methods.',
+                shopifyLocalizedTitle: 'Localized Checkout',
+                shopifyLocalizedTag: 'Supported: Local payment methods',
+                shopifyLocalizedDesc: 'Support local payment methods such as Apple Pay, Google Pay, Klarna, Afterpay, Pix, OXXO, etc.',
+
+                shoplineDocTitle: 'ShopLine Integration Guide',
+                shoplineDocIntro: 'ShopLine merchants can accept payments by installing the UseePay plugin. Click the cards below to view detailed integration steps.',
+                shoplineEmbeddedTitle: 'Embedded Checkout',
+                shoplineEmbeddedTag: 'Supported: Card',
+                shoplineEmbeddedDesc: 'Embed the UseePay checkout page into your ShopLine checkout page for card payments.',
+                shoplineRedirectTitle: 'Redirect Checkout',
+                shoplineRedirectTag: 'Supported: Google Pay, Apple Pay',
+                shoplineRedirectDesc: 'Redirect customers from ShopLine checkout to the hosted UseePay checkout page with Google Pay / Apple Pay.',
+
+                pluginDocButton: 'View integration guide'
             }
         };
 
@@ -1023,9 +1218,17 @@
                 }
             });
 
-            // 更新语言按钮的活动状态
+            // 更新语言按钮状态
             document.getElementById('langZh').classList.toggle('active', currentLang === 'zh');
             document.getElementById('langEn').classList.toggle('active', currentLang === 'en');
+
+            // 根据当前语言更新插件文档按钮链接
+            const docLinks = document.querySelectorAll('a[data-doc-slug]');
+            docLinks.forEach(link => {
+                const slug = link.getAttribute('data-doc-slug'); // e.g. 'shopify-embedded'
+                const lang = (currentLang === 'en') ? 'en' : 'zh';
+                link.href = `/plugin-docs/${lang}/${slug}`;
+            });
         }
 
         // 页面加载时初始化语言
@@ -1066,13 +1269,40 @@
             if (descElement) {
                 descElement.textContent = descriptions[value] || '';
             }
-            
+
+            // 展示对应的板块内容(自建站,shopify,shopline)
+            const selfBuiltSection = document.getElementById('selfBuiltSection');
+            const shopifySection   = document.getElementById('shopifySection');
+            const shoplineSection  = document.getElementById('shoplineSection');
+            if (selfBuiltSection) {
+                selfBuiltSection.style.display = (value === 'selfBuilt') ? 'block' : 'none';
+            }
+            if (shopifySection) {
+                shopifySection.style.display   = (value === 'shopify')   ? 'block' : 'none';
+            }
+            if (shoplineSection) {
+                shoplineSection.style.display  = (value === 'shopline')  ? 'block' : 'none';
+            }
+
             // 保存选择到localStorage
             localStorage.setItem('selectedBuildingMethod', value);
         }
 
         // 添加活动类到当前导航链接
         document.addEventListener('DOMContentLoaded', function() {
+            // shopify和shopline板块内容携带hash跳转，便于往回跳
+            updateLanguage();
+            initBuildingMethodNav();
+            (function() {
+                const hash = window.location.hash;
+                let targetValue = 'selfBuilt';
+                if (hash === '#shopify') targetValue = 'shopify';
+                else if (hash === '#shopline') targetValue = 'shopline';
+
+                const btn = document.querySelector('.building-nav-btn[data-value="' + targetValue + '"]');
+                if (btn) selectBuildingMethod(btn);
+            })();
+
             const currentPath = window.location.pathname;
             const navLinks = document.querySelectorAll('nav a');
             
