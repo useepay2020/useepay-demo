@@ -202,7 +202,6 @@ const GooglePay = (function() {
 
     /**
      * 添加 Google Pay 按钮
-     * 使用 Google Pay 官方 createButton API
      */
     function addButton() {
         const container = document.getElementById('googlePayButtonContainer');
@@ -213,7 +212,6 @@ const GooglePay = (function() {
         const client = getPaymentsClient();
         if (!client) return;
         
-        // 使用 Google Pay 官方按钮
         const button = client.createButton({
             buttonColor: 'black',
             buttonType: 'plain',
@@ -228,13 +226,14 @@ const GooglePay = (function() {
 
     /**
      * Google Pay 按钮点击处理
+     * 注意：必须是同步函数，loadPaymentData 必须在用户点击的同步上下文中调用
      */
     function onButtonClicked() {
         console.log('Google Pay button clicked');
         
         hideError();
         
-        // 验证表单数据
+        // 验证表单数据（同步操作）
         const form = document.getElementById('checkoutForm');
         if (form) {
             const formData = new FormData(form);
@@ -252,11 +251,6 @@ const GooglePay = (function() {
         
         const totals = CheckoutRenderer.calculateTotals(cart);
         
-        // 判断环境
-        const isTestEnv = window.location.hostname.includes('localhost') || 
-                         window.location.hostname.includes('dev') || 
-                         window.location.hostname.includes('uat');
-        
         const paymentDataRequest = {
             ...config.baseRequest,
             allowedPaymentMethods: [getCardPaymentMethod()],
@@ -267,20 +261,20 @@ const GooglePay = (function() {
                 totalPrice: totals.totalAmount
             },
             merchantInfo: {
-                ...(isTestEnv ? {} : { merchantId: config.merchantId }),
+                merchantId: config.merchantId,
                 merchantName: config.merchantName
             }
         };
         
         console.log('Google Pay payment request:', paymentDataRequest);
         
-        // 调用 loadPaymentData，会在新窗口打开 Google Pay
+        // 必须同步调用 loadPaymentData，使用 .then().catch() 而不是 await
         client.loadPaymentData(paymentDataRequest)
-            .then(paymentData => {
+            .then(function(paymentData) {
                 console.log('Google Pay payment data:', paymentData);
                 return processPayment(paymentData);
             })
-            .catch(err => {
+            .catch(function(err) {
                 console.error('Google Pay error:', err);
                 if (err.statusCode !== 'CANCELED') {
                     showError(currentLang === 'zh' ? 'Google Pay 支付失败: ' + (err.statusMessage || err.message) : 'Google Pay failed: ' + (err.statusMessage || err.message));
@@ -334,24 +328,31 @@ const GooglePay = (function() {
             const confirmResult = await confirmResponse.json();
             console.log('Confirm response:', confirmResult);
             
-            if (confirmResult.success && confirmResult.data.status === 'succeeded') {
-                const orderData = {
-                    orderId: confirmResult.data.merchant_order_id,
-                    paymentIntentId: confirmResult.data.id,
-                    customer: data,
-                    items: cart,
-                    totals: checkoutData.totals,
-                    date: new Date().toISOString(),
-                    status: confirmResult.data.status,
-                    amount: confirmResult.data.amount
-                };
-                
-                const paymentHandler = new PaymentResponseHandler({
-                    translations: translations,
-                    currentLang: currentLang,
-                    submitButton: document.getElementById('submitButton'),
-                    totals: checkoutData.totals
-                });
+            const orderData = {
+                orderId: confirmResult.data.merchant_order_id,
+                paymentIntentId: confirmResult.data.id,
+                customer: data,
+                items: cart,
+                totals: checkoutData.totals,
+                date: new Date().toISOString(),
+                status: confirmResult.data.status,
+                amount: confirmResult.data.amount
+            };
+            
+            const paymentHandler = new PaymentResponseHandler({
+                translations: translations,
+                currentLang: currentLang,
+                submitButton: document.getElementById('submitButton'),
+                totals: checkoutData.totals
+            });
+            
+            // 检查是否需要 3DS 验证
+            if (confirmResult.data.next_action && confirmResult.data.next_action.redirect) {
+                console.log('3DS verification required:', confirmResult.data.next_action);
+                // 使用 PaymentResponseHandler 处理 3DS 重定向（会在 iframe 中打开）
+                paymentHandler.handlePaymentResult(confirmResult, orderData);
+            } else if (confirmResult.success && confirmResult.data.status === 'succeeded') {
+                // 支付成功
                 paymentHandler.handlePaymentResult(confirmResult, orderData);
             } else {
                 showError(confirmResult.error?.message || (currentLang === 'zh' ? '支付失败' : 'Payment failed'));
