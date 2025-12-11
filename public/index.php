@@ -152,6 +152,24 @@ switch ($request) {
     case '/api/payment':
         require __DIR__ . '/../src/Controllers/PaymentApiHandler.php';
         break;
+    case '/api/payment/apple-pay/configuration':
+        // Apple Pay 配置获取 API
+        require_once __DIR__ . '/../src/Controllers/PaymentController.php';
+        $controller = new \UseePayDemo\Controllers\PaymentController();
+        $controller->getApplePayConfiguration();
+        break;
+    case '/api/payment/apple-pay/validate':
+        // Apple Pay Session 验证 API
+        require_once __DIR__ . '/../src/Controllers/PaymentController.php';
+        $controller = new \UseePayDemo\Controllers\PaymentController();
+        $controller->validateApplePaySession();
+        break;
+    case '/api/payment/google-pay/configuration':
+        // Google Pay 配置获取 API
+        require_once __DIR__ . '/../src/Controllers/PaymentController.php';
+        $controller = new \UseePayDemo\Controllers\PaymentController();
+        $controller->getGooglePayConfiguration();
+        break;
     case '/api/customers/create':
         require __DIR__ . '/../src/Controllers/CustomerController.php';
         $controller = new \UseePayDemo\Controllers\CustomerController();

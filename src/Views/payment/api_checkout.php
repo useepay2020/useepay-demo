@@ -145,6 +145,36 @@
                 </div>
                 `;
             }
+
+            // 如果是 Apple Pay，添加 Apple Pay 按钮区域
+            if (method === 'apple_pay') {
+                html += `
+                <div class="apple-pay-section" id="applePaySection" style="display: none; padding: 15px; margin-top: 10px;">
+                    <div id="applePayStatus" style="margin-bottom: 10px; color: #666;"></div>
+                    <div id="applePayButtonContainer" style="display: flex; justify-content: center;">
+                        <apple-pay-button 
+                            buttonstyle="black" 
+                            type="plain" 
+                            locale="${currentLang === 'zh' ? 'zh-CN' : 'en-US'}"
+                            onclick="initiateApplePay()"
+                            style="--apple-pay-button-width: 100%; --apple-pay-button-height: 44px; --apple-pay-button-border-radius: 8px; cursor: pointer;">
+                        </apple-pay-button>
+                    </div>
+                    <div id="applePayError" style="margin-top: 10px; color: #dc3545; display: none;"></div>
+                </div>
+                `;
+            }
+
+            // 如果是 Google Pay，添加 Google Pay 按钮区域
+            if (method === 'google_pay') {
+                html += `
+                <div class="google-pay-section" id="googlePaySection" style="display: none; padding: 15px; margin-top: 10px;">
+                    <div id="googlePayStatus" style="margin-bottom: 10px; color: #666;"></div>
+                    <div id="googlePayButtonContainer" style="display: flex; justify-content: center; width: 100%; height: 44px;"></div>
+                    <div id="googlePayError" style="margin-top: 10px; color: #dc3545; display: none;"></div>
+                </div>
+                `;
+            }
             
             return html;
         }).join('');
@@ -157,11 +187,58 @@
             section.classList.remove('active');
         });
         
-        // 如果选择信用卡，显示对应的卡信息部分
+        // 隐藏 Apple Pay 区域
+        const applePaySection = document.getElementById('applePaySection');
+        if (applePaySection) {
+            applePaySection.style.display = 'none';
+        }
+        
+        // 隐藏 Google Pay 区域
+        const googlePaySection = document.getElementById('googlePaySection');
+        if (googlePaySection) {
+            googlePaySection.style.display = 'none';
+        }
+        
+        // 获取原始提交按钮
+        const submitButton = document.getElementById('submitButton');
+        
+        // 如果选择信用卡，显示对应的卡信息部分，显示原始提交按钮
         if (method === 'card') {
             const cardSection = document.getElementById('cardInfoSection_card');
             if (cardSection) {
                 cardSection.classList.add('active');
+            }
+            if (submitButton) {
+                submitButton.style.display = 'block';
+            }
+        }
+        
+        // 如果选择 Apple Pay，显示 Apple Pay 区域，隐藏原始提交按钮
+        if (method === 'apple_pay') {
+            if (applePaySection) {
+                applePaySection.style.display = 'block';
+                checkApplePayAvailability();
+            }
+            if (submitButton) {
+                submitButton.style.display = 'none';
+            }
+        }
+        
+        // 如果选择 Google Pay，显示 Google Pay 区域，隐藏原始提交按钮
+        if (method === 'google_pay') {
+            if (googlePaySection) {
+                googlePaySection.style.display = 'block';
+                checkGooglePayAvailability();
+            }
+            if (submitButton) {
+                submitButton.style.display = 'none';
+            }
+        }
+        
+        // 其他支付方式，显示原始提交按钮
+        if (method !== 'card' && method !== 'apple_pay' && method !== 'google_pay') {
+            if (submitButton) {
+                submitButton.style.display = 'block';
             }
         }
     }
@@ -288,14 +365,36 @@
             });
     }
 
+    // ==================== Apple Pay & Google Pay ====================
+    // 使用独立的 JS 模块: /assets/js/payment/apple-pay.js 和 /assets/js/payment/google-pay.js
+    
+    // Apple Pay 可用性检查 (调用模块方法)
+    function checkApplePayAvailability() {
+        ApplePay.updateConfig({ currentLang, translations, cart });
+        ApplePay.checkAvailability();
+    }
+    
+    // Google Pay 可用性检查 (调用模块方法)
+    function checkGooglePayAvailability() {
+        GooglePay.updateConfig({ currentLang, translations, cart });
+        GooglePay.checkAvailability();
+    }
+    
+    // ==================== 初始化 ====================
+
     document.addEventListener('DOMContentLoaded', function() {
-        // Initialize
         loadCart();
         updateLanguage(currentLang);
         renderCheckout();
-
+        
+        // 初始化 Apple Pay 和 Google Pay 模块
+        ApplePay.init({ currentLang, translations, cart });
+        GooglePay.init({ currentLang, translations, cart });
     });
 </script>
+<!-- Apple Pay & Google Pay 独立模块 -->
+<script src="/assets/js/payment/apple-pay.js"></script>
+<script src="/assets/js/payment/google-pay.js"></script>
 <script src="/assets/js/payment-response-handler.js"></script>
 </body>
 </html>
