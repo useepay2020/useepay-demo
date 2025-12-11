@@ -207,8 +207,8 @@ class PaymentController extends BaseController
                     
                     if (!empty($methodData['apple_pay'])) {
                         $paymentParams['payment_method_data']['apple_pay'] = array(
-                            'payment' => $methodData['apple_pay']['payment'],
-                            'merchant_identifier' => $methodData['apple_pay']['merchant_identifier']
+                            'merchant_identifier' => $methodData['apple_pay']['merchant_identifier'] ?? '',
+                            'encrypt_payment_data' => $methodData['apple_pay']['encrypt_payment_data'] ?? ''
                         );
                     }
                     
@@ -217,7 +217,8 @@ class PaymentController extends BaseController
                     
                     $this->log('Apple Pay data added to payment_method_data', 'info', [
                         'type' => 'apple_pay',
-                        'merchant_identifier' => $methodData['apple_pay']['merchant_identifier'] ?? 'N/A'
+                        'merchant_identifier' => $methodData['apple_pay']['merchant_identifier'] ?? 'N/A',
+                        'has_encrypt_payment_data' => !empty($methodData['apple_pay']['encrypt_payment_data'])
                     ], 'payment');
                 }
                 // Google Pay

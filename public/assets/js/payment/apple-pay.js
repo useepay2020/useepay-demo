@@ -267,7 +267,7 @@ const ApplePay = (function() {
                         type: 'apple_pay',
                         apple_pay: {
                             merchant_identifier: config.merchantIdentifier,
-                            payment: event.payment
+                            encrypt_payment_data: event.payment.token.paymentData
                         }
                     };
                     
