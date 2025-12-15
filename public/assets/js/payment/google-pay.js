@@ -11,8 +11,8 @@ const GooglePay = (function() {
     // 其他参数写死
     let config = {
         // 从服务端读取
-        allowedCardNetworks: ['DISCOVER', 'MASTERCARD', 'VISA', 'AMEX'],
-        allowedCardAuthMethods: ['PAN_ONLY', 'CRYPTOGRAM_3DS'],
+        allowedCardNetworks: [],
+        allowedCardAuthMethods: [],
         // 固定参数
         baseRequest: {
             apiVersion: 2,
@@ -25,8 +25,8 @@ const GooglePay = (function() {
                 gatewayMerchantId: 'BCR2DN4T7LTNVTBU'
             }
         },
-        merchantName: 'Fashion Store',
-        merchantId: 'BCR2DN4T7LTNVTBU'
+        merchantName: '',
+        merchantId: ''
     };
 
     // Google Pay 客户端
@@ -87,7 +87,7 @@ const GooglePay = (function() {
                 body: JSON.stringify({
                     currency: totals.currency || 'USD',
                     host: window.location.hostname,
-                    merchant_name: 'Fashion Store',
+                    // merchant_name: 'Fashion Store',
                     os_type: 'WEB',
                     amount: amount
                 })
