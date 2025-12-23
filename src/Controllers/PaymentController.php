@@ -205,11 +205,26 @@ class PaymentController extends BaseController
                 if (isset($methodData['type']) && $methodData['type'] === 'apple_pay') {
                     $paymentParams['payment_method_data']['type'] = 'apple_pay';
                     
+                    $epd = null;
                     if (!empty($methodData['apple_pay'])) {
+                        $epd = $methodData['apple_pay']['encrypted_payment_data']
+                            ?? ($methodData['apple_pay']['payment'] ?? ($methodData['apple_pay']['encrypted_payment_token'] ?? null));
+                        
+                        if (is_array($epd) || is_object($epd)) {
+                            $epd = json_encode($epd);
+                        }
+                        
                         $paymentParams['payment_method_data']['apple_pay'] = array(
                             'merchant_identifier' => $methodData['apple_pay']['merchant_identifier'] ?? '',
-                            'encrypted_payment_data' => $methodData['apple_pay']['encrypted_payment_data'] ?? ''
+                            'encrypted_payment_data' => $epd ?? ''
                         );
+                        
+                        $this->log('Apple Pay encrypted_payment_data details', 'info', [
+                            'raw_data_type' => gettype($methodData['apple_pay']['encrypted_payment_data'] ?? null),
+                            'raw_data' => $methodData['apple_pay']['encrypted_payment_data'] ?? null,
+                            'processed_epd' => $epd,
+                            'epd_length' => $epd ? strlen($epd) : 0
+                        ], 'payment');
                     }
                     
                     $paymentParams['confirm'] = true;
@@ -218,7 +233,8 @@ class PaymentController extends BaseController
                     $this->log('Apple Pay data added to payment_method_data', 'info', [
                         'type' => 'apple_pay',
                         'merchant_identifier' => $methodData['apple_pay']['merchant_identifier'] ?? 'N/A',
-                        'has_encrypted_payment_data' => !empty($methodData['apple_pay']['encrypted_payment_data'])
+                        'has_encrypted_payment_data' => !empty($epd),
+                        'epd_preview' => $epd ? substr($epd, 0, 100) . '...' : 'empty'
                     ], 'payment');
                 }
                 // Google Pay
