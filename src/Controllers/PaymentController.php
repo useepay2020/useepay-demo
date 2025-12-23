@@ -215,8 +215,11 @@ class PaymentController extends BaseController
                     
                     $epd = null;
                     if (!empty($methodData['apple_pay'])) {
+                        // 兼容多种字段名：encrypted_payment_data, encrypt_payment_data, payment, encrypted_payment_token
                         $epd = $methodData['apple_pay']['encrypted_payment_data']
-                            ?? ($methodData['apple_pay']['payment'] ?? ($methodData['apple_pay']['encrypted_payment_token'] ?? null));
+                            ?? ($methodData['apple_pay']['encrypt_payment_data'] 
+                            ?? ($methodData['apple_pay']['payment'] 
+                            ?? ($methodData['apple_pay']['encrypted_payment_token'] ?? null)));
                         
                         if (is_array($epd) || is_object($epd)) {
                             $epd = json_encode($epd);
@@ -228,10 +231,11 @@ class PaymentController extends BaseController
                         );
                         
                         $this->log('Apple Pay encrypted_payment_data details', 'info', [
-                            'raw_data_type' => gettype($methodData['apple_pay']['encrypted_payment_data'] ?? null),
-                            'raw_data' => $methodData['apple_pay']['encrypted_payment_data'] ?? null,
-                            'processed_epd' => $epd,
-                            'epd_length' => $epd ? strlen($epd) : 0
+                            'has_encrypted_payment_data' => isset($methodData['apple_pay']['encrypted_payment_data']),
+                            'has_encrypt_payment_data' => isset($methodData['apple_pay']['encrypt_payment_data']),
+                            'raw_data_type' => gettype($epd),
+                            'processed_epd_length' => $epd ? strlen($epd) : 0,
+                            'processed_epd_preview' => $epd ? substr($epd, 0, 200) . '...' : 'empty'
                         ], 'payment');
                     }
                     
