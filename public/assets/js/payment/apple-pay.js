@@ -250,8 +250,6 @@ const ApplePay = (function() {
             // 支付授权回调
             // 直接在 createPayment 时传递 Apple Pay 数据，不需要单独 confirm
             session.onpaymentauthorized = async (event) => {
-                console.log('onpaymentauthorized - payment:', event.payment);
-                
                 try {
                     const form = document.getElementById('checkoutForm');
                     const formData = new FormData(form);
@@ -262,12 +260,16 @@ const ApplePay = (function() {
                         () => CheckoutRenderer.calculateTotals(cart)
                     );
                     
+                    // 获取 Apple Pay token 数据
+                    const applePayToken = event.payment.token;
+                    const paymentData = applePayToken.paymentData || applePayToken;
+                    
                     // 添加 Apple Pay 支付数据到请求中
                     checkoutData.payment_method_data = {
                         type: 'apple_pay',
                         apple_pay: {
                             merchant_identifier: config.merchantIdentifier,
-                            encrypted_payment_data: event.payment.token.paymentData
+                            encrypted_payment_data: paymentData
                         }
                     };
                     

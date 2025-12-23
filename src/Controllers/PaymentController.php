@@ -16,6 +16,14 @@ class PaymentController extends BaseController
         // Validate required fields
         $requiredFields = array('items', 'totals');
         $data = $this->getRequestData();
+        
+        // Log complete request data for debugging
+        $this->log('Complete Request Data - createPayment', 'info', [
+            'has_payment_method_data' => isset($data['payment_method_data']),
+            'payment_method_data' => $data['payment_method_data'] ?? null,
+            'paymentMethods' => $data['paymentMethods'] ?? null
+        ], 'payment');
+        
         $missing = [];
 
         foreach ($requiredFields as $field) {
