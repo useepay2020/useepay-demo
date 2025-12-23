@@ -301,7 +301,7 @@ const GooglePay = (function() {
             checkoutData.payment_method_data = {
                 type: 'google_pay',
                 google_pay: {
-                    encrypt_payment_data: paymentData.paymentMethodData.tokenizationData.token
+                    encrypted_payment_data: paymentData.paymentMethodData.tokenizationData.token
                 }
             };
             
