@@ -216,15 +216,103 @@
         console.log('=== Starting payment confirmation ===');
         
         // Show payment progress modal
-        showPaymentProgress('processing');
+        //showPaymentProgress('processing');
         
         try {
-            // Call the payment confirmation
-            const result = await confirmPaymentIntent();
-            console.log('Payment confirmation result:', result);
-            
-            if (result.success) {
-                // Payment succeeded
+            // Step 1: Create payment intent on server
+            console.log('Step 1: Creating payment intent on server...');
+            const form = document.getElementById('checkoutForm');
+            if (!form) {
+                throw new Error('Checkout form not found');
+            }
+
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData);
+
+            // Prepare checkout data
+            const checkoutData = CheckoutRenderer.prepareCheckoutData(
+                data,
+                cart,
+                getPaymentMethods,
+                () => CheckoutRenderer.calculateTotals(cart)
+            );
+
+            // Submit to backend to create payment intent
+            const paymentIntentResponse = await fetch('/api/payment', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(checkoutData)
+            });
+
+            const paymentIntentText = await paymentIntentResponse.text();
+            let paymentIntentResult;
+            try {
+                paymentIntentResult = JSON.parse(paymentIntentText);
+            } catch (e) {
+                console.error('JSON parse error:', e);
+                throw new Error('Invalid JSON response from server');
+            }
+
+            if (!paymentIntentResult.success || !paymentIntentResult.data) {
+                throw new Error(paymentIntentResult.data?.error?.message || 'Failed to create payment intent');
+            }
+
+            const { client_secret: clientSecret, id: paymentIntentId } = paymentIntentResult.data;
+            console.log('✓ Payment intent created:', paymentIntentId);
+            console.log('Client secret:', clientSecret ? '✓' : '✗');
+
+            // Step 2: Get UseePay elements
+            console.log('Step 2: Submitting payment form...');
+            const useepayElements = getUseepayElements();
+            if (!useepayElements) {
+                throw new Error('UseePay Elements not initialized');
+            }
+
+            // Step 3: Submit elements to validate and get selected payment method
+            const submitResult = await useepayElements.submit();
+            const { selectedPaymentMethod, error: submitError } = submitResult;
+
+            if (submitError) {
+                console.error('Form submission error:', submitError);
+                throw new Error(submitError.message || 'Form validation failed');
+            }
+
+            if (!selectedPaymentMethod) {
+                throw new Error('No payment method selected');
+            }
+
+            console.log('✓ Payment method selected:', selectedPaymentMethod);
+
+            // Step 4: Confirm payment with UseePay
+            console.log('Step 3: Confirming payment with UseePay...');
+            const useepayInstance = getUseepayInstance();
+            if (!useepayInstance) {
+                throw new Error('UseePay instance not initialized');
+            }
+
+            const confirmResult = await useepayInstance.confirmPayment({
+                elements: useepayElements,
+                paymentIntentId: paymentIntentId,
+                clientSecret: clientSecret
+            });
+
+            const { paymentIntent, error: confirmError } = confirmResult;
+
+            if (confirmError) {
+                console.error('Payment confirmation error:', confirmError);
+                throw new Error(confirmError.message || 'Payment confirmation failed');
+            }
+
+            if (!paymentIntent) {
+                throw new Error('No payment intent returned');
+            }
+
+            console.log('✓ Payment confirmed:', paymentIntent);
+
+            // Step 5: Handle payment success
+            if (paymentIntent.status === 'succeeded') {
                 console.log('✓ Payment succeeded');
                 
                 // Update modal to success state
@@ -232,26 +320,17 @@
                 
                 // Redirect to callback page
                 setTimeout(() => {
-                    window.location.href = '/payment/callback?id=' + result.paymentIntent.id + 
-                        '&merchant_order_id=' + result.paymentIntent.merchant_order_id + 
+                    window.location.href = '/payment/callback?id=' + paymentIntent.id + 
+                        '&merchant_order_id=' + paymentIntent.merchant_order_id + 
                         '&status=succeeded';
                 }, 1500);
             } else {
-                // Payment failed
-                const errorMsg = result.error || translations[currentLang].paymentError;
-                console.error('Payment failed:', errorMsg);
-                
-                // Update modal to error state
-                showPaymentProgress('error', errorMsg);
-                
-                // Hide modal after 3 seconds
-                setTimeout(() => {
-                    hidePaymentProgress();
-                }, 3000);
+                throw new Error('Payment status: ' + paymentIntent.status);
             }
+
         } catch (error) {
             console.error('Payment confirmation error:', error);
-            const errorMsg = translations[currentLang].paymentError + ': ' + error.message;
+            const errorMsg = error.message || translations[currentLang].paymentError;
             
             // Update modal to error state
             showPaymentProgress('error', errorMsg);
@@ -375,9 +454,6 @@
     //                 // Store in sessionStorage for current session
     //                 sessionStorage.setItem('currentPaymentIntent', JSON.stringify(result.data));
     //                 console.log('✓ Payment intent created and cached:', result.data.id);
-    //
-    //                 // For card payment method, initialize UseePay Elements
-    //                 initializeUseepayElements(result.data.client_secret, result.data.id);
     //
     //             } else {
     //                 console.error('Payment failed:', result.data.error.message);
