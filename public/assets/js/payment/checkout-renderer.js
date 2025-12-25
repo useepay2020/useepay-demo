@@ -374,20 +374,26 @@ class CheckoutRenderer {
      */
     renderOrderItems() {
         const t = this.translations[this.currentLang];
-        return this.cart.map(item => {
+        return this.cart.map((item, index) => {
             const productName = this.getProductName(item.id, this.currentLang);
             const imageUrl = item.image || '/assets/images/products/placeholder.jpg';
+            const itemTotal = (item.price * item.quantity).toFixed(2);
             return `
-                <div class="order-item">
+                <div class="order-item" data-item-index="${index}">
                     <div class="order-item-image">
                         <img src="${imageUrl}" alt="${productName}" onerror="this.src='/assets/images/products/placeholder.jpg'">
                     </div>
                     <div class="order-item-info">
                         <div class="order-item-name">${productName}</div>
                         <div class="order-item-details">
-                            <span>${t.quantity}: ${item.quantity}</span>
-                            <span class="order-item-price">$${(item.price * item.quantity).toFixed(2)}</span>
+                            <span class="order-item-unit-price">$${item.price.toFixed(2)}</span>
+                            <span class="order-item-price">$${itemTotal}</span>
                         </div>
+                    </div>
+                    <div class="order-item-quantity-control">
+                        <button class="qty-btn qty-decrease" data-item-index="${index}" title="${t.decrease || 'Decrease'}">−</button>
+                        <input type="number" class="qty-input" data-item-index="${index}" value="${item.quantity}" min="1" max="999">
+                        <button class="qty-btn qty-increase" data-item-index="${index}" title="${t.increase || 'Increase'}">+</button>
                     </div>
                 </div>
             `;
@@ -464,6 +470,9 @@ class CheckoutRenderer {
             checkoutForm.addEventListener('submit', this.handleSubmit);
         }
 
+        // Add quantity adjustment handlers
+        this.setupQuantityHandlers();
+
         // Add one-page checkout toggle handler
         const onePageCheckbox = document.getElementById('onePageCheckout');
         const paymentMethodsList = document.getElementById('paymentMethodsContainer');
@@ -516,6 +525,156 @@ class CheckoutRenderer {
             
             // Add change event listener
             sameAsShippingCheckbox.addEventListener('change', updateBillingAddressVisibility);
+        }
+    }
+
+    /**
+     * Setup quantity adjustment handlers
+     */
+    setupQuantityHandlers() {
+        // Decrease quantity buttons
+        document.querySelectorAll('.qty-decrease').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const index = parseInt(btn.dataset.itemIndex);
+                if (this.cart[index]) {
+                    if (this.cart[index].quantity > 1) {
+                        this.cart[index].quantity--;
+                        this.updateOrderSummary();
+                    } else {
+                        // Remove item when quantity reaches 0
+                        this.removeCartItem(index);
+                    }
+                }
+            });
+        });
+
+        // Increase quantity buttons
+        document.querySelectorAll('.qty-increase').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const index = parseInt(btn.dataset.itemIndex);
+                if (this.cart[index]) {
+                    this.cart[index].quantity++;
+                    this.updateOrderSummary();
+                }
+            });
+        });
+
+        // Quantity input fields
+        document.querySelectorAll('.qty-input').forEach(input => {
+            input.addEventListener('change', (e) => {
+                const index = parseInt(input.dataset.itemIndex);
+                let newQty = parseInt(input.value) || 0;
+                
+                if (this.cart[index]) {
+                    // If quantity is 0 or less, remove the item
+                    if (newQty <= 0) {
+                        this.removeCartItem(index);
+                    } else {
+                        // Validate quantity
+                        if (newQty > 999) {
+                            newQty = 999;
+                        }
+                        this.cart[index].quantity = newQty;
+                        input.value = newQty;
+                        this.updateOrderSummary();
+                    }
+                }
+            });
+
+            // Allow real-time input validation
+            input.addEventListener('input', (e) => {
+                let value = input.value;
+                if (value && isNaN(value)) {
+                    input.value = '';
+                } else if (value > 999) {
+                    input.value = 999;
+                }
+            });
+        });
+    }
+
+    /**
+     * Remove item from cart
+     * @param {number} index - Item index in cart
+     */
+    removeCartItem(index) {
+        if (this.cart[index]) {
+            const productName = this.getProductName(this.cart[index].id, this.currentLang);
+            console.log(`Removing item: ${productName}`);
+            
+            // Remove item from cart array
+            this.cart.splice(index, 1);
+            
+            // Check if cart is empty
+            if (this.cart.length === 0) {
+                console.log('Cart is now empty');
+                // Re-render entire checkout page with empty cart message
+                const container = document.getElementById('checkoutContent');
+                if (container) {
+                    this.renderEmptyCart(container);
+                }
+            } else {
+                // Update order summary
+                this.updateOrderSummary();
+            }
+        }
+    }
+
+    /**
+     * Update order summary with recalculated totals
+     */
+    updateOrderSummary() {
+        const totals = CheckoutRenderer.calculateTotals(this.cart);
+        const orderItemsContainer = document.getElementById('orderItems');
+        const orderTotalsContainer = document.querySelector('.order-totals');
+        const submitButton = document.getElementById('submitButton');
+
+        if (orderItemsContainer) {
+            // Update order items HTML
+            orderItemsContainer.innerHTML = this.renderOrderItems();
+            // Re-attach event handlers to new elements
+            this.setupQuantityHandlers();
+        }
+
+        if (orderTotalsContainer) {
+            // Update totals HTML
+            const t = this.translations[this.currentLang];
+            orderTotalsContainer.innerHTML = `
+                <div class="total-row">
+                    <span>${t.subtotal}</span>
+                    <span>$${totals.subtotal}</span>
+                </div>
+                <div class="total-row">
+                    <span>${t.shipping}</span>
+                    <span>$${totals.shipping}</span>
+                </div>
+                <div class="total-row">
+                    <span>${t.tax}</span>
+                    <span>$${totals.tax}</span>
+                </div>
+                <div class="total-row grand-total">
+                    <span>${t.orderTotal}</span>
+                    <span>$${totals.totalAmount}</span>
+                </div>
+            `;
+        }
+
+        if (submitButton) {
+            // Update submit button with new total
+            const t = this.translations[this.currentLang];
+            submitButton.textContent = `${t.confirmPay} $${totals.totalAmount}`;
+        }
+
+        // Update cart in localStorage
+        localStorage.setItem('fashionCart', JSON.stringify(this.cart));
+        console.log('Cart updated:', this.cart);
+        
+        // Update payment element with new amount when cart changes
+        if (typeof updatePaymentElementOnCartChange === 'function') {
+            console.log('Calling updatePaymentElementOnCartChange...');
+            updatePaymentElementOnCartChange();
         }
     }
 

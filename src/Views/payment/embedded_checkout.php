@@ -9,7 +9,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>结算 - Checkout</title>
+    <title>Checkout</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/assets/css/payment/checkout.css">
 <style>
@@ -90,10 +90,10 @@
 <body>
 <div class="container">
     <header>
-        <div class="logo" data-i18n="logo">🛍️ 时尚服装商城</div>
+        <div class="logo" data-i18n="logo">🛍️ Fashion Store</div>
         <div style="display: flex; gap: 10px; align-items: center;">
-            <a href="/" class="back-button" data-i18n="backToHome">← 返回首页</a>
-            <a href="/payment/clothing-shop" class="back-button" data-i18n="backToShop">← 返回购物</a>
+            <a href="/" class="back-button" data-i18n="backToHome">← Back to Home</a>
+            <a href="/payment/clothing-shop" class="back-button" data-i18n="backToShop">← Back to Shop</a>
         </div>
     </header>
 
@@ -105,13 +105,13 @@
     <div id="paymentProgressModal" class="payment-progress-modal" style="display: none;">
         <div class="payment-progress-content">
             <div class="payment-progress-spinner"></div>
-            <h3 id="paymentProgressTitle" class="payment-progress-title">处理中...</h3>
-            <p id="paymentProgressMessage" class="payment-progress-message">正在处理您的支付，请稍候</p>
+            <h3 id="paymentProgressTitle" class="payment-progress-title"></h3>
+            <p id="paymentProgressMessage" class="payment-progress-message"></p>
         </div>
     </div>
 </div>
 <!-- UseePay SDK -->
-<script src="https://checkout-sdk1.uat.useepay.com/1.0.1/useepay.min.js"></script>
+<script src="https://checkout-sdk1.uat.useepay.com/2.0.0/useepay.min.js"></script>
 
 <!-- UseePay Public Key Configuration -->
 <script>
@@ -151,12 +151,10 @@
 
     // Load payment methods from cache based on action type
     function getPaymentMethods() {
-        // 获取操作类型
         const actionType = localStorage.getItem('paymentActionType');
         console.log('Current action type:', actionType);
 
-        // 根据操作类型选择对应的缓存键
-        let cacheKey = 'paymentMethods'; // 默认为支付方式
+        let cacheKey = 'paymentMethods';
         if (actionType === 'subscription') {
             cacheKey = 'subscriptionMethods';
         } else if (actionType === 'installment') {
@@ -177,11 +175,11 @@
         return [];
     }
 
-    // Render payment method section - 支付方式界面渲染
+    // Render payment method section
     function renderPaymentMethodSection(t, generatePaymentMethods) {
         return `
             <div class="form-section">
-                <h3 data-i18n="paymentMethod">💳 支付方式</h3>
+                <h3 data-i18n="paymentMethod">💳 Payment Method</h3>
                 <div id="payment-element" style="margin: 20px 0;"></div>
             </div>
             `;
@@ -318,99 +316,178 @@
         }
     }
 
-    function createPaymentIntent() {
-        // Get form element
-        const form = document.getElementById('checkoutForm');
-        if (!form) {
-            console.error('Checkout form not found');
-            return;
+    // function createPaymentIntent() {
+    //     // Get form element
+    //     const form = document.getElementById('checkoutForm');
+    //     if (!form) {
+    //         console.error('Checkout form not found');
+    //         return;
+    //     }
+    //
+    //     const formData = new FormData(form);
+    //     const data = Object.fromEntries(formData);
+    //
+    //     // Get payment methods from local cache
+    //     const paymentMethods = getPaymentMethods();
+    //     console.log('Payment methods from cache:', paymentMethods);
+    //
+    //     // Prepare checkout data using CheckoutRenderer
+    //     const checkoutData = CheckoutRenderer.prepareCheckoutData(
+    //         data,
+    //         cart,
+    //         getPaymentMethods,
+    //         () => CheckoutRenderer.calculateTotals(cart)
+    //     );
+    //
+    //
+    //     // Submit to backend - Call PaymentController::createPayment()
+    //     fetch('/api/payment', {
+    //         method: 'POST',
+    //         headers: {
+    //             'Content-Type': 'application/json',
+    //         },
+    //         body: JSON.stringify(checkoutData)
+    //     })
+    //         .then(response => {
+    //             console.log('Response status:', response.status);
+    //             console.log('Response headers:', response.headers);
+    //
+    //             // Try to parse JSON
+    //             return response.text().then(text => {
+    //                 console.log('Response text:', text);
+    //                 try {
+    //                     return JSON.parse(text);
+    //                 } catch (e) {
+    //                     console.error('JSON parse error:', e);
+    //                     console.error('Response was:', text);
+    //                     throw new Error('Invalid JSON response from server');
+    //                 }
+    //             });
+    //         })
+    //         .then(result => {
+    //             console.log('Parsed result:', result);
+    //
+    //             // Check if payment creation was successful
+    //             if (result.success && result.data) {
+    //                 // Cache payment intent data to browser memory
+    //                 console.log('Caching payment intent data:', result.data);
+    //
+    //                 // Store in sessionStorage for current session
+    //                 sessionStorage.setItem('currentPaymentIntent', JSON.stringify(result.data));
+    //                 console.log('✓ Payment intent created and cached:', result.data.id);
+    //
+    //                 // For card payment method, initialize UseePay Elements
+    //                 initializeUseepayElements(result.data.client_secret, result.data.id);
+    //
+    //             } else {
+    //                 console.error('Payment failed:', result.data.error.message);
+    //                 // Show error message
+    //                 const errorMsg = result.error?.message || result.data.error.message || translations[currentLang].paymentError || 'Payment failed. Please try again.';
+    //                 alert(errorMsg);
+    //             }
+    //         })
+    //         .catch(error => {
+    //             console.error('Payment creation error:', error);
+    //             alert(translations[currentLang].paymentError + ': ' + error.message);
+    //         })
+    //         .finally(() => {
+    //             // Restore button state
+    //             if (submitButton) {
+    //                 submitButton.disabled = false;
+    //                 const totals = CheckoutRenderer.calculateTotals(cart);
+    //                 submitButton.textContent = `${translations[currentLang].confirmPay} $${totals.totalAmount}`;
+    //             }
+    //         });
+    // }
+
+    /**
+     * Initialize UseePay payment element with amount and currency
+     */
+    function initializePaymentElement() {
+        console.log('=== Initializing Payment Element ===');
+        
+        // Calculate totals from current cart
+        const totals = CheckoutRenderer.calculateTotals(cart);
+        console.log('Cart totals:', totals);
+        
+        if (!totals || !totals.totalAmount) {
+            console.error('Cannot initialize payment element: invalid totals');
+            return false;
+        }
+        
+        // Convert total amount to cents (smallest unit)
+        const currency = totals.currency || 'USD';
+        
+        console.log('Initializing payment element with:');
+        console.log('  Amount:', totals.totalAmount, 'cents');
+        console.log('  Currency:', currency);
+        
+        // Call initializeElementsForPayment with amount and currency
+        const success = initializeElementsForPayment(totals.totalAmount, currency);
+        
+        if (success) {
+            console.log('✓ Payment element initialized successfully');
+        } else {
+            console.error('Failed to initialize payment element');
+        }
+        
+        return success;
+    }
+
+    /**
+     * Update payment element when cart changes (e.g., quantity adjustment)
+     */
+    function updatePaymentElementOnCartChange() {
+        console.log('=== Updating Payment Element on Cart Change ===');
+        
+        // Calculate new totals
+        const totals = CheckoutRenderer.calculateTotals(cart);
+        console.log('Updated cart totals:', totals);
+        
+        if (!totals || !totals.totalAmount) {
+            console.error('Cannot update payment element: invalid totals');
+            return false;
         }
 
-        const formData = new FormData(form);
-        const data = Object.fromEntries(formData);
-
-        // Get payment methods from local cache
-        const paymentMethods = getPaymentMethods();
-        console.log('Payment methods from cache:', paymentMethods);
-
-        // Prepare checkout data using CheckoutRenderer
-        const checkoutData = CheckoutRenderer.prepareCheckoutData(
-            data,
-            cart,
-            getPaymentMethods,
-            () => CheckoutRenderer.calculateTotals(cart)
-        );
-
-
-        // Submit to backend - Call PaymentController::createPayment()
-        fetch('/api/payment', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(checkoutData)
-        })
-            .then(response => {
-                console.log('Response status:', response.status);
-                console.log('Response headers:', response.headers);
-
-                // Try to parse JSON
-                return response.text().then(text => {
-                    console.log('Response text:', text);
-                    try {
-                        return JSON.parse(text);
-                    } catch (e) {
-                        console.error('JSON parse error:', e);
-                        console.error('Response was:', text);
-                        throw new Error('Invalid JSON response from server');
-                    }
-                });
-            })
-            .then(result => {
-                console.log('Parsed result:', result);
-
-                // Check if payment creation was successful
-                if (result.success && result.data) {
-                    // Cache payment intent data to browser memory
-                    console.log('Caching payment intent data:', result.data);
-
-                    // Store in sessionStorage for current session
-                    sessionStorage.setItem('currentPaymentIntent', JSON.stringify(result.data));
-                    console.log('✓ Payment intent created and cached:', result.data.id);
-
-                    // For card payment method, initialize UseePay Elements
-                    initializeUseepayElements(result.data.client_secret, result.data.id);
-
-                } else {
-                    console.error('Payment failed:', result.data.error.message);
-                    // Show error message
-                    const errorMsg = result.error?.message || result.data.error.message || translations[currentLang].paymentError || 'Payment failed. Please try again.';
-                    alert(errorMsg);
-                }
-            })
-            .catch(error => {
-                console.error('Payment creation error:', error);
-                alert(translations[currentLang].paymentError + ': ' + error.message);
-            })
-            .finally(() => {
-                // Restore button state
-                if (submitButton) {
-                    submitButton.disabled = false;
-                    const totals = CheckoutRenderer.calculateTotals(cart);
-                    submitButton.textContent = `${translations[currentLang].confirmPay} $${totals.totalAmount}`;
-                }
-            });
+        const currency = totals.currency || 'USD';
+        
+        console.log('Updating payment element with:');
+        console.log('  Amount:', totals.totalAmount, 'cents');
+        console.log('  Currency:', currency);
+        
+        // Call updatePaymentElementAmount to update the element
+        const success = updatePaymentElementAmount(totals.totalAmount, currency);
+        
+        if (success) {
+            console.log('✓ Payment element updated successfully');
+        } else {
+            console.error('Failed to update payment element');
+        }
+        
+        return success;
     }
 
     document.addEventListener('DOMContentLoaded', function() {
         loadCart();
+        
+        // Update language first to apply translations to header
+        currentLang = getCurrentLanguage();
+        updateLanguage(currentLang);
+        
         renderCheckout();
-        updateLanguage();
-        renderCheckout();
+        
+        // Update language again after checkout is rendered
+        updateLanguage(currentLang);
+        
+        // Initialize payment element with cart amount and currency
+        setTimeout(() => {
+            initializePaymentElement();
+        }, 500);
+        
         // Check if card should be shown by default
         // const firstMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value;
         // handlePaymentMethodChange(firstMethod);
-        createPaymentIntent();
+        //createPaymentIntent();
 
     });
 </script>
