@@ -15,7 +15,7 @@
     <!-- Pricing Page Internationalization (must load before inline scripts) -->
     <script src="/assets/js/i18n/subscription/pricing-i18n.js"></script>
     <!-- UseePay SDK -->
-    <script src="https://checkout-sdk1.uat.useepay.com/1.0.1/useepay.min.js"></script>
+    <script src="https://checkout-sdk1.uat.useepay.com/2.0.0/useepay.min.js"></script>
     <!-- Payment Methods Configuration -->
     <script src="/assets/js/payment/payment-methods-config.js"></script>
     <!-- UseePay Elements Initializer (must be loaded first) -->
@@ -576,7 +576,8 @@
                         paymentIntentId: result.data.id,
                         date: new Date().toISOString(),
                         status: result.data.status,
-                        amount: result.data.amount
+                        amount: result.data.amount,
+                        currency: currency
                     };
 
                     // Cache the response result to browser localStorage

@@ -147,8 +147,9 @@ class PaymentResponseHandler {
      * @returns {boolean} 成功标志
      */
     handleGetRedirect(url) {
-        this.logger.log('Performing GET redirect via iframe to:', url);
-        return this.show3DSIframe(url, 'GET');
+        this.logger.log('Performing GET redirect to:', url);
+        window.location.href = url;
+        return true;
     }
 
     /**
@@ -158,8 +159,26 @@ class PaymentResponseHandler {
      * @returns {boolean} 成功标志
      */
     handlePostRedirect(url, data = {}) {
-        this.logger.log('Performing POST redirect via iframe to:', url);
-        return this.show3DSIframe(url, 'POST', data);
+        this.logger.log('Performing POST redirect to:', url);
+
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = url;
+
+        // 添加表单数据
+        if (data && typeof data === 'object') {
+            for (const [key, value] of Object.entries(data)) {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = key;
+                input.value = typeof value === 'string' ? value : JSON.stringify(value);
+                form.appendChild(input);
+            }
+        }
+
+        document.body.appendChild(form);
+        form.submit();
+        return true;
     }
 
     /**
@@ -495,6 +514,7 @@ class PaymentResponseHandler {
 
     /**
      * 处理内嵌收银台模式的支付流程
+     * @param {String} mode
      * @param {Object} result 支付结果
      * @param {Object} orderData 订单数据
      */
@@ -527,7 +547,7 @@ class PaymentResponseHandler {
                     });
                     
                     // Call the public initializeUseepayElements function
-                    if (typeof initializeUseepayElements === 'function') {
+                    if (typeof initializeElements === 'function') {
                         try {
                             const success = initializeUseepayElements(clientSecret, paymentIntentId);
                             if (success) {
