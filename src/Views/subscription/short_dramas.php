@@ -91,9 +91,7 @@
             <div id="processingStatus" class="processing-status"></div>
         </div>
     </div>
-
-
-
+    
     <!-- Auth Modal -->
     <div id="authModal" class="auth-modal">
         <div class="modal-content">
@@ -356,18 +354,37 @@
                 billingCycleElement.textContent = perMonthText;
             }
             
-            // Re-initialize payment element if in embedded mode and amount > 0
+            // Handle payment element based on integration mode
             const integrationMode = localStorage.getItem('paymentIntegrationMode') || 'redirect';
             const embeddedPaymentContainer = document.getElementById('embeddedPaymentContainer');
             
-            if (integrationMode === 'embedded' && selectedDramas.size > 0) {
-                if (embeddedPaymentContainer) embeddedPaymentContainer.style.display = 'block';
-                
-                setTimeout(() => {
-                    initializePaymentElement();
-                }, 100);
+            if (selectedDramas.size > 0) {
+                if (integrationMode === 'embedded') {
+                    // Embedded mode: show container and initialize UseePay elements
+                    if (embeddedPaymentContainer) embeddedPaymentContainer.style.display = 'block';
+                    
+                    setTimeout(() => {
+                        initializePaymentElement();
+                    }, 100);
+                } else if (integrationMode === 'api') {
+                    // API mode: render payment methods in container
+                    console.log('API mode detected, rendering payment methods');
+                    renderPaymentMethodInContainer();
+                } else {
+                    // Redirect mode: hide container
+                    if (embeddedPaymentContainer) embeddedPaymentContainer.style.display = 'none';
+                }
             } else {
+                // No dramas selected: hide container
                 if (embeddedPaymentContainer) embeddedPaymentContainer.style.display = 'none';
+                
+                // Hide confirm payment button if exists
+                const confirmButton = document.getElementById('confirmPaymentButton');
+                if (confirmButton) confirmButton.style.display = 'none';
+                
+                // Show subscribe button
+                const subscribeButton = document.getElementById('subscribeButton');
+                if (subscribeButton) subscribeButton.style.display = 'block';
             }
         }
 
@@ -455,6 +472,8 @@
                         paymentHandler.processPaymentResultForRedirect(result, subscriptionData);
                     } else if (integrationMode === 'embedded') {
                         await processEmbeddedCheckoutForSubscription(result, orderData);
+                    } else {
+                        confirmPaymentMethod();
                     }
                 }, 1500);
             })
@@ -561,6 +580,9 @@
             }
         }
 
+        /**
+         * Load payment methods from cache based on action type
+         */
         function getPaymentMethods() {
             const actionType = localStorage.getItem('paymentActionType');
             let cacheKey = 'paymentMethods';
@@ -580,6 +602,320 @@
                 }
             }
             return [];
+        }
+
+        /**
+         * Generate payment methods HTML - 生成支付方式 HTML
+         */
+        function generatePaymentMethods() {
+            const cachedMethods = getPaymentMethods();
+            console.log('Cached payment methods:', cachedMethods);
+            
+            let methodsToDisplay = [];
+            if (cachedMethods && cachedMethods.length > 0) {
+                methodsToDisplay = [...cachedMethods];
+                console.log('Using cached methods:', methodsToDisplay);
+            } else {
+                methodsToDisplay = ['card', 'apple_pay'];
+                console.log('No cached methods, using default methods:', methodsToDisplay);
+            }
+            
+            return methodsToDisplay.map((method, index) => {
+                const methodInfo = paymentMethodsMap[method];
+                if (!methodInfo) {
+                    console.warn('Unknown payment method:', method);
+                    return '';
+                }
+                
+                const methodName = currentLang === 'zh' ? methodInfo.name_zh : methodInfo.name_en;
+                const methodDesc = currentLang === 'zh' ? methodInfo.desc_zh : methodInfo.desc_en;
+                const isFirst = index === 0;
+                
+                let html = `
+                    <div class="payment-option">
+                        <input type="radio" id="method_${method}" name="paymentMethod" value="${method}" ${isFirst ? 'checked' : ''} onchange="handlePaymentMethodChange('${method}')" style="display: none;">
+                        <label for="method_${method}" style="display: flex; align-items: center; padding: 15px; border: 1px solid #e0e0e0; border-radius: 8px; cursor: pointer; margin-bottom: 10px;">
+                            <div class="payment-icon" style="font-size: 1.5rem; margin-right: 15px;">${methodInfo.icon}</div>
+                            <div class="payment-info">
+                                <div class="payment-name" style="font-weight: 600; font-size: 14px;">${methodName}</div>
+                                <div class="payment-desc" style="font-size: 12px; color: #666;">${methodDesc}</div>
+                            </div>
+                        </label>
+                    </div>
+                `;
+                
+                // 如果是信用卡，添加卡信息表单
+                if (method === 'card') {
+                    const t = dramaTranslations[currentLang];
+                    html += `
+                    <div class="card-info-section ${isFirst ? 'active' : ''}" id="cardInfoSection_${method}" style="display: ${isFirst ? 'block' : 'none'}; margin-top: 15px; padding: 15px; background: #f9f9f9; border-radius: 8px;">
+                        <div class="card-row" style="margin-bottom: 15px;">
+                            <div class="form-group full-width">
+                                <label><span data-i18n="cardNumber">${t.cardNumber}</span> <span class="required" data-i18n="required">*</span></label>
+                                <input type="text" id="cardNumber" placeholder="${t.cardNumberPlaceholder}" maxlength="19" value="4111 1111 1111 1111" oninput="updateCardPreview()">
+                            </div>
+                        </div>
+
+                        <div class="card-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                            <div class="form-group">
+                                <label><span data-i18n="expiryDate">${t.expiryDate}</span> <span class="required" data-i18n="required">*</span></label>
+                                <input type="text" id="expiryDate" placeholder="${t.expiryPlaceholder}" maxlength="5" value="12/25" oninput="updateCardPreview()">
+                            </div>
+                            <div class="form-group">
+                                <label><span data-i18n="cvv">${t.cvv}</span> <span class="required" data-i18n="required">*</span></label>
+                                <input type="text" id="cvv" placeholder="${t.cvvPlaceholder}" maxlength="4" value="123">
+                            </div>
+                        </div>
+                    </div>
+                    `;
+                }
+                
+                return html;
+            }).join('');
+        }
+
+        /**
+         * Handle payment method change
+         */
+        function handlePaymentMethodChange(method) {
+            console.log('Payment method changed to:', method);
+            
+            // Hide all card info sections
+            document.querySelectorAll('.card-info-section').forEach(section => {
+                section.classList.remove('active');
+                section.style.display = 'none';
+            });
+            
+            // Show card info section only if card is selected
+            if (method === 'card') {
+                const cardSection = document.getElementById('cardInfoSection_card');
+                if (cardSection) {
+                    cardSection.classList.add('active');
+                    cardSection.style.display = 'block';
+                    console.log('✓ Card info section shown');
+                } else {
+                    console.warn('Card info section not found');
+                }
+            } else {
+                console.log('✓ Card info section hidden (non-card method selected)');
+            }
+        }
+
+        /**
+         * Update card preview
+         */
+        function updateCardPreview() {
+            const cardNumber = document.getElementById('cardNumber')?.value || '•••• •••• •••• ••••';
+            const cardHolder = document.getElementById('cardHolder')?.value || 'CARDHOLDER NAME';
+            const expiryDate = document.getElementById('expiryDate')?.value || 'MM/YY';
+            
+            const previewNumber = document.getElementById('previewCardNumber');
+            const previewHolder = document.getElementById('previewCardHolder');
+            const previewExpiry = document.getElementById('previewExpiryDate');
+            
+            if (previewNumber) previewNumber.textContent = cardNumber;
+            if (previewHolder) previewHolder.textContent = cardHolder.toUpperCase();
+            if (previewExpiry) previewExpiry.textContent = expiryDate;
+        }
+
+        /**
+         * Render payment method in embeddedPaymentContainer - 在容器中渲染支付方式
+         * @param {boolean} isAfterSubscription - 是否在订阅创建后调用（影响按钮文本）
+         */
+        function renderPaymentMethodInContainer(isAfterSubscription = false) {
+            console.log('=== renderPaymentMethodInContainer called ===');
+            console.log('isAfterSubscription:', isAfterSubscription);
+            
+            const container = document.getElementById('embeddedPaymentContainer');
+            if (!container) {
+                console.error('embeddedPaymentContainer not found');
+                return;
+            }
+            console.log('✓ embeddedPaymentContainer found');
+
+            const t = dramaTranslations[currentLang];
+            const paymentElement = document.getElementById('payment-element');
+            
+            if (!paymentElement) {
+                console.error('payment-element not found');
+                return;
+            }
+            console.log('✓ payment-element found');
+            
+            // 生成支付方式 HTML
+            const paymentMethodsHTML = generatePaymentMethods();
+            console.log('Generated payment methods HTML length:', paymentMethodsHTML.length);
+            
+            // 渲染支付方式到 payment-element
+            paymentElement.innerHTML = `
+                <div class="form-section">
+                    <div class="payment-methods" id="paymentMethodsList">
+                        ${paymentMethodsHTML}
+                    </div>
+                </div>
+            `;
+            console.log('✓ Payment methods rendered to payment-element');
+            
+            // 显示容器
+            container.style.display = 'block';
+            console.log('✓ embeddedPaymentContainer displayed');
+            
+            const subscribeButton = document.getElementById('subscribeButton');
+            let confirmButton = document.getElementById('confirmPaymentButton');
+            
+            if (isAfterSubscription) {
+                // 订阅后：隐藏订阅按钮，显示确认支付按钮
+                if (subscribeButton) {
+                    subscribeButton.style.display = 'none';
+                    console.log('✓ Subscribe button hidden');
+                }
+                
+                // 添加确认支付按钮（如果不存在）
+                if (!confirmButton) {
+                    confirmButton = document.createElement('button');
+                    confirmButton.id = 'confirmPaymentButton';
+                    confirmButton.className = 'subscribe-button';
+                    confirmButton.onclick = confirmPaymentMethod;
+                    confirmButton.setAttribute('data-i18n', 'confirm');
+                    confirmButton.textContent = t.confirm || '确认支付';
+                    container.parentElement.appendChild(confirmButton);
+                    console.log('✓ Confirm payment button created');
+                } else {
+                    confirmButton.style.display = 'block';
+                    confirmButton.textContent = t.confirm || '确认支付';
+                    console.log('✓ Confirm payment button shown');
+                }
+            } else {
+                // 页面加载时：保持订阅按钮，隐藏确认支付按钮
+                if (subscribeButton) {
+                    subscribeButton.style.display = 'block';
+                    console.log('✓ Subscribe button shown');
+                }
+                
+                if (confirmButton) {
+                    confirmButton.style.display = 'none';
+                    console.log('✓ Confirm payment button hidden');
+                }
+            }
+            
+            console.log('=== renderPaymentMethodInContainer completed ===');
+        }
+
+        async function confirmPaymentMethod() {
+            // Show processing modal
+            showProcessingModal();
+            const processingTitle = document.getElementById('processingTitle');
+            const processingMessage = document.getElementById('processingMessage');
+            
+            processingTitle.textContent = dramaTranslations[currentLang].paymentProcessing;
+            processingMessage.textContent = dramaTranslations[currentLang].paymentProcessingMessage;
+            
+            if (!paymentHandler) {
+                paymentHandler = new PaymentResponseHandler({
+                    translations: dramaTranslations,
+                    currentLang: currentLang,
+                    submitButton: null,
+                    totals: {}
+                });
+            }
+            
+            const integrationMode = localStorage.getItem('paymentIntegrationMode') || 'redirect';
+            console.log('Confirm payment with integration mode:', integrationMode);
+            
+            try {
+                let result;
+                
+                if (integrationMode === 'embedded') {
+                    console.log('Using embedded mode - confirmPaymentIntent()');
+                    result = await confirmPaymentIntent();
+                } else if (integrationMode === 'api') {
+                    console.log('Using API mode - calling confirmPaymentViaAPI()');
+                    
+                    const currentSubscription = localStorage.getItem('subscriptionResponseCache');
+                    const subscriptionData = currentSubscription ? JSON.parse(currentSubscription) : null;
+                    const paymentIntentId = subscriptionData.data.id;
+
+                    const selectedPaymentMethodRadio = document.querySelector('input[name="paymentMethod"]:checked');
+                    const selectedPaymentMethod = selectedPaymentMethodRadio ? selectedPaymentMethodRadio.value : 'card';
+                    console.log('Selected payment method from UI:', selectedPaymentMethod);
+
+                    let payment_method_data = null;
+                    
+                    if (selectedPaymentMethod === 'card') {
+                        const cardNumber = document.getElementById('cardNumber')?.value?.replace(/\s/g, '');
+                        const expiryDate = document.getElementById('expiryDate')?.value;
+                        const cvv = document.getElementById('cvv')?.value;
+                        const cardHolder = document.getElementById('cardHolder')?.value;
+                        
+                        const [expMonth, expYear] = expiryDate ? expiryDate.split('/') : ['', ''];
+                        
+                        if (!cardNumber || !expiryDate || !cvv) {
+                            throw new Error(dramaTranslations[currentLang].pleaseEnterCardInfo || 'Please enter complete card information');
+                        }
+                        
+                        payment_method_data = {
+                            type: 'card',
+                            card: {
+                                number: cardNumber,
+                                expiry_month: expMonth,
+                                expiry_year: expYear,
+                                cvc: cvv,
+                                name: cardHolder || ''
+                            }
+                        };
+                        
+                        console.log('Card data collected:', {
+                            number: cardNumber ? '****' + cardNumber.slice(-4) : 'N/A',
+                            exp_month: expMonth,
+                            exp_year: expYear,
+                            cvc: cvv ? '***' : 'N/A',
+                            name: cardHolder
+                        });
+                    } else {
+                        payment_method_data = {
+                            type: selectedPaymentMethod
+                        };
+                        console.log('Payment method data:', payment_method_data);
+                    }
+
+                    result = await paymentHandler.confirmPaymentViaAPI(paymentIntentId, {
+                        payment_method_data: payment_method_data
+                    });
+                } else {
+                    console.warn('Unknown integration mode, defaulting to embedded');
+                }
+                
+                if (result.success) {
+                    updateProcessingStatus('success', dramaTranslations[currentLang].paymentSuccess);
+                    
+                    setTimeout(() => {
+                        closeProcessingModal();
+                        const returnUrl = '/payment/callback?id=' + result.paymentIntent.id +'&merchant_order_id='
+                            +result.paymentIntent.merchant_order_id+'&status=succeeded';
+                        
+                        if (window.self !== window.top) {
+                            console.log('Detected iframe context, redirecting parent window');
+                            window.top.location.href = returnUrl;
+                        } else {
+                            window.location.href = returnUrl;
+                        }
+                    }, 500);
+                } else {
+                    const errorMsg = result.error || dramaTranslations[currentLang].paymentError;
+                    updateProcessingStatus('error', errorMsg);
+                    
+                    setTimeout(() => {
+                        closeProcessingModal();
+                    }, 3000);
+                }
+            } catch (error) {
+                console.error('Payment confirmation error:', error);
+                updateProcessingStatus('error', dramaTranslations[currentLang].paymentError + ': ' + error.message);
+                
+                setTimeout(() => {
+                    closeProcessingModal();
+                }, 3000);
+            }
         }
 
         function showProcessingModal() {
