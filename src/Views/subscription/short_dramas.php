@@ -12,9 +12,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>短剧订阅 - UseePay Demo</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="/assets/css/short-dramas.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="/assets/css/short-dramas.css?v=<?php echo @filemtime(__DIR__ . '/../../public/assets/css/short-dramas.css') ?: time(); ?>">
     <!-- Short Dramas Page Internationalization -->
-    <script src="/assets/js/i18n/subscription/short-dramas-i18n.js?v=<?php echo time(); ?>"></script>
+    <script src="/assets/js/i18n/subscription/short-dramas-i18n.js?v=<?php echo @filemtime(__DIR__ . '/../../public/assets/js/i18n/subscription/short-dramas-i18n.js') ?: time(); ?>"></script>
     <!-- UseePay SDK -->
     <script src="https://checkout-sdk1.uat.useepay.com/2.0.0/useepay.min.js"></script>
     <!-- UseePay Public Key Configuration -->
@@ -27,11 +27,11 @@
         console.log('UseePay Public Key configured:', window.USEEPAY_PUBLIC_KEY ? '✓' : '✗');
     </script>
     <!-- Payment Methods Configuration -->
-    <script src="/assets/js/payment/payment-methods-config.js?v=<?php echo time(); ?>"></script>
+    <script src="/assets/js/payment/payment-methods-config.js?v=<?php echo @filemtime(__DIR__ . '/../../public/assets/js/payment/payment-methods-config.js') ?: time(); ?>"></script>
     <!-- UseePay Elements Initializer -->
-    <script src="/assets/js/useepay-elements-initializer.js?v=<?php echo time(); ?>"></script>
+    <script src="/assets/js/useepay-elements-initializer.js?v=<?php echo @filemtime(__DIR__ . '/../../public/assets/js/useepay-elements-initializer.js') ?: time(); ?>"></script>
     <!-- Payment Response Handler -->
-    <script src="/assets/js/payment-response-handler.js?v=<?php echo time(); ?>"></script>
+    <script src="/assets/js/payment-response-handler.js?v=<?php echo @filemtime(__DIR__ . '/../../public/assets/js/payment-response-handler.js') ?: time(); ?>"></script>
 </head>
 <body>
     <div class="container">
