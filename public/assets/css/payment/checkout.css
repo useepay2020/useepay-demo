@@ -381,6 +381,7 @@ textarea {
     gap: 15px;
     padding: 15px 0;
     border-bottom: 1px solid #f1f3f5;
+    align-items: center;
 }
 
 .order-item:first-child {
@@ -418,11 +419,84 @@ textarea {
     justify-content: space-between;
     font-size: 13px;
     color: #636e72;
+    gap: 10px;
+}
+
+.order-item-unit-price {
+    color: #636e72;
+    font-size: 12px;
 }
 
 .order-item-price {
     font-weight: 600;
     color: #667eea;
+}
+
+/* Quantity Control */
+.order-item-quantity-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #f5f7fa;
+    border-radius: 8px;
+    padding: 4px 8px;
+    flex-shrink: 0;
+}
+
+.qty-btn {
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: white;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    color: #667eea;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    border: 1px solid #e1e5e8;
+}
+
+.qty-btn:hover {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+    transform: scale(1.05);
+}
+
+.qty-btn:active {
+    transform: scale(0.95);
+}
+
+.qty-input {
+    width: 45px !important;
+    height: 28px;
+    padding: 4px 8px !important;
+    border: 1px solid #e1e5e8 !important;
+    border-radius: 6px;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: #2d3436;
+}
+
+.qty-input:focus {
+    border-color: #667eea !important;
+    outline: none;
+}
+
+/* Remove spinner from number input */
+.qty-input::-webkit-outer-spin-button,
+.qty-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.qty-input[type=number] {
+    -moz-appearance: textfield;
 }
 
 .order-totals {

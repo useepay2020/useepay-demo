@@ -412,9 +412,9 @@ function t($key) {
         </div>
 
         <div class="callback-actions">
-            <a href="/payment/clothing-shop" class="btn btn-primary">
-                <i class="fas fa-shopping-bag"></i> <?php echo t('continue_shopping'); ?>
-            </a>
+<!--            <a href="/payment/clothing-shop" class="btn btn-primary">-->
+<!--                <i class="fas fa-shopping-bag"></i> --><?php //echo t('continue_shopping'); ?>
+<!--            </a>-->
             <a href="/" class="btn btn-secondary">
                 <i class="fas fa-home"></i> <?php echo t('home'); ?>
             </a>

@@ -17,6 +17,6 @@ return [
             'connect' => 30,  // 连接超时时间（秒）
             'read' => 60      // 读取超时时间（秒）
         ],
-        'callback_url' => getenv('USEEPAY_CALLBACK_URL') ?: 'https://demo1.uat.useepay.com/payment/callback',
+        'callback_url' => getenv('USEEPAY_CALLBACK_URL') ?: 'http://localhost:8000/payment/callback',
     ]
 ];

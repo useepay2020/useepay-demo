@@ -13,6 +13,8 @@ const pricingTranslations = {
         flexiblePricing: '灵活的定价选项，满足各种业务需求',
         
         // Billing Toggle
+        monthly: '月度',
+        annual: '年度',
         monthlyBilling: '按月计费',
         annualBilling: '按年计费',
         saveBadge: '节省 20%',
@@ -118,7 +120,13 @@ const pricingTranslations = {
         expiryPlaceholder: 'MM/YY',
         cvv: 'CVV',
         cvvPlaceholder: 'CVV',
-        required: '*'
+        required: '*',
+        
+        // Subscription Home Page
+        subscriptionCenter: '订阅中心',
+        chooseYourPlan: '选择适合您的订阅方案',
+        softwareSubscription: '软件订阅',
+        shortDramas: '短剧订阅'
     },
     
     en: {
@@ -130,6 +138,8 @@ const pricingTranslations = {
         flexiblePricing: 'Flexible pricing options for all business needs',
         
         // Billing Toggle
+        monthly: 'Monthly',
+        annual: 'Annual',
         monthlyBilling: 'Monthly Billing',
         annualBilling: 'Annual Billing',
         saveBadge: 'Save 20%',
@@ -235,7 +245,13 @@ const pricingTranslations = {
         expiryPlaceholder: 'MM/YY',
         cvv: 'CVV',
         cvvPlaceholder: 'CVV',
-        required: '*'
+        required: '*',
+        
+        // Subscription Home Page
+        subscriptionCenter: 'Subscription Center',
+        chooseYourPlan: 'Choose Your Subscription Plan',
+        softwareSubscription: 'Software Subscription',
+        shortDramas: 'Short Dramas'
     }
 };
 

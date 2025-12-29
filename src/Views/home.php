@@ -767,7 +767,7 @@
                             </div>
                         </div>
 
-                        <a href="/subscription/pricing" class="btn btn-warning" id="createSubscriptionBtn">
+                        <a href="/subscription/home" class="btn btn-warning" id="createSubscriptionBtn">
                             <i class="fas fa-plus"></i> <span data-i18n="createSubscription">创建订阅</span>
                         </a>
                     </div>
@@ -1642,7 +1642,7 @@
                 } else if (actionType === 'subscription') {
                     setTimeout(() => {
                         console.log('✓ 正在跳转到产品订阅页面...');
-                        window.location.href = '/subscription/pricing';
+                        window.location.href = '/subscription/home';
                     }, 500);
                 }
             }

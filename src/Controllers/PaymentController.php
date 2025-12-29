@@ -16,6 +16,14 @@ class PaymentController extends BaseController
         // Validate required fields
         $requiredFields = array('items', 'totals');
         $data = $this->getRequestData();
+        
+        // Log complete request data for debugging
+        $this->log('Complete Request Data - createPayment', 'info', [
+            'has_payment_method_data' => isset($data['payment_method_data']),
+            'payment_method_data' => $data['payment_method_data'] ?? null,
+            'paymentMethods' => $data['paymentMethods'] ?? null
+        ], 'payment');
+        
         $missing = [];
 
         foreach ($requiredFields as $field) {
@@ -197,26 +205,44 @@ class PaymentController extends BaseController
                 $paymentParams['auto_capture'] = true;
             }
 
-            // Handle Apple Pay payment_method_data
+            // Handle Apple Pay / Google Pay payment_method_data
             if (!empty($data['payment_method_data']) && is_array($data['payment_method_data'])) {
                 $methodData = $data['payment_method_data'];
                 
+                // Apple Pay
                 if (isset($methodData['type']) && $methodData['type'] === 'apple_pay') {
                     $paymentParams['payment_method_data']['type'] = 'apple_pay';
                     
                     if (!empty($methodData['apple_pay'])) {
+                        $epd = $methodData['apple_pay']['encrypted_payment_data']
+                            ?? $methodData['apple_pay']['encrypt_payment_data']
+                            ?? null;
+                        
                         $paymentParams['payment_method_data']['apple_pay'] = array(
-                            'payment' => $methodData['apple_pay']['payment'],
-                            'merchant_identifier' => $methodData['apple_pay']['merchant_identifier']
+                            'merchant_identifier' => $methodData['apple_pay']['merchant_identifier'] ?? '',
+                            'encrypted_payment_data' => $epd
+                        );
+                    }
+                    
+                    $paymentParams['confirm'] = true;
+                    $paymentParams['auto_capture'] = true;
+                }
+                // Google Pay
+                else if (isset($methodData['type']) && $methodData['type'] === 'google_pay') {
+                    $paymentParams['payment_method_data']['type'] = 'google_pay';
+                    
+                    if (!empty($methodData['google_pay'])) {
+                        $paymentParams['payment_method_data']['google_pay'] = array(
+                            'encrypted_payment_data' => $methodData['google_pay']['encrypted_payment_data'] ?? ''
                         );
                     }
                     
                     $paymentParams['confirm'] = true;
                     $paymentParams['auto_capture'] = true;
                     
-                    $this->log('Apple Pay data added to payment_method_data', 'info', [
-                        'type' => 'apple_pay',
-                        'merchant_identifier' => $methodData['apple_pay']['merchant_identifier'] ?? 'N/A'
+                    $this->log('Google Pay data added to payment_method_data', 'info', [
+                        'type' => 'google_pay',
+                        'has_encrypted_payment_data' => !empty($methodData['google_pay']['encrypted_payment_data'])
                     ], 'payment');
                 }
             }
@@ -343,17 +369,25 @@ class PaymentController extends BaseController
                 else if (isset($methodData['type']) && $methodData['type'] === 'apple_pay') {
                     $applePayData = $methodData['apple_pay'] ?? [];
                     
+                    // 兼容多种字段名，保持为对象
+                    $applePayToken = $applePayData['encrypted_payment_data']
+                        ?? ($applePayData['encrypt_payment_data']
+                        ?? ($applePayData['encrypted_payment_token'] 
+                        ?? ($applePayData['payment'] ?? '')));
+                    
                     $paymentParams['payment_method_data'] = array(
                         'type' => 'apple_pay',
                         'apple_pay' => array(
                             'merchant_identifier' => $applePayData['merchant_identifier'] ?? '',
-                            'payment' => $applePayData['encrypted_payment_token'] ?? $applePayData['payment'] ?? ''
+                            'encrypted_payment_data' => $applePayToken
                         )
                     );
                     
                     $this->log('Apple Pay Confirm - payment_method_data', 'info', [
                         'type' => 'apple_pay',
-                        'merchant_identifier' => $applePayData['merchant_identifier'] ?? 'N/A'
+                        'merchant_identifier' => $applePayData['merchant_identifier'] ?? 'N/A',
+                        'has_token' => !empty($applePayToken),
+                        'token_type' => gettype($applePayToken)
                     ], 'payment');
                 }
                 // Handle Google Pay payment method
@@ -362,11 +396,14 @@ class PaymentController extends BaseController
                     
                     $paymentParams['payment_method_data'] = array(
                         'type' => 'google_pay',
-                        'google_pay' => $googlePayData
+                        'google_pay' => array(
+                            'encrypted_payment_data' => $googlePayData['encrypted_payment_data'] ?? ''
+                        )
                     );
                     
                     $this->log('Google Pay Confirm - payment_method_data', 'info', [
-                        'type' => 'google_pay'
+                        'type' => 'google_pay',
+                        'has_encrypted_payment_data' => !empty($googlePayData['encrypted_payment_data'])
                     ], 'payment');
                 }
                 else {

@@ -15,7 +15,7 @@
     <!-- Pricing Page Internationalization (must load before inline scripts) -->
     <script src="/assets/js/i18n/subscription/pricing-i18n.js"></script>
     <!-- UseePay SDK -->
-    <script src="https://checkout-sdk1.uat.useepay.com/1.0.1/useepay.min.js"></script>
+    <script src="https://checkout-sdk1.uat.useepay.com/2.0.0/useepay.min.js"></script>
     <!-- Payment Methods Configuration -->
     <script src="/assets/js/payment/payment-methods-config.js"></script>
     <!-- UseePay Elements Initializer (must be loaded first) -->
@@ -24,34 +24,23 @@
     <script src="/assets/js/payment-response-handler.js"></script>
 </head>
 <body>
-    <div class="container">
-        <a href="/" class="back-button">
-            <i class="fas fa-arrow-left"></i>
-            <span data-i18n="backHome">返回首页</span>
-        </a>
+    <header>
+        <h1 data-i18n="selectPlan">选择适合您的订阅计划</h1>
+        <p data-i18n="flexiblePricing">灵活的定价选项，满足各种业务需求</p>
 
-        <button class="register-button" onclick="openAuthModal()">
-            <i class="fas fa-user"></i>
-            <span id="authButtonText" data-i18n="register">注册</span>
-        </button>
-
-        <header>
-            <div class="logo">💳 UseePay Demo</div>
-            <h1 data-i18n="selectPlan">选择适合您的订阅计划</h1>
-            <p data-i18n="flexiblePricing">灵活的定价选项，满足各种业务需求</p>
-
-            <div class="toggle-billing">
-                <span class="billing-label" data-i18n="monthlyBilling">按月计费</span>
-                <div class="toggle-switch">
-                    <input type="radio" id="monthly" name="billing" value="monthly" checked>
-                    <label for="monthly" data-i18n="monthly">月度</label>
-                    <input type="radio" id="annual" name="billing" value="annual">
-                    <label for="annual" data-i18n="annual">年度</label>
-                </div>
-                <span class="billing-label" data-i18n="annualBilling">按年计费</span> <span class="save-badge" data-i18n="saveBadge">节省 20%</span>
+        <div class="toggle-billing">
+            <span class="billing-label" data-i18n="monthlyBilling">按月计费</span>
+            <div class="toggle-switch">
+                <input type="radio" id="monthly" name="billing" value="monthly" checked>
+                <label for="monthly" data-i18n="monthly">月度</label>
+                <input type="radio" id="annual" name="billing" value="annual">
+                <label for="annual" data-i18n="annual">年度</label>
             </div>
-        </header>
+            <span class="billing-label" data-i18n="annualBilling">按年计费</span> <span class="save-badge" data-i18n="saveBadge">节省 20%</span>
+        </div>
+    </header>
 
+    <div class="container">
         <div class="pricing-grid">
             <!-- Starter Plan -->
             <div class="pricing-card">
@@ -235,60 +224,6 @@
                     </tr>
                 </tbody>
             </table>
-        </div>
-
-        <!-- FAQ Section -->
-        <div class="faq-section">
-            <h2 data-i18n="faq">常见问题</h2>
-            <div class="faq-item">
-                <div class="faq-question" onclick="toggleFAQ(this)">
-                    <span class="icon"><i class="fas fa-chevron-down"></i></span>
-                    <span data-i18n="canUpgrade">我可以随时升级或降级我的计划吗？</span>
-                </div>
-                <div class="faq-answer" data-i18n="canUpgradeAnswer">
-                    是的，您可以随时升级或降级您的订阅计划。升级会立即生效，降级将在下一个计费周期生效。我们会按比例计算费用。
-                </div>
-            </div>
-
-            <div class="faq-item">
-                <div class="faq-question" onclick="toggleFAQ(this)">
-                    <span class="icon"><i class="fas fa-chevron-down"></i></span>
-                    <span data-i18n="exceedLimit">如果我超过了我的交易限额会怎样？</span>
-                </div>
-                <div class="faq-answer" data-i18n="exceedLimitAnswer">
-                    如果您接近交易限额，我们会向您发送通知。您可以选择升级计划或联系我们讨论自定义解决方案。我们不会在没有通知的情况下阻止交易。
-                </div>
-            </div>
-
-            <div class="faq-item">
-                <div class="faq-question" onclick="toggleFAQ(this)">
-                    <span class="icon"><i class="fas fa-chevron-down"></i></span>
-                    <span data-i18n="freeTrial">你们提供免费试用吗？</span>
-                </div>
-                <div class="faq-answer" data-i18n="freeTrialAnswer">
-                    是的，我们为所有新用户提供 14 天的免费试用。您可以在试用期间体验所有功能，无需提供信用卡信息。
-                </div>
-            </div>
-
-            <div class="faq-item">
-                <div class="faq-question" onclick="toggleFAQ(this)">
-                    <span class="icon"><i class="fas fa-chevron-down"></i></span>
-                    <span data-i18n="paymentMethods2">你们接受哪些付款方式？</span>
-                </div>
-                <div class="faq-answer" data-i18n="paymentMethodsAnswer">
-                    我们接受所有主要的信用卡（Visa、MasterCard、American Express）、支付宝、微信支付和银行转账。所有交易都是安全加密的。
-                </div>
-            </div>
-
-            <div class="faq-item">
-                <div class="faq-question" onclick="toggleFAQ(this)">
-                    <span class="icon"><i class="fas fa-chevron-down"></i></span>
-                    <span data-i18n="canCancel">我可以取消我的订阅吗？</span>
-                </div>
-                <div class="faq-answer" data-i18n="canCancelAnswer">
-                    是的，您可以随时取消订阅。取消后，您将能够访问您的账户直到当前计费周期结束。我们不收取任何取消费用。
-                </div>
-            </div>
         </div>
     </div>
 
@@ -500,7 +435,8 @@
             }
             
             // 构建 Subscription 对象
-            const billingType = document.querySelector('input[name="billing"]:checked').value;
+            const billingRadio = document.querySelector('input[name="billing"]:checked');
+            const billingType = billingRadio ? billingRadio.value : 'month';
             const planName = getPlanName(plan);
             
             // 获取价格信息
@@ -576,7 +512,8 @@
                         paymentIntentId: result.data.id,
                         date: new Date().toISOString(),
                         status: result.data.status,
-                        amount: result.data.amount
+                        amount: result.data.amount,
+                        currency: currency
                     };
 
                     // Cache the response result to browser localStorage
@@ -962,8 +899,16 @@
                         closeProcessingModal();
                         // Optionally redirect to success page
                         //window.location.href = '/subscription/confirm?subscription_id=' + result.subscriptionId;
-                        window.location.href = '/payment/callback?id=' + result.paymentIntent.id +'&merchant_order_id='
+                        const returnUrl = '/payment/callback?id=' + result.paymentIntent.id +'&merchant_order_id='
                             +result.paymentIntent.merchant_order_id+'&status=succeeded';
+                        
+                        // 检测是否在 iframe 中
+                        if (window.self !== window.top) {
+                            console.log('Detected iframe context, redirecting parent window');
+                            window.top.location.href = returnUrl;
+                        } else {
+                            window.location.href = returnUrl;
+                        }
                     }, 500);
                 } else {
                     // Payment failed
@@ -1194,6 +1139,7 @@
         window.USEEPAY_PUBLIC_KEY = '<?php echo $publicKey; ?>';
         console.log('UseePay Public Key configured:', window.USEEPAY_PUBLIC_KEY ? '✓' : '✗');
     </script>
+
 
 
     <!-- Auth Modal -->
