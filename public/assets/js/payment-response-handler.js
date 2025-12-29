@@ -90,8 +90,16 @@ class PaymentResponseHandler {
         if (paymentStatus === 'requires_payment_method' || paymentStatus === 'requires_customer_action' || paymentStatus === 'requires_action') {
             return this.handlePaymentRedirect(result);
         } else if (paymentStatus === 'succeeded' || paymentStatus === 'failed') {
-            window.location.href = result.data.return_url+'?id=' + result.data.id +'&merchant_order_id='
+            const returnUrl = result.data.return_url+'?id=' + result.data.id +'&merchant_order_id='
                 +result.data.merchant_order_id+'&status='+paymentStatus;
+            
+            // 检测是否在 iframe 中
+            if (window.self !== window.top) {
+                this.logger.log('Detected iframe context, redirecting parent window');
+                window.top.location.href = returnUrl;
+            } else {
+                window.location.href = returnUrl;
+            }
         } else if (paymentStatus === 'payment_intent_created') {
             const errorMessage = this.currentLang === 'zh' 
                 ? '支付失败，请联系您的客户经理。' 
@@ -148,7 +156,14 @@ class PaymentResponseHandler {
      */
     handleGetRedirect(url) {
         this.logger.log('Performing GET redirect to:', url);
-        window.location.href = url;
+        
+        // 检测是否在 iframe 中
+        if (window.self !== window.top) {
+            this.logger.log('Detected iframe context, redirecting parent window');
+            window.top.location.href = url;
+        } else {
+            window.location.href = url;
+        }
         return true;
     }
 
@@ -164,6 +179,12 @@ class PaymentResponseHandler {
         const form = document.createElement('form');
         form.method = 'POST';
         form.action = url;
+        
+        // 检测是否在 iframe 中，如果是则设置 target 为 _top
+        if (window.self !== window.top) {
+            this.logger.log('Detected iframe context, setting form target to _top');
+            form.target = '_top';
+        }
 
         // 添加表单数据
         if (data && typeof data === 'object') {
@@ -325,9 +346,19 @@ class PaymentResponseHandler {
             if (event.data.status === 'succeeded' || event.data.success) {
                 // 支付成功，跳转到成功页面
                 if (event.data.return_url) {
-                    window.location.href = event.data.return_url;
+                    // 检测是否在 iframe 中
+                    if (window.self !== window.top) {
+                        this.logger.log('Detected iframe context, redirecting parent window');
+                        window.top.location.href = event.data.return_url;
+                    } else {
+                        window.location.href = event.data.return_url;
+                    }
                 } else {
-                    window.location.reload();
+                    if (window.self !== window.top) {
+                        window.top.location.reload();
+                    } else {
+                        window.location.reload();
+                    }
                 }
             } else {
                 // 支付失败
@@ -387,7 +418,14 @@ class PaymentResponseHandler {
      */
     redirect(url) {
         this.logger.log('Redirecting to:', url);
-        window.location.href = url;
+        
+        // 检测是否在 iframe 中
+        if (window.self !== window.top) {
+            this.logger.log('Detected iframe context, redirecting parent window');
+            window.top.location.href = url;
+        } else {
+            window.location.href = url;
+        }
     }
 
     /**

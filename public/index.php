@@ -135,9 +135,17 @@ switch ($request) {
         $controller = new \UseePayDemo\Controllers\CheckoutController();
         $controller->apiCheckout();
         break;
-    case '/subscription/pricing':
+    case '/subscription/home':
+        // Load subscription home page
+        require __DIR__ . '/../src/Views/subscription/home.php';
+        break;
+    case '/subscription/software':
         // Load subscription pricing page
-        require __DIR__ . '/../src/Views/subscription/pricing.php';
+        require __DIR__ . '/../src/Views/subscription/software.php';
+        break;
+    case '/subscription/short_dramas':
+        // Load short dramas subscription page
+        require __DIR__ . '/../src/Views/subscription/short_dramas.php';
         break;
     case '/subscription/checkout':
         // Load subscription checkout page
