@@ -11,17 +11,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>订阅计划 - UseePay Demo</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="/assets/css/pricing.css">
+    <link rel="stylesheet" href="/assets/css/pricing.css?v=<?php echo time(); ?>">
     <!-- Pricing Page Internationalization (must load before inline scripts) -->
-    <script src="/assets/js/i18n/subscription/pricing-i18n.js"></script>
+    <script src="/assets/js/i18n/subscription/pricing-i18n.js?v=<?php echo time(); ?>"></script>
     <!-- UseePay SDK -->
     <script src="https://checkout-sdk1.uat.useepay.com/2.0.0/useepay.min.js"></script>
     <!-- Payment Methods Configuration -->
-    <script src="/assets/js/payment/payment-methods-config.js"></script>
+    <script src="/assets/js/payment/payment-methods-config.js?v=<?php echo time(); ?>"></script>
     <!-- UseePay Elements Initializer (must be loaded first) -->
-    <script src="/assets/js/useepay-elements-initializer.js"></script>
+    <script src="/assets/js/useepay-elements-initializer.js?v=<?php echo time(); ?>"></script>
     <!-- Payment Response Handler -->
-    <script src="/assets/js/payment-response-handler.js"></script>
+    <script src="/assets/js/payment-response-handler.js?v=<?php echo time(); ?>"></script>
 </head>
 <body>
     <header>

@@ -11,7 +11,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>结算 - Checkout</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="/assets/css/payment/checkout.css">
+    <link rel="stylesheet" href="/assets/css/payment/checkout.css?v=<?php echo time(); ?>">
 </head>
 <body>
     <div class="container">
@@ -29,11 +29,11 @@
     </div>
 
     <!-- Internationalization -->
-    <script src="/assets/js/i18n/payment/checkout-i18n.js"></script>
+    <script src="/assets/js/i18n/payment/checkout-i18n.js?v=<?php echo time(); ?>"></script>
     <!-- Payment Methods Configuration -->
-    <script src="/assets/js/payment/payment-methods-config.js"></script>
+    <script src="/assets/js/payment/payment-methods-config.js?v=<?php echo time(); ?>"></script>
     <!-- Checkout Renderer -->
-    <script src="/assets/js/payment/checkout-renderer.js"></script>
+    <script src="/assets/js/payment/checkout-renderer.js?v=<?php echo time(); ?>"></script>
     <script>
         // Use translations from i18n file
         const translations = checkoutTranslations;
@@ -192,6 +192,6 @@
 
         });
     </script>
-    <script src="/assets/js/payment-response-handler.js"></script>
+    <script src="/assets/js/payment-response-handler.js?v=<?php echo time(); ?>"></script>
 </body>
 </html>
