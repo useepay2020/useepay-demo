@@ -198,7 +198,7 @@ function initializeElements(mode, amount, currency,options) {
 
         // Create payment element
         console.log('Creating payment element...');
-        useepayPaymentElement = useepayElements.create('payment');
+        useepayPaymentElement = useepayElements.create('payment',options);
         console.log('✓ Payment element created');
 
         // Mount payment element to DOM

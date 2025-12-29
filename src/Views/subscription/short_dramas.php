@@ -26,22 +26,6 @@
 </head>
 <body>
     <div class="container">
-<!--        <a href="/" class="back-button">-->
-<!--            <i class="fas fa-arrow-left"></i>-->
-<!--            <span data-i18n="backHome">返回首页</span>-->
-<!--        </a>-->
-<!---->
-<!--        <button class="register-button" onclick="openAuthModal()">-->
-<!--            <i class="fas fa-user"></i>-->
-<!--            <span id="authButtonText" data-i18n="register">注册</span>-->
-<!--        </button>-->
-<!---->
-<!--        <header>-->
-<!--            <div class="logo">🎬 UseePay Demo</div>-->
-<!--            <h1 data-i18n="selectDramas">选择您喜欢的短剧</h1>-->
-<!--            <p data-i18n="dramasDescription">订阅您喜爱的短剧，每部仅需 $0.99/月</p>-->
-<!--        </header>-->
-
         <div class="dramas-container">
             <div class="dramas-grid" id="dramasGrid">
                 <!-- Drama cards will be generated here -->
@@ -64,6 +48,14 @@
                         <span id="billingCycle">每月</span>
                     </div>
                 </div>
+                
+                <!-- Embedded Payment Element (shown when integration mode is embedded and amount > 0) -->
+                <div id="embeddedPaymentContainer" style="display: none; margin: 20px 0;">
+                    <h3 data-i18n="selectPaymentMethod" style="margin-bottom: 15px;">选择支付方式</h3>
+                    <div id="payment-element" style="margin: 20px 0;"></div>
+                </div>
+                
+                <!-- Subscribe Button (shown when not in embedded mode or amount is 0) -->
                 <button class="subscribe-button" id="subscribeButton" onclick="handleSubscribe()" data-i18n="subscribeNow">立即订阅</button>
             </div>
         </div>
@@ -100,20 +92,7 @@
         </div>
     </div>
 
-    <!-- Payment Methods Modal -->
-    <div id="paymentMethodsModal" class="payment-methods-modal">
-        <div class="payment-methods-modal-content">
-            <div class="payment-methods-header">
-                <h2 class="payment-methods-title" data-i18n="selectPaymentMethod">选择支付方式</h2>
-                <button class="payment-methods-close" onclick="closePaymentMethodsModal()">×</button>
-            </div>
-            <div id="payment-element" style="margin: 20px 0;"></div>
-            <div class="payment-methods-footer">
-                <button class="payment-methods-btn cancel" onclick="closePaymentMethodsModal()" data-i18n="cancel">取消</button>
-                <button class="payment-methods-btn confirm" onclick="confirmPaymentMethod()" data-i18n="confirm">确认</button>
-            </div>
-        </div>
-    </div>
+
 
     <!-- Auth Modal -->
     <div id="authModal" class="auth-modal">
@@ -358,7 +337,6 @@
             if (selectedDramas.size === 0) {
                 listContainer.innerHTML = `<p>${noDramasText}</p>`;
                 totalPriceElement.textContent = '$0.00';
-                subscribeButton.disabled = true;
             } else {
                 const selectedDramasList = shortDramas.filter(d => selectedDramas.has(d.id));
                 listContainer.innerHTML = selectedDramasList.map(drama => `
@@ -368,14 +346,28 @@
                     </div>
                 `).join('');
                 
-                const totalPrice = selectedDramas.size * DRAMA_PRICE;
+                // Fix floating point precision issue
+                const totalPrice = parseFloat((selectedDramas.size * DRAMA_PRICE).toFixed(2));
                 totalPriceElement.textContent = '$' + totalPrice.toFixed(2);
-                subscribeButton.disabled = false;
             }
             
             // Update billing cycle text
             if (billingCycleElement) {
                 billingCycleElement.textContent = perMonthText;
+            }
+            
+            // Re-initialize payment element if in embedded mode and amount > 0
+            const integrationMode = localStorage.getItem('paymentIntegrationMode') || 'redirect';
+            const embeddedPaymentContainer = document.getElementById('embeddedPaymentContainer');
+            
+            if (integrationMode === 'embedded' && selectedDramas.size > 0) {
+                if (embeddedPaymentContainer) embeddedPaymentContainer.style.display = 'block';
+                
+                setTimeout(() => {
+                    initializePaymentElement();
+                }, 100);
+            } else {
+                if (embeddedPaymentContainer) embeddedPaymentContainer.style.display = 'none';
             }
         }
 
@@ -395,7 +387,8 @@
             }
 
             const selectedDramasList = shortDramas.filter(d => selectedDramas.has(d.id));
-            const totalPrice = selectedDramas.size * DRAMA_PRICE;
+            // Fix floating point precision issue
+            const totalPrice = parseFloat((selectedDramas.size * DRAMA_PRICE).toFixed(2));
             const currency = 'USD';
 
             const subscriptionData = {
@@ -404,7 +397,7 @@
                     interval: 'month',
                     interval_count: 1,
                     unit_amount: totalPrice,
-                    totalBillingCycles: null
+                    totalBillingCycles: 10
                 },
                 currency: currency,
                 description: currentLang === 'zh' ? '短剧订阅' : 'Short Dramas Subscription',
@@ -453,19 +446,15 @@
 
                 localStorage.setItem('subscriptionResponseCache', JSON.stringify(result));
 
-                setTimeout(() => {
-                    closeProcessingModal();
+                setTimeout(async () => {
 
                     const integrationMode = localStorage.getItem('paymentIntegrationMode') || 'redirect';
                     console.log('Integration mode:', integrationMode);
 
                     if (integrationMode === 'redirect') {
-                        paymentHandler.processPaymentResultForRedirect(result, orderData);
+                        paymentHandler.processPaymentResultForRedirect(result, subscriptionData);
                     } else if (integrationMode === 'embedded') {
-                        paymentHandler.processPaymentResultForEmbedded(result, orderData);
-                    } else {
-                        renderPaymentMethodSection();
-                        showPaymentMethodsModal();
+                        await processEmbeddedCheckoutForSubscription(result, orderData);
                     }
                 }, 1500);
             })
@@ -477,6 +466,99 @@
                     paymentHandler.handleFetchError(error);
                 }, 2000);
             });
+        }
+
+        /**
+         * Process embedded checkout flow
+         * @param {Object} result - API response containing payment intent data
+         * @param {Object} subscriptionData - subscription information
+         */
+        async function processEmbeddedCheckoutForSubscription(result, subscriptionData) {
+            const clientSecret = result.data?.client_secret;
+            const paymentIntentId = result.data?.id;
+            
+            if (!clientSecret || !paymentIntentId) {
+                console.error('Missing client_secret or payment_intent_id for embedded checkout');
+                alert(dramaTranslations[currentLang].paymentError || 'Payment configuration error');
+                return;
+            }
+
+            try {
+                console.log('Payment intent created for embedded checkout');
+                console.log('Payment element should already be visible on the page');
+
+                // Step 2: Get UseePay elements
+                console.log('Step 2: Submitting payment form...');
+                const useepayElements = getUseepayElements();
+                if (!useepayElements) {
+                    throw new Error('UseePay Elements not initialized');
+                }
+
+                // Step 3: Submit elements to validate and get selected payment method
+                console.log('Step 3: Submit elements to validate and get selected payment method...');
+                const submitResult = await useepayElements.submit();
+                const { selectedPaymentMethod, error: submitError } = submitResult;
+
+                if (submitError) {
+                    console.error('Form submission error:', submitError);
+                    throw new Error(submitError.message || 'Form validation failed');
+                }
+
+                if (!selectedPaymentMethod) {
+                    throw new Error('No payment method selected');
+                }
+
+                console.log('✓ Payment method selected:', selectedPaymentMethod);
+
+                // Step 4: Confirm payment with UseePay
+                console.log('Step 4: Confirming payment with UseePay...');
+                const useepayInstance = getUseepayInstance();
+                if (!useepayInstance) {
+                    throw new Error('UseePay instance not initialized');
+                }
+
+                const confirmResult = await useepayInstance.confirmPayment({
+                    elements: useepayElements,
+                    paymentIntentId: paymentIntentId,
+                    clientSecret: clientSecret
+                });
+
+                const { paymentIntent, error: confirmError } = confirmResult;
+
+                if (confirmError) {
+                    console.error('Payment confirmation error:', confirmError);
+                    throw new Error(confirmError.message || 'Payment confirmation failed');
+                }
+
+                if (!paymentIntent) {
+                    throw new Error('No payment intent returned');
+                }
+                
+                console.log('Step 5: Handle payment result:', JSON.stringify(paymentIntent));
+                
+                // Step 5: Handle payment success
+                if (paymentIntent.status === 'succeeded') {
+                    console.log('✓ Payment succeeded');
+
+                    // Redirect to callback page
+                    setTimeout(() => {
+                        const returnUrl = '/payment/callback?id=' + paymentIntent.id + '&merchant_order_id='
+                            + paymentIntent.merchant_order_id + '&status=succeeded';
+                        // 检测是否在 iframe 中
+                        if (window.self !== window.top) {
+                            console.log('Detected iframe context, redirecting parent window');
+                            window.top.location.href = returnUrl;
+                        } else {
+                            window.location.href = returnUrl;
+                        }
+                    }, 1500);
+                } else {
+                    throw new Error('Payment status: ' + paymentIntent.status);
+                }
+            } catch (error) {
+                console.error('Embedded checkout error:', error);
+                alert(dramaTranslations[currentLang].paymentError || error.message || 'Payment failed');
+            }
         }
 
         function getPaymentMethods() {
@@ -498,166 +580,6 @@
                 }
             }
             return [];
-        }
-
-        function renderPaymentMethodSection() {
-            const container = document.getElementById('payment-element');
-            if (!container) {
-                console.error('Payment methods container not found');
-                return;
-            }
-
-            const t = dramaTranslations[currentLang];
-            const cachedMethods = getPaymentMethods();
-            let methodsToDisplay = cachedMethods.length > 0 ? cachedMethods : ['card', 'apple_pay'];
-
-            const methodsHTML = methodsToDisplay.map((method, index) => {
-                const methodInfo = paymentMethodsMap[method];
-                if (!methodInfo) return '';
-
-                const methodName = currentLang === 'zh' ? methodInfo.name_zh : methodInfo.name_en;
-                const methodDesc = currentLang === 'zh' ? methodInfo.desc_zh : methodInfo.desc_en;
-                const isFirst = index === 0;
-
-                return `
-                    <div class="payment-option">
-                        <input type="radio" id="method_${method}" name="paymentMethod" value="${method}" ${isFirst ? 'checked' : ''}>
-                        <label for="method_${method}">
-                            <div class="payment-icon">${methodInfo.icon}</div>
-                            <div class="payment-info">
-                                <div class="payment-name">${methodName}</div>
-                                <div class="payment-desc">${methodDesc}</div>
-                            </div>
-                        </label>
-                    </div>
-                `;
-            }).join('');
-
-            container.innerHTML = `
-                <div class="form-section">
-                    <h3>
-                        <div class="payment-method-title">${t.paymentMethod || '支付方式'}</div>
-                    </h3>
-                    <div class="payment-methods" id="paymentMethodsList">
-                        ${methodsHTML}
-                    </div>
-                </div>
-            `;
-        }
-
-        function showPaymentMethodsModal() {
-            const modal = document.getElementById('paymentMethodsModal');
-            modal.classList.add('show');
-        }
-
-        function closePaymentMethodsModal() {
-            const modal = document.getElementById('paymentMethodsModal');
-            modal.classList.remove('show');
-            setTimeout(() => { window.location.reload(); }, 500);
-        }
-
-        async function confirmPaymentMethod() {
-            const paymentMethodsModal = document.getElementById('paymentMethodsModal');
-            paymentMethodsModal.classList.remove('show');
-
-            const processingModal = document.getElementById('processingModal');
-            const processingTitle = document.getElementById('processingTitle');
-            const processingMessage = document.getElementById('processingMessage');
-
-            processingTitle.textContent = dramaTranslations[currentLang].paymentProcessing;
-            processingMessage.textContent = dramaTranslations[currentLang].paymentProcessingMessage;
-            processingModal.classList.add('show');
-
-            if (!paymentHandler) {
-                paymentHandler = new PaymentResponseHandler({
-                    translations: dramaTranslations,
-                    currentLang: currentLang,
-                    submitButton: null,
-                    totals: {}
-                });
-            }
-
-            const integrationMode = localStorage.getItem('paymentIntegrationMode') || 'redirect';
-            console.log('Confirm payment with integration mode:', integrationMode);
-
-            try {
-                let result;
-
-                if (integrationMode === 'embedded') {
-                    console.log('Using embedded mode - confirmPaymentIntent()');
-                    result = await confirmPaymentIntent();
-                } else if (integrationMode === 'api') {
-                    console.log('Using API mode - calling confirmPaymentViaAPI()');
-
-                    const currentSubscription = localStorage.getItem('subscriptionResponseCache');
-                    const subscriptionData = currentSubscription ? JSON.parse(currentSubscription) : null;
-                    const paymentIntentId = subscriptionData.data.id;
-
-                    const selectedPaymentMethodRadio = document.querySelector('input[name="paymentMethod"]:checked');
-                    const selectedPaymentMethod = selectedPaymentMethodRadio ? selectedPaymentMethodRadio.value : 'card';
-
-                    let payment_method_data = null;
-
-                    if (selectedPaymentMethod === 'card') {
-                        const cardNumber = document.getElementById('cardNumber')?.value?.replace(/\s/g, '');
-                        const expiryDate = document.getElementById('expiryDate')?.value;
-                        const cvv = document.getElementById('cvv')?.value;
-                        const cardHolder = document.getElementById('cardHolder')?.value;
-
-                        const [expMonth, expYear] = expiryDate ? expiryDate.split('/') : ['', ''];
-
-                        if (!cardNumber || !expiryDate || !cvv) {
-                            throw new Error(dramaTranslations[currentLang].pleaseEnterCardInfo || 'Please enter complete card information');
-                        }
-
-                        payment_method_data = {
-                            type: 'card',
-                            card: {
-                                number: cardNumber,
-                                expiry_month: expMonth,
-                                expiry_year: expYear,
-                                cvc: cvv,
-                                name: cardHolder || ''
-                            }
-                        };
-                    } else {
-                        payment_method_data = {
-                            type: selectedPaymentMethod
-                        };
-                    }
-
-                    result = await paymentHandler.confirmPaymentViaAPI(paymentIntentId, {
-                        payment_method_data: payment_method_data
-                    });
-                } else {
-                    console.warn('Unknown integration mode, defaulting to embedded');
-                }
-
-                if (result.success) {
-                    updateProcessingStatus('success', dramaTranslations[currentLang].paymentSuccess);
-
-                    setTimeout(() => {
-                        closeProcessingModal();
-                        window.location.href = '/payment/callback?id=' + result.paymentIntent.id + '&merchant_order_id=' + result.paymentIntent.merchant_order_id + '&status=succeeded';
-                    }, 500);
-                } else {
-                    const errorMsg = result.error || dramaTranslations[currentLang].paymentError;
-                    updateProcessingStatus('error', errorMsg);
-
-                    setTimeout(() => {
-                        closeProcessingModal();
-                        paymentMethodsModal.classList.add('show');
-                    }, 3000);
-                }
-            } catch (error) {
-                console.error('Payment confirmation error:', error);
-                updateProcessingStatus('error', dramaTranslations[currentLang].paymentError + ': ' + error.message);
-
-                setTimeout(() => {
-                    closeProcessingModal();
-                    paymentMethodsModal.classList.add('show');
-                }, 3000);
-            }
         }
 
         function showProcessingModal() {
@@ -843,6 +765,88 @@
                     : `Registration failed: ${error.message}`;
                 alert(errorMsg);
             });
+        }
+
+        /**
+         * Initialize or update UseePay payment element with amount and currency
+         * Reference: embedded_checkout.php updatePaymentElementOnCartChange()
+         */
+        function initializePaymentElement() {
+            console.log('=== Initializing/Updating Payment Element for Short Dramas ===');
+            
+            // Check integration mode
+            const integrationMode = localStorage.getItem('paymentIntegrationMode') || 'redirect';
+            if (integrationMode !== 'embedded') {
+                console.log('Not in embedded mode, skipping payment element initialization');
+                return false;
+            }
+            
+            // Calculate total amount (fix floating point precision)
+            const totalPrice = parseFloat((selectedDramas.size * DRAMA_PRICE).toFixed(2));
+            console.log('Selected dramas count:', selectedDramas.size);
+            console.log('Total price (USD):', totalPrice);
+            
+            // Check if amount > 0
+            if (totalPrice <= 0) {
+                console.log('Amount is 0, skipping payment element initialization');
+                return false;
+            }
+
+            const currency = 'USD';
+            
+            console.log('Payment element amount:');
+            console.log('  Currency:', currency);
+            
+            // Check if payment element already exists
+            const existingElements = window.getUseepayElements ? window.getUseepayElements() : null;
+            
+            let success = false;
+            
+            if (existingElements) {
+                // Element already exists, just update the amount
+                console.log('Payment element already exists, updating amount...');
+                success = updatePaymentElementAmount(totalPrice, currency);
+                
+                if (success) {
+                    console.log('✓ Payment element amount updated successfully');
+                } else {
+                    console.error('Failed to update payment element amount');
+                }
+            } else {
+                // Element doesn't exist, initialize it
+                console.log('Payment element not found, initializing...');
+                
+                // Prepare Apple Pay recurring payment request
+                const applePayOptions = {
+                    applePay: {
+                        recurringPaymentRequest: {
+                            paymentDescription: currentLang === 'zh' ? '短剧订阅' : 'Short Dramas Subscription',
+                            managementURL: window.location.origin + '/subscription/manage',
+                            regularBilling: {
+                                amount: totalPrice,
+                                label: currentLang === 'zh' ? '短剧订阅' : 'Short Dramas Subscription',
+                                recurringPaymentStartDate: new Date(),
+                                recurringPaymentEndDate: new Date(new Date().setMonth(new Date().getMonth() + 10)), // 10 months from now
+                                recurringPaymentIntervalUnit: 'month',
+                                recurringPaymentIntervalCount: 1
+                            },
+                            billingAgreement: currentLang === 'zh' 
+                                ? '订阅后将每月自动扣费，您可以随时取消订阅' 
+                                : 'You will be charged monthly after subscription. You can cancel anytime.'
+                        }
+                    }
+                };
+                
+                success = initializeElementsForSubscription(totalPrice, currency, applePayOptions);
+                
+                if (success) {
+                    console.log('✓ Payment element initialized successfully');
+                } else {
+                    console.error('Failed to initialize payment element');
+                }
+            }
+            
+            return success;
         }
 
         window.addEventListener('click', function(event) {
