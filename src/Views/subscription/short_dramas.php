@@ -1144,13 +1144,32 @@
             
             // Check if payment element already exists
             const existingElements = window.getUseepayElements ? window.getUseepayElements() : null;
-            
+            // Prepare Apple Pay recurring payment request
+            const applePayOptions = {
+                applePay: {
+                    recurringPaymentRequest: {
+                        paymentDescription: currentLang === 'zh' ? '短剧订阅' : 'Short Dramas Subscription',
+                        managementURL: window.location.origin + '/subscription/manage',
+                        regularBilling: {
+                            amount: totalPrice,
+                            label: currentLang === 'zh' ? '短剧订阅' : 'Short Dramas Subscription',
+                            recurringPaymentStartDate: new Date(),
+                            recurringPaymentEndDate: new Date(new Date().setMonth(new Date().getMonth() + 10)), // 10 months from now
+                            recurringPaymentIntervalUnit: 'month',
+                            recurringPaymentIntervalCount: 1
+                        },
+                        billingAgreement: currentLang === 'zh'
+                            ? '订阅后将每月自动扣费，您可以随时取消订阅'
+                            : 'You will be charged monthly after subscription. You can cancel anytime.'
+                    }
+                }
+            };
             let success = false;
             
             if (existingElements) {
                 // Element already exists, just update the amount
                 console.log('Payment element already exists, updating amount...');
-                success = updatePaymentElementAmount(totalPrice, currency);
+                success = updatePaymentElementAmount(totalPrice, currency,applePayOptions);
                 
                 if (success) {
                     console.log('✓ Payment element amount updated successfully');
@@ -1160,28 +1179,7 @@
             } else {
                 // Element doesn't exist, initialize it
                 console.log('Payment element not found, initializing...');
-                
-                // Prepare Apple Pay recurring payment request
-                const applePayOptions = {
-                    applePay: {
-                        recurringPaymentRequest: {
-                            paymentDescription: currentLang === 'zh' ? '短剧订阅' : 'Short Dramas Subscription',
-                            managementURL: window.location.origin + '/subscription/manage',
-                            regularBilling: {
-                                amount: totalPrice,
-                                label: currentLang === 'zh' ? '短剧订阅' : 'Short Dramas Subscription',
-                                recurringPaymentStartDate: new Date(),
-                                recurringPaymentEndDate: new Date(new Date().setMonth(new Date().getMonth() + 10)), // 10 months from now
-                                recurringPaymentIntervalUnit: 'month',
-                                recurringPaymentIntervalCount: 1
-                            },
-                            billingAgreement: currentLang === 'zh' 
-                                ? '订阅后将每月自动扣费，您可以随时取消订阅' 
-                                : 'You will be charged monthly after subscription. You can cancel anytime.'
-                        }
-                    }
-                };
-                
+
                 success = initializeElementsForSubscription(totalPrice, currency, applePayOptions);
                 
                 if (success) {
