@@ -23,8 +23,8 @@
     <script src="/assets/js/payment/payment-methods-config.js"></script>
     <!-- UseePay Elements Initializer -->
     <script src="/assets/js/useepay-elements-initializer.js"></script>
-    <!-- Payment Response Handler -->
-    <script src="/assets/js/payment-response-handler.js"></script>
+    <!-- Payment Handler -->
+    <script src="/assets/js/payment-handler.js"></script>
     <script>
         // Define switchTab function early so it's available for onclick handlers
         function switchTab(tabName, buttonElement) {

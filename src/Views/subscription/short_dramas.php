@@ -28,10 +28,8 @@
     </script>
     <!-- Payment Methods Configuration -->
     <script src="/assets/js/payment/payment-methods-config.js?v=<?php echo @filemtime(__DIR__ . '/../../public/assets/js/payment/payment-methods-config.js') ?: time(); ?>"></script>
-    <!-- UseePay Elements Initializer -->
-    <script src="/assets/js/useepay-elements-initializer.js?v=<?php echo @filemtime(__DIR__ . '/../../public/assets/js/useepay-elements-initializer.js') ?: time(); ?>"></script>
-    <!-- Payment Response Handler -->
-    <script src="/assets/js/payment-response-handler.js?v=<?php echo @filemtime(__DIR__ . '/../../public/assets/js/payment-response-handler.js') ?: time(); ?>"></script>
+    <!-- Payment Handler -->
+    <script src="/assets/js/payment-handler.js?v=<?php echo @filemtime(__DIR__ . '/../../public/assets/js/payment-handler.js') ?: time(); ?>"></script>
 </head>
 <body>
     <div class="container">
@@ -131,12 +129,20 @@
         let currentLang = localStorage.getItem('language') || 'zh';
         // short-dramas-i18n.js exports as window.translations
         let dramaTranslations = window.translations || {};
-        let paymentHandler = null;
         let selectedDramas = new Set();
         const DRAMA_PRICE = 0.99;
         
+        // Initialize PaymentHandler globally
+        let paymentHandler = new PaymentHandler({
+            translations: dramaTranslations,
+            currentLang: currentLang,
+            submitButton: null,
+            totals: {}
+        });
+        
         console.log('Short Dramas Page - Current language:', currentLang);
         console.log('Short Dramas Page - Translations loaded:', !!dramaTranslations.zh, !!dramaTranslations.en);
+        console.log('PaymentHandler initialized:', !!paymentHandler);
 
         // Sample short dramas data
         const shortDramas = [
@@ -373,7 +379,7 @@
                     if (embeddedPaymentContainer) embeddedPaymentContainer.style.display = 'block';
                     
                     setTimeout(() => {
-                        initializePaymentElement();
+                        initializePaymentElement('payment-element');
                     }, 100);
                 } else if (integrationMode === 'api') {
                     // API mode: render payment methods in container
@@ -397,7 +403,7 @@
             }
         }
 
-        function handleSubscribe() {
+        async function handleSubscribe() {
             const customerData = localStorage.getItem('customer');
             const customer = customerData ? JSON.parse(customerData) : null;
             
@@ -412,8 +418,8 @@
                 return;
             }
 
+            // Step 1: Assemble subscriptionData object
             const selectedDramasList = shortDramas.filter(d => selectedDramas.has(d.id));
-            // Fix floating point precision issue
             const totalPrice = parseFloat((selectedDramas.size * DRAMA_PRICE).toFixed(2));
             const currency = 'USD';
 
@@ -437,157 +443,62 @@
                 }
             };
 
-            console.log('Sending subscription data:', subscriptionData);
+            console.log('=== Step 1: Subscription data assembled ===');
+            console.log('Subscription data:', subscriptionData);
 
             showProcessingModal();
 
-            if (!paymentHandler) {
-                paymentHandler = new PaymentResponseHandler({
-                    translations: dramaTranslations,
-                    currentLang: currentLang,
-                    submitButton: null,
-                    totals: {}
-                });
-            }
+            try {
+                // Step 2: Determine integration mode
+                const integrationMode = localStorage.getItem('paymentIntegrationMode') || 'redirect';
+                console.log('=== Step 2: Integration mode ===', integrationMode);
 
-            fetch('/api/subscription', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(subscriptionData)
-            })
-            .then(response => paymentHandler.handleResponse(response))
-            .then(result => {
-                updateProcessingStatus('success', dramaTranslations[currentLang].processingSuccess);
+                if (integrationMode === 'redirect') {
+                    // Redirect mode: createSubscription -> processPaymentResultForRedirect
+                    console.log('=== Processing REDIRECT mode ===');
+                    showProcessingModal();
 
-                const orderData = {
-                    orderId: result.data.merchant_order_id,
-                    paymentIntentId: result.data.id,
-                    date: new Date().toISOString(),
-                    status: result.data.status,
-                    amount: result.data.amount,
-                    currency: currency
-                };
+                    await paymentHandler.processSubscriptionForRedirect(
+                        subscriptionData,
+                        updateProcessingStatus
+                    );
 
-                localStorage.setItem('subscriptionResponseCache', JSON.stringify(result));
+                    setTimeout(() => {
+                        closeProcessingModal();
+                    }, 1500);
+                    
+                } else if (integrationMode === 'embedded') {
+                    // Embedded mode: submit form -> createSubscription -> confirmPayment -> handle result
+                    await paymentHandler.processSubscriptionEmbeddedCheckout(
+                        subscriptionData,
+                        updateProcessingStatus
+                    );
+                    
+                } else if (integrationMode === 'api') {
+                    // API mode: createSubscription -> confirmPaymentMethod
+                    console.log('=== Processing API mode ===');
 
-                setTimeout(async () => {
-
-                    const integrationMode = localStorage.getItem('paymentIntegrationMode') || 'redirect';
-                    console.log('Integration mode:', integrationMode);
-
-                    if (integrationMode === 'redirect') {
-                        paymentHandler.processPaymentResultForRedirect(result, subscriptionData);
-                    } else if (integrationMode === 'embedded') {
-                        await processEmbeddedCheckoutForSubscription(result, orderData);
-                    } else {
-                        confirmPaymentMethod();
-                    }
-                }, 1500);
-            })
-            .catch(error => {
+                    // Process subscription with API mode
+                    await paymentHandler.processSubscriptionForApi(
+                        subscriptionData,
+                        updateProcessingStatus
+                    );
+                    
+                } else {
+                    throw new Error('Unknown integration mode: ' + integrationMode);
+                }
+                
+            } catch (error) {
+                console.error('handleSubscribe error:', error);
                 updateProcessingStatus('error', dramaTranslations[currentLang].processingError);
-
+                
                 setTimeout(() => {
                     closeProcessingModal();
                     paymentHandler.handleFetchError(error);
                 }, 2000);
-            });
-        }
-
-        /**
-         * Process embedded checkout flow
-         * @param {Object} result - API response containing payment intent data
-         * @param {Object} subscriptionData - subscription information
-         */
-        async function processEmbeddedCheckoutForSubscription(result, subscriptionData) {
-            const clientSecret = result.data?.client_secret;
-            const paymentIntentId = result.data?.id;
-            
-            if (!clientSecret || !paymentIntentId) {
-                console.error('Missing client_secret or payment_intent_id for embedded checkout');
-                alert(dramaTranslations[currentLang].paymentError || 'Payment configuration error');
-                return;
-            }
-
-            try {
-                console.log('Payment intent created for embedded checkout');
-                console.log('Payment element should already be visible on the page');
-
-                // Step 2: Get UseePay elements
-                console.log('Step 2: Submitting payment form...');
-                const useepayElements = getUseepayElements();
-                if (!useepayElements) {
-                    throw new Error('UseePay Elements not initialized');
-                }
-
-                // Step 3: Submit elements to validate and get selected payment method
-                console.log('Step 3: Submit elements to validate and get selected payment method...');
-                const submitResult = await useepayElements.submit();
-                const { selectedPaymentMethod, error: submitError } = submitResult;
-
-                if (submitError) {
-                    console.error('Form submission error:', submitError);
-                    throw new Error(submitError.message || 'Form validation failed');
-                }
-
-                if (!selectedPaymentMethod) {
-                    throw new Error('No payment method selected');
-                }
-
-                console.log('✓ Payment method selected:', selectedPaymentMethod);
-
-                // Step 4: Confirm payment with UseePay
-                console.log('Step 4: Confirming payment with UseePay...');
-                const useepayInstance = getUseepayInstance();
-                if (!useepayInstance) {
-                    throw new Error('UseePay instance not initialized');
-                }
-
-                const confirmResult = await useepayInstance.confirmPayment({
-                    elements: useepayElements,
-                    paymentIntentId: paymentIntentId,
-                    clientSecret: clientSecret
-                });
-
-                const { paymentIntent, error: confirmError } = confirmResult;
-
-                if (confirmError) {
-                    console.error('Payment confirmation error:', confirmError);
-                    throw new Error(confirmError.message || 'Payment confirmation failed');
-                }
-
-                if (!paymentIntent) {
-                    throw new Error('No payment intent returned');
-                }
-                
-                console.log('Step 5: Handle payment result:', JSON.stringify(paymentIntent));
-                
-                // Step 5: Handle payment success
-                if (paymentIntent.status === 'succeeded') {
-                    console.log('✓ Payment succeeded');
-
-                    // Redirect to callback page
-                    setTimeout(() => {
-                        const returnUrl = '/payment/callback?id=' + paymentIntent.id + '&merchant_order_id='
-                            + paymentIntent.merchant_order_id + '&status=succeeded';
-                        // 检测是否在 iframe 中
-                        if (window.self !== window.top) {
-                            console.log('Detected iframe context, redirecting parent window');
-                            window.top.location.href = returnUrl;
-                        } else {
-                            window.location.href = returnUrl;
-                        }
-                    }, 1500);
-                } else {
-                    throw new Error('Payment status: ' + paymentIntent.status);
-                }
-            } catch (error) {
-                console.error('Embedded checkout error:', error);
-                alert(dramaTranslations[currentLang].paymentError || error.message || 'Payment failed');
             }
         }
+
 
         /**
          * Load payment methods from cache based on action type
@@ -819,15 +730,6 @@
             processingTitle.textContent = dramaTranslations[currentLang].paymentProcessing;
             processingMessage.textContent = dramaTranslations[currentLang].paymentProcessingMessage;
             
-            if (!paymentHandler) {
-                paymentHandler = new PaymentResponseHandler({
-                    translations: dramaTranslations,
-                    currentLang: currentLang,
-                    submitButton: null,
-                    totals: {}
-                });
-            }
-            
             const integrationMode = localStorage.getItem('paymentIntegrationMode') || 'redirect';
             console.log('Confirm payment with integration mode:', integrationMode);
             
@@ -838,7 +740,7 @@
                     console.log('Using embedded mode - confirmPaymentIntent()');
                     result = await confirmPaymentIntent();
                 } else if (integrationMode === 'api') {
-                    console.log('Using API mode - calling confirmPaymentViaAPI()');
+                    console.log('Using API mode - calling confirmPaymentForApi()');
                     
                     const currentSubscription = localStorage.getItem('subscriptionResponseCache');
                     const subscriptionData = currentSubscription ? JSON.parse(currentSubscription) : null;
@@ -887,7 +789,7 @@
                         console.log('Payment method data:', payment_method_data);
                     }
 
-                    result = await paymentHandler.confirmPaymentViaAPI(paymentIntentId, {
+                    result = await paymentHandler.confirmPaymentForApi(paymentIntentId, {
                         payment_method_data: payment_method_data
                     });
                 } else {
@@ -1115,9 +1017,11 @@
         /**
          * Initialize or update UseePay payment element with amount and currency
          * Reference: embedded_checkout.php updatePaymentElementOnCartChange()
+         * @param {string} elementId 支付元素容器ID (默认: 'payment-element')
          */
-        function initializePaymentElement() {
+        function initializePaymentElement(elementId = 'payment-element') {
             console.log('=== Initializing/Updating Payment Element for Short Dramas ===');
+            console.log('Element ID:', elementId);
             
             // Check integration mode
             const integrationMode = localStorage.getItem('paymentIntegrationMode') || 'redirect';
@@ -1142,8 +1046,6 @@
             console.log('Payment element amount:');
             console.log('  Currency:', currency);
             
-            // Check if payment element already exists
-            const existingElements = window.getUseepayElements ? window.getUseepayElements() : null;
             // Prepare Apple Pay recurring payment request
             const applePayOptions = {
                 applePay: {
@@ -1164,12 +1066,16 @@
                     }
                 }
             };
+            
             let success = false;
             
-            if (existingElements) {
-                // Element already exists, just update the amount
-                console.log('Payment element already exists, updating amount...');
-                success = updatePaymentElementAmount(totalPrice, currency,applePayOptions);
+            // Check if element is already bound
+            const isAlreadyBound = paymentHandler.isElementAlreadyBound(elementId);
+            
+            if (isAlreadyBound) {
+                // Element already bound, just update the amount
+                console.log('Payment element already bound, updating amount...');
+                success = paymentHandler.updatePaymentElement(totalPrice, currency, applePayOptions);
                 
                 if (success) {
                     console.log('✓ Payment element amount updated successfully');
@@ -1177,10 +1083,10 @@
                     console.error('Failed to update payment element amount');
                 }
             } else {
-                // Element doesn't exist, initialize it
-                console.log('Payment element not found, initializing...');
+                // Element not bound, initialize it
+                console.log('Payment element not bound, initializing...');
 
-                success = initializeElementsForSubscription(totalPrice, currency, applePayOptions);
+                success = paymentHandler.initializeElementsForSubscription(totalPrice, currency, applePayOptions, elementId);
                 
                 if (success) {
                     console.log('✓ Payment element initialized successfully');

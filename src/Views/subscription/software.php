@@ -18,10 +18,8 @@
     <script src="https://checkout-sdk1.uat.useepay.com/2.0.0/useepay.min.js"></script>
     <!-- Payment Methods Configuration -->
     <script src="/assets/js/payment/payment-methods-config.js?v=<?php echo @filemtime(__DIR__ . '/../../public/assets/js/payment/payment-methods-config.js') ?: time(); ?>"></script>
-    <!-- UseePay Elements Initializer (must be loaded first) -->
-    <script src="/assets/js/useepay-elements-initializer.js?v=<?php echo @filemtime(__DIR__ . '/../../public/assets/js/useepay-elements-initializer.js') ?: time(); ?>"></script>
-    <!-- Payment Response Handler -->
-    <script src="/assets/js/payment-response-handler.js?v=<?php echo @filemtime(__DIR__ . '/../../public/assets/js/payment-response-handler.js') ?: time(); ?>"></script>
+    <!-- Payment Handler -->
+    <script src="/assets/js/payment-handler.js?v=<?php echo @filemtime(__DIR__ . '/../../public/assets/js/payment-handler.js') ?: time(); ?>"></script>
 </head>
 <body>
     <header>
@@ -268,14 +266,20 @@
         // 从 localStorage 读取语言设置，默认为中文
         let currentLang = localStorage.getItem('language') || 'zh';
         
-        // Initialize global payment response handler
-        let paymentHandler = null;
+        // Initialize PaymentHandler globally
+        let paymentHandler = new PaymentHandler({
+            translations: translations,
+            currentLang: currentLang,
+            submitButton: null,
+            totals: {}
+        });
         
         console.log('=== Pricing Page Language Initialization ===');
         console.log('Stored language:', localStorage.getItem('language'));
         console.log('Current language:', currentLang);
         console.log('Translations loaded:', !!translations);
         console.log('Available languages:', Object.keys(translations));
+        console.log('PaymentHandler initialized:', !!paymentHandler);
 
         // Initialize language on page load
         document.addEventListener('DOMContentLoaded', function() {
@@ -422,41 +426,26 @@
             return [];
         }
 
-        function selectPlan(plan) {
-            // 检查浏览器缓存中是否有消费者对象
-            const customerData = localStorage.getItem('customer');
-            const customer = customerData ? JSON.parse(customerData) : null;
-            
-            if (!customer) {
-                // 没有消费者缓存，弹出注册界面
-                console.log('No consumer found in cache, showing registration modal');
-                openAuthModal();
-                return;
-            }
-            
-            // 构建 Subscription 对象
+        /**
+         * Assemble subscription data object
+         * @param {string} plan - Plan identifier (starter, professional, enterprise)
+         * @param {Object} customer - Customer object
+         * @returns {Object} Subscription data object
+         */
+        function assembleSubscriptionData(plan, customer) {
             const billingRadio = document.querySelector('input[name="billing"]:checked');
             const billingType = billingRadio ? billingRadio.value : 'month';
             const planName = getPlanName(plan);
             
-            // 获取价格信息
+            // Get price information
             const planCard = event.target.closest('.pricing-card');
             const priceElement = planCard.querySelector('[id$="-price"]');
             const price = priceElement ? priceElement.textContent.replace(/[^\d.]/g, '') : '0';
             
-            // 获取币种
             const currency = 'USD';
-
             const interval = billingType === 'annual' ? 'year' : 'month';
-            
-            // 从浏览器缓存中获取支付方式
 
-            const paymentMethods = getPaymentMethods();
-            
-            console.log('Payment methods from cache:', paymentMethods);
-            
-            // 构建 Subscription 对象用于后端
-            const subscriptionData = {
+            return {
                 customer_id: customer.id,
                 recurring: {
                     interval: interval,
@@ -466,7 +455,7 @@
                 },
                 currency: currency,
                 description: planName,
-                paymentMethods: paymentMethods,
+                paymentMethods: getPaymentMethods(),
                 order: {
                     products: [
                         {
@@ -477,82 +466,88 @@
                     ]
                 }
             };
+        }
+
+        async function selectPlan(plan) {
+            const customerData = localStorage.getItem('customer');
+            const customer = customerData ? JSON.parse(customerData) : null;
             
-            console.log('Sending subscription data to backend:', subscriptionData);
-            
-            // Show processing modal
-            showProcessingModal();
-            
-            // Initialize payment response handler for subscription (if not already initialized)
-            if (!paymentHandler) {
-                paymentHandler = new PaymentResponseHandler({
-                    translations: translations,
-                    currentLang: currentLang,
-                    submitButton: null,
-                    totals: {}
-                });
+            if (!customer) {
+                console.log('No customer found, showing registration modal');
+                openAuthModal();
+                return;
             }
 
-            // 通过 AJAX 调用后台 createSubscription 方法
-            fetch('/api/subscription', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(subscriptionData)
-            })
-            .then(response => paymentHandler.handleResponse(response))
-                .then(result => {
-                    // Update processing modal with success status
-                    updateProcessingStatus('success', translations[currentLang].processingSuccess);
+
+
+            try {
+                // Step 1: Determine integration mode
+                const integrationMode = localStorage.getItem('paymentIntegrationMode') || 'redirect';
+                console.log('=== Step 1: Integration mode ===', integrationMode);
+
+                // Step 2: Assemble subscriptionData object
+                const subscriptionData = assembleSubscriptionData(plan, customer);
+                console.log('=== Step 2: Subscription data assembled ===');
+                console.log('Subscription data:', subscriptionData);
+                // Cache subscription data for later use
+                localStorage.setItem('subscriptionDataCacheForSoftware', JSON.stringify(subscriptionData));
+
+                if (integrationMode === 'redirect') {
+                    // Redirect mode: Use encapsulated processSubscriptionForRedirect method
+                    console.log('=== Processing REDIRECT mode ===');
+                    showProcessingModal();
                     
-                    // Prepare order data for success page
-                    const orderData = {
-                        orderId: result.data.merchant_order_id,
-                        paymentIntentId: result.data.id,
-                        date: new Date().toISOString(),
-                        status: result.data.status,
-                        amount: result.data.amount,
-                        currency: currency
-                    };
-
-                    // Cache the response result to browser localStorage
-                    localStorage.setItem('subscriptionResponseCache', JSON.stringify(result));
-
-                    // Close modal after 1.5 seconds and process payment result
+                    await paymentHandler.processSubscriptionForRedirect(
+                        subscriptionData,
+                        updateProcessingStatus
+                    );
+                    
                     setTimeout(() => {
                         closeProcessingModal();
-                        
-                        // Get integration mode from cache
-                        const integrationMode = localStorage.getItem('paymentIntegrationMode') || 'redirect';
-                        console.log('Integration mode:', integrationMode);
-                        
-                        // Execute different handler based on integration mode
-                        if (integrationMode === 'redirect') {
-                            // 跳转收银台模式
-                            paymentHandler.processPaymentResultForRedirect(result, orderData);
-                        } else if (integrationMode === 'embedded') {
-                            // 内嵌收银台模式
-                            paymentHandler.processPaymentResultForEmbedded(result, orderData);
-                        } else {
-                            // 渲染支付方式并显示弹窗
-                            renderPaymentMethodSection();
-                            // 显示支付方式弹出窗口
-                            showPaymentMethodsModal();
-
-                        }
                     }, 1500);
-                })
-                .catch(error => {
-                    // Update processing modal with error status
-                    updateProcessingStatus('error', translations[currentLang].processingError);
                     
-                    // Close modal after 2 seconds
-                    setTimeout(() => {
-                        closeProcessingModal();
-                        paymentHandler.handleFetchError(error);
-                    }, 2000);
-                });
+                } else if (integrationMode === 'embedded') {
+                    // Embedded mode: initialize payment element -> submit form -> createSubscription -> confirmPayment -> handle result
+                    console.log('=== Processing EMBEDDED mode ===');
+                    
+
+                    // Initialize payment element first
+                    const elementInitialized = initializePaymentElement('payment-element');
+                    
+                    if (!elementInitialized) {
+                        throw new Error('Failed to initialize payment element');
+                    }
+                    
+                    // Show payment methods modal
+                    showPaymentMethodsModal();
+                    
+                    // Wait a bit for the modal to be visible
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                    closeProcessingModal();
+                    
+                } else if (integrationMode === 'api') {
+                    // API mode: createSubscription -> confirmPaymentMethod
+                    console.log('=== Processing API mode ===');
+
+                    updateProcessingStatus('success', translations[currentLang].processingSuccess);
+                    closeProcessingModal();
+                    // Render payment methods and show modal
+                    renderPaymentMethodSection();
+                    showPaymentMethodsModal();
+                    
+                } else {
+                    throw new Error('Unknown integration mode: ' + integrationMode);
+                }
+                
+            } catch (error) {
+                console.error('selectPlan error:', error);
+                updateProcessingStatus('error', translations[currentLang].processingError);
+                
+                setTimeout(() => {
+                    closeProcessingModal();
+                    paymentHandler.handleFetchError(error);
+                }, 2000);
+            }
         }
 
         function getPlanName(plan) {
@@ -820,108 +815,43 @@
                 
                 if (integrationMode === 'embedded') {
                     // Embedded mode: Use UseePay SDK to confirm payment
-                    console.log('Using embedded mode - confirmPaymentIntent()');
-                    result = await confirmPaymentIntent();
-                } else if (integrationMode === 'api') {
-                    // API mode: Call backend PaymentController.confirmPayment() using encapsulated method
-                    console.log('Using API mode - calling confirmPaymentViaAPI()');
+                    console.log('Embedded mode: submit form -> createSubscription -> confirmPayment -> handle result');
                     
-                    // Get payment intent ID from localStorage or current subscription
-                    const currentSubscription = localStorage.getItem('subscriptionResponseCache');
-                    const subscriptionData = currentSubscription ? JSON.parse(currentSubscription) : null;
-                    const paymentIntentId = subscriptionData.data.id;
+                    // Get subscription data from localStorage
+                    const cachedSubscription = localStorage.getItem('subscriptionDataCacheForSoftware');
+                    const subscriptionData = cachedSubscription ? JSON.parse(cachedSubscription) : null;
 
-                    // Get selected payment method from rendered UI (radio button)
-                    const selectedPaymentMethodRadio = document.querySelector('input[name="paymentMethod"]:checked');
-                    const selectedPaymentMethod = selectedPaymentMethodRadio ? selectedPaymentMethodRadio.value : 'card';
-                    console.log('Selected payment method from UI:', selectedPaymentMethod);
-
-                    // Prepare payment method data based on selected payment method
-                    let payment_method_data = null;
-                    
-                    if (selectedPaymentMethod === 'card') {
-                        // Collect card information from input fields
-                        const cardNumber = document.getElementById('cardNumber')?.value?.replace(/\s/g, '');
-                        const expiryDate = document.getElementById('expiryDate')?.value;
-                        const cvv = document.getElementById('cvv')?.value;
-                        const cardHolder = document.getElementById('cardHolder')?.value;
-                        
-                        // Parse expiry date (MM/YY format)
-                        const [expMonth, expYear] = expiryDate ? expiryDate.split('/') : ['', ''];
-                        
-                        // Validate card information
-                        if (!cardNumber || !expiryDate || !cvv) {
-                            throw new Error(translations[currentLang].pleaseEnterCardInfo || 'Please enter complete card information');
-                        }
-                        
-                        payment_method_data = {
-                            type: 'card',
-                            card: {
-                                number: cardNumber,
-                                expiry_month: expMonth,
-                                expiry_year: expYear,
-                                cvc: cvv,
-                                name: cardHolder || ''
-                            }
-                        };
-                        
-                        console.log('Card data collected:', {
-                            number: cardNumber ? '****' + cardNumber.slice(-4) : 'N/A',
-                            exp_month: expMonth,
-                            exp_year: expYear,
-                            cvc: cvv ? '***' : 'N/A',
-                            name: cardHolder
-                        });
-                    } else {
-                        // For other payment methods, use basic structure
-                        payment_method_data = {
-                            type: selectedPaymentMethod
-                        };
-                        console.log('Payment method data:', payment_method_data);
+                    if (!subscriptionData) {
+                        throw new Error('Subscription data not found in cache');
                     }
 
-                    // Call encapsulated API method
-                    result = await paymentHandler.confirmPaymentViaAPI(paymentIntentId, {
-                        payment_method_data: payment_method_data
-                    });
+                    // Embedded mode: submit form -> createSubscription -> confirmPayment -> handle result
+                    await paymentHandler.processSubscriptionEmbeddedCheckout(
+                        subscriptionData,
+                        updateProcessingStatus
+                    );
+                } else if (integrationMode === 'api') {
+                    // API mode: Use encapsulated processSubscriptionForApi method
+                    console.log('Using API mode - calling processSubscriptionForApi()');
+
+                    // Get subscription data from localStorage
+                    const cachedSubscription = localStorage.getItem('subscriptionDataCacheForSoftware');
+                    const subscriptionData = cachedSubscription ? JSON.parse(cachedSubscription) : null;
+                    if (!subscriptionData) {
+                        throw new Error('Subscription data not found in cache');
+                    }
+
+                    // Process subscription with API mode
+                    await paymentHandler.processSubscriptionForApi(
+                        subscriptionData,
+                        updateProcessingStatus
+                    );
                 } else {
                     // Unknown mode, default to embedded
                     console.warn('Unknown integration mode, defaulting to embedded');
                 }
                 
-                // Handle result
-                if (result.success) {
-                    // Payment succeeded
-                    updateProcessingStatus('success', translations[currentLang].paymentSuccess);
-                    
-                    // Close modal after 2 seconds and redirect or reload
-                    setTimeout(() => {
-                        closeProcessingModal();
-                        // Optionally redirect to success page
-                        //window.location.href = '/subscription/confirm?subscription_id=' + result.subscriptionId;
-                        const returnUrl = '/payment/callback?id=' + result.paymentIntent.id +'&merchant_order_id='
-                            +result.paymentIntent.merchant_order_id+'&status=succeeded';
-                        
-                        // 检测是否在 iframe 中
-                        if (window.self !== window.top) {
-                            console.log('Detected iframe context, redirecting parent window');
-                            window.top.location.href = returnUrl;
-                        } else {
-                            window.location.href = returnUrl;
-                        }
-                    }, 500);
-                } else {
-                    // Payment failed
-                    const errorMsg = result.error || translations[currentLang].paymentError;
-                    updateProcessingStatus('error', errorMsg);
-                    
-                    // Close modal after 3 seconds
-                    setTimeout(() => {
-                        closeProcessingModal();
-                        // Reopen payment methods modal to allow retry
-                        paymentMethodsModal.classList.add('show');
-                    }, 3000);
-                }
+
             } catch (error) {
                 console.error('Payment confirmation error:', error);
                 updateProcessingStatus('error', translations[currentLang].paymentError + ': ' + error.message);
@@ -1121,6 +1051,95 @@
                 });
             }
         });
+
+        /**
+         * Initialize or update payment element for subscription
+         * @param {string} elementId - The ID of the payment element container
+         * @returns {boolean} - Whether initialization/update was successful
+         */
+        function initializePaymentElement(elementId = 'payment-element') {
+            console.log('=== Initializing/Updating Payment Element for Software Subscription ===');
+            console.log('Element ID:', elementId);
+            
+            // Get selected plan information
+            const billingRadio = document.querySelector('input[name="billing"]:checked');
+            const billingType = billingRadio ? billingRadio.value : 'month';
+            
+            // Calculate total price from current selection
+            // Note: This should be called after a plan is selected
+            const priceElements = document.querySelectorAll('[id$="-price"]');
+            let totalPrice = 0;
+            
+            // Try to get price from the last selected plan or default to first plan
+            if (priceElements.length > 0) {
+                const priceText = priceElements[0].textContent.replace(/[^\d.]/g, '');
+                totalPrice = parseFloat(priceText) || 0;
+            }
+            
+            console.log('Total price (USD):', totalPrice);
+            
+            // Check if amount > 0
+            if (totalPrice <= 0) {
+                console.log('Amount is 0, skipping payment element initialization');
+                return false;
+            }
+
+            const currency = 'USD';
+            
+            console.log('Payment element amount:');
+            console.log('  Currency:', currency);
+            
+            // Prepare Apple Pay recurring payment request
+            const applePayOptions = {
+                applePay: {
+                    recurringPaymentRequest: {
+                        paymentDescription: currentLang === 'zh' ? '软件订阅' : 'Software Subscription',
+                        managementURL: window.location.origin + '/subscription/manage',
+                        regularBilling: {
+                            amount: totalPrice,
+                            label: currentLang === 'zh' ? '软件订阅' : 'Software Subscription',
+                            recurringPaymentStartDate: new Date(),
+                            recurringPaymentEndDate: new Date(new Date().setMonth(new Date().getMonth() + 10)),
+                            recurringPaymentIntervalUnit: billingType === 'annual' ? 'year' : 'month',
+                            recurringPaymentIntervalCount: 1
+                        },
+                        billingAgreement: currentLang === 'zh'
+                            ? '订阅后将自动扣费，您可以随时取消订阅'
+                            : 'You will be charged automatically after subscription. You can cancel anytime.'
+                    }
+                }
+            };
+            
+            let success = false;
+            
+            // Check if element is already bound
+            const isAlreadyBound = paymentHandler.isElementAlreadyBound(elementId);
+            
+            if (isAlreadyBound) {
+                // Element already bound, just update the amount
+                console.log('Payment element already bound, updating amount...');
+                success = paymentHandler.updatePaymentElement(totalPrice, currency, applePayOptions);
+                
+                if (success) {
+                    console.log('✓ Payment element amount updated successfully');
+                } else {
+                    console.error('Failed to update payment element amount');
+                }
+            } else {
+                // Element not bound, initialize it
+                console.log('Payment element not bound, initializing...');
+
+                success = paymentHandler.initializeElementsForSubscription(totalPrice, currency, applePayOptions, elementId);
+                
+                if (success) {
+                    console.log('✓ Payment element initialized successfully');
+                } else {
+                    console.error('Failed to initialize payment element');
+                }
+            }
+            
+            return success;
+        }
 
         // 点击模态框外部关闭
         window.addEventListener('click', function(event) {
