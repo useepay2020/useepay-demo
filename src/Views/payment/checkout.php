@@ -192,6 +192,6 @@
 
         });
     </script>
-    <script src="/assets/js/payment-response-handler.js?v=<?php echo @filemtime(__DIR__ . '/../../public/assets/js/payment-response-handler.js') ?: time(); ?>"></script>
+    <script src="/assets/js/payment-handler.js?v=<?php echo @filemtime(__DIR__ . '/../../public/assets/js/payment-handler.js') ?: time(); ?>"></script>
 </body>
 </html>

@@ -358,7 +358,7 @@
                 };
 
                 // Process payment result
-                paymentHandler.handlePaymentResult(result, orderData);
+                paymentHandler.handlePaymentResult(result.data, orderData);
             })
             .catch(error => {
                 paymentHandler.handleFetchError(error);
@@ -395,6 +395,6 @@
 <!-- Apple Pay & Google Pay 独立模块 -->
 <script src="/assets/js/payment/apple-pay.js?v=<?php echo @filemtime(__DIR__ . '/../../public/assets/js/payment/apple-pay.js') ?: time(); ?>"></script>
 <script src="/assets/js/payment/google-pay.js?v=<?php echo @filemtime(__DIR__ . '/../../public/assets/js/payment/google-pay.js') ?: time(); ?>"></script>
-<script src="/assets/js/payment-response-handler.js?v=<?php echo @filemtime(__DIR__ . '/../../public/assets/js/payment-response-handler.js') ?: time(); ?>"></script>
+<script src="/assets/js/payment-handler.js?v=<?php echo @filemtime(__DIR__ . '/../../public/assets/js/payment-handler.js') ?: time(); ?>"></script>
 </body>
 </html>
