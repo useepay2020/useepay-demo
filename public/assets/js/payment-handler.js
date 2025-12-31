@@ -602,6 +602,7 @@ class PaymentHandler {
 
             this.logger.log('✓ Payment element updated successfully');
             this.logger.log('Updated amount:', amount);
+            this.logger.log('Updated options:', options);
             this.logger.log('Updated currency:', currency);
             return true;
         } catch (error) {
