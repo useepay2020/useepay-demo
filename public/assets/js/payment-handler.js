@@ -590,15 +590,16 @@ class PaymentHandler {
             // Prepare update options
             const updateOptions = {
                 amount: amount,
-                currency: currency,
-                ...options
+                currency: currency
             };
 
             this.logger.log('Calling useepayElements.update() with options:', updateOptions);
             
             // Call the update method on payment element
             useepayElements.update(updateOptions);
-            
+
+            window.useepayPaymentElement.update(options);
+
             this.logger.log('✓ Payment element updated successfully');
             this.logger.log('Updated amount:', amount);
             this.logger.log('Updated currency:', currency);
