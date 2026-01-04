@@ -355,8 +355,8 @@
             quickPayment: {
                 containerId: 'quickPaymentMethodsContainer',
                 inputName: 'quickPaymentMethod',
-                methods: ['card', 'apple_pay', 'google_pay', 'wechat', 'alipay'],
-                defaultChecked: ['card', 'apple_pay', 'google_pay', 'wechat', 'alipay'],
+                methods: ['apple_pay', 'google_pay'],
+                defaultChecked: ['apple_pay', 'google_pay'],
                 cacheKey: 'quickPaymentMethods'
             }
         };
