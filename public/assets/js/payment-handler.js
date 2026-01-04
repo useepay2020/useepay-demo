@@ -693,6 +693,30 @@ class PaymentHandler {
             return false;
         }
         
+        // Retrieve cached payment methods based on mode
+        let cachedPaymentMethods = null;
+        try {
+            if (mode === 'subscription') {
+                const subscriptionMethodsCache = localStorage.getItem('subscriptionMethods');
+                if (subscriptionMethodsCache) {
+                    cachedPaymentMethods = JSON.parse(subscriptionMethodsCache);
+                    this.logger.log('✓ Retrieved cached subscription methods:', cachedPaymentMethods);
+                } else {
+                    this.logger.log('⚠️ No cached subscription methods found');
+                }
+            } else if (mode === 'payment') {
+                const paymentMethodsCache = localStorage.getItem('paymentMethods');
+                if (paymentMethodsCache) {
+                    cachedPaymentMethods = JSON.parse(paymentMethodsCache);
+                    this.logger.log('✓ Retrieved cached payment methods:', cachedPaymentMethods);
+                } else {
+                    this.logger.log('⚠️ No cached payment methods found');
+                }
+            }
+        } catch (error) {
+            this.logger.error('❌ Error retrieving cached payment methods:', error);
+        }
+        
         // Check if UseePay SDK is loaded
         if (!window.UseePay) {
             this.logger.error('❌ UseePay SDK not loaded');
@@ -719,13 +743,21 @@ class PaymentHandler {
             const useepayInstance = window.UseePay(publicKey);
             this.logger.log('✓ UseePay instance initialized');
 
-            // Initialize Elements with mode, amount, and currency
+            // Initialize Elements with mode, amount, currency, and cached payment methods
             this.logger.log('Creating UseePay Elements...');
-            const useepayElements = useepayInstance.elements({
+            const elementsConfig = {
                 mode: mode,
                 amount: amountAsNumber,
                 currency: currency
-            });
+            };
+            
+            // Add payment methods to config if available
+            // if (cachedPaymentMethods) {
+            //     elementsConfig.paymentMethodTypes = cachedPaymentMethods;
+            //     this.logger.log('✓ Added cached payment methods to elements config');
+            // }
+            
+            const useepayElements = useepayInstance.elements(elementsConfig);
             this.logger.log('✓ UseePay Elements created');
 
             // Create payment element

@@ -9,477 +9,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>UseePay API 演示</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        :root {
-            --primary-color: #4a6bdf;
-            --primary-light: #6d8bf0;
-            --primary-dark: #2a4ab3;
-            --success-color: #4caf50;
-            --danger-color: #f44336;
-            --warning-color: #ff9800;
-            --text-color: #333;
-            --text-light: #666;
-            --bg-color: #f5f7ff;
-            --card-bg: #ffffff;
-            --shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            color: var(--text-color);
-            background-color: var(--bg-color);
-            background-image: 
-                radial-gradient(circle at 10% 20%, rgba(91, 137, 255, 0.1) 0%, transparent 20%),
-                radial-gradient(circle at 90% 80%, rgba(76, 175, 80, 0.1) 0%, transparent 20%);
-            min-height: 100vh;
-            padding: 0;
-            margin: 0;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
-
-        header {
-            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
-            color: white;
-            padding: 2rem 0;
-            text-align: center;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            position: relative;
-            overflow: hidden;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding-right: 2rem;
-        }
-
-        .lang-toggle-header {
-            position: absolute;
-            top: 1.5rem;
-            right: 2rem;
-            display: flex;
-            gap: 0.5rem;
-        }
-
-        .lang-btn {
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-
-        .lang-btn:hover {
-            background: rgba(255, 255, 255, 0.3);
-            border-color: rgba(255, 255, 255, 0.5);
-        }
-
-        .lang-btn.active {
-            background: white;
-            color: var(--primary-color);
-            border-color: white;
-        }
-
-        header::after {
-            content: '';
-            position: absolute;
-            bottom: -50px;
-            left: 0;
-            right: 0;
-            height: 100px;
-            background: white;
-            transform: skewY(-3deg);
-            transform-origin: 100%;
-            z-index: 1;
-        }
-
-        .logo {
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
-
-        .logo i {
-            font-size: 2.8rem;
-        }
-
-        .tagline {
-            font-size: 1.2rem;
-            opacity: 0.9;
-            margin-bottom: 1.5rem;
-        }
-
-        .main-content {
-            position: relative;
-            z-index: 2;
-            padding: 2rem 0 4rem;
-        }
-
-        .cards {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 2rem;
-            margin-top: 2rem;
-        }
-
-        .card {
-            background: var(--card-bg);
-            border-radius: 12px;
-            padding: 2rem;
-            box-shadow: var(--shadow);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            border: 1px solid rgba(0, 0, 0, 0.05);
-        }
-
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-        }
-
-        .card h2 {
-            color: var(--primary-color);
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .card h2 i {
-            font-size: 1.5em;
-        }
-
-        .card p {
-            color: var(--text-light);
-            margin-bottom: 1.5rem;
-            min-height: 60px;
-        }
-
-        .btn {
-            display: inline-block;
-            padding: 0.8rem 1.5rem;
-            background: var(--primary-color);
-            color: white;
-            text-decoration: none;
-            border-radius: 6px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            border: none;
-            cursor: pointer;
-            text-align: center;
-        }
-
-        .btn:hover {
-            background: var(--primary-dark);
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-        }
-
-        .btn-outline {
-            background: transparent;
-            border: 2px solid var(--primary-color);
-            color: var(--primary-color);
-        }
-
-        .btn-outline:hover {
-            background: var(--primary-color);
-            color: white;
-        }
-
-        .btn-success {
-            background: var(--success-color);
-        }
-
-        .btn-danger {
-            background: var(--danger-color);
-        }
-
-        .btn-warning {
-            background: var(--warning-color);
-        }
-
-        .features {
-            margin-top: 3rem;
-        }
-
-        .features h3 {
-            text-align: center;
-            margin-bottom: 2rem;
-            color: var(--primary-color);
-            font-size: 1.8rem;
-        }
-
-        .feature-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.5rem;
-            margin-top: 2rem;
-        }
-
-        .feature {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 8px;
-            text-align: center;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-            transition: transform 0.3s ease;
-        }
-
-        .feature:hover {
-            transform: translateY(-5px);
-        }
-
-        .feature i {
-            font-size: 2.5rem;
-            color: var(--primary-color);
-            margin-bottom: 1rem;
-            display: inline-block;
-        }
-
-        .feature h4 {
-            margin-bottom: 0.8rem;
-            color: var(--text-color);
-        }
-
-        .feature p {
-            color: var(--text-light);
-            font-size: 0.95rem;
-        }
-
-        footer {
-            background: #2d3748;
-            color: #a0aec0;
-            padding: 3rem 0;
-            margin-top: 4rem;
-        }
-
-        .footer-content {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 2rem;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
-
-        .footer-section h3 {
-            color: white;
-            margin-bottom: 1.5rem;
-            font-size: 1.2rem;
-        }
-
-        .footer-section ul {
-            list-style: none;
-        }
-
-        .footer-section ul li {
-            margin-bottom: 0.8rem;
-        }
-
-        .footer-section a {
-            color: #a0aec0;
-            text-decoration: none;
-            transition: color 0.3s ease;
-        }
-
-        .footer-section a:hover {
-            color: white;
-        }
-
-        .footer-bottom {
-            text-align: center;
-            padding-top: 2rem;
-            margin-top: 2rem;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        /* Under Construction Modal Styles */
-        .under-construction-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.6);
-            z-index: 9999;
-            justify-content: center;
-            align-items: center;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .under-construction-modal.show {
-            display: flex;
-        }
-
-        .under-construction-modal-content {
-            background: white;
-            border-radius: 16px;
-            padding: 40px;
-            max-width: 500px;
-            width: 90%;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-            text-align: center;
-            position: relative;
-            animation: slideUp 0.3s ease;
-        }
-
-        .under-construction-close {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            background: transparent;
-            border: none;
-            font-size: 28px;
-            color: #999;
-            cursor: pointer;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            transition: all 0.3s ease;
-        }
-
-        .under-construction-close:hover {
-            background: #f5f5f5;
-            color: #333;
-            transform: rotate(90deg);
-        }
-
-        .under-construction-icon {
-            font-size: 80px;
-            color: var(--warning-color);
-            margin-bottom: 20px;
-            animation: bounce 2s infinite;
-        }
-
-        .under-construction-title {
-            font-size: 28px;
-            font-weight: 700;
-            color: var(--text-color);
-            margin-bottom: 15px;
-        }
-
-        .under-construction-message {
-            font-size: 16px;
-            color: var(--text-light);
-            line-height: 1.6;
-            margin-bottom: 30px;
-        }
-
-        .under-construction-btn {
-            background: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 12px 30px;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .under-construction-btn:hover {
-            background: var(--primary-dark);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(74, 107, 223, 0.3);
-        }
-
-        .doc-section .doc-card {
-            border-radius: 10px;
-            padding: 1.2rem 1.5rem;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.04);
-            border: 1px solid #edf2f7;
-            background: #ffffff;
-        }
-
-        .doc-section .doc-card:nth-child(1) { background: #f5f7ff; }
-        .doc-section .doc-card:nth-child(2) { background: #f5f7ff; }
-        .doc-section .doc-card:nth-child(3) { background: #f5f7ff; }
-
-        .doc-section .doc-card h3 { ... }
-        .doc-section .doc-card p  { ... }
-        .doc-section .doc-tags { ... }
-        .doc-section .doc-tags .tag { ... }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-            }
-            to {
-                opacity: 1;
-            }
-        }
-
-        @keyframes slideUp {
-            from {
-                transform: translateY(50px);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-
-        @keyframes bounce {
-            0%, 20%, 50%, 80%, 100% {
-                transform: translateY(0);
-            }
-            40% {
-                transform: translateY(-20px);
-            }
-            60% {
-                transform: translateY(-10px);
-            }
-        }
-
-        @media (max-width: 768px) {
-            .cards {
-                grid-template-columns: 1fr;
-            }
-            
-            .card {
-                margin: 0 1rem;
-            }
-            
-            .feature-grid {
-                grid-template-columns: 1fr;
-                padding: 0 1rem;
-            }
-
-            .under-construction-modal-content {
-                padding: 30px 20px;
-            }
-
-            .under-construction-icon {
-                font-size: 60px;
-            }
-
-            .under-construction-title {
-                font-size: 24px;
-            }
-        }
-    </style>
+    <!-- Home Page Styles -->
+    <link rel="stylesheet" href="/assets/css/home.css">
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
@@ -514,48 +45,6 @@
                     <span>ShopLine</span>
                 </button>
             </div>
-
-            <style>
-                .building-nav-btn {
-                    position: relative !important;
-                    transition: all 0.3s ease !important;
-                    border: 1px solid #e9ecef !important;
-                    border-radius: 8px !important;
-                    background: white !important;
-                }
-
-                .building-nav-btn.active {
-                    color: var(--primary-color, #1890ff) !important;
-                    border-color: var(--primary-color, #1890ff) !important;
-                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
-                }
-
-                .building-nav-btn.active::after {
-                    content: '';
-                    position: absolute;
-                    bottom: -10px;
-                    left: 50%;
-                    transform: translateX(-50%);
-                    width: 80px;
-                    height: 3px;
-                    background-color: var(--primary-color, #1890ff);
-                    border-radius: 2px;
-                    z-index: 2;
-                }
-
-                .building-nav-btn:hover {
-                    color: #666 !important;
-                    border-color: #e9ecef !important;
-                    box-shadow: none !important;
-                    transform: none !important;
-                }
-
-                .building-nav-btn.active:hover {
-                    color: var(--primary-color, #1890ff) !important;
-                    border-color: var(--primary-color, #1890ff) !important;
-                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
-                }
-            </style>
 
             <!-- 自建站板块：放置自建站的支付体验内容 -->
             <div id="selfBuiltSection">
@@ -598,92 +87,8 @@
                             <label style="display: block; margin-bottom: 1rem; font-weight: 600; color: var(--text-color);">
                                 <i class="fas fa-wallet"></i> <span data-i18n="selectPaymentMethod">选择支付方式：</span>
                             </label>
-                            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.8rem;">
-                                <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
-                                    <input type="checkbox" name="paymentMethod" value="card" checked style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
-                                    <i class="fas fa-credit-card" style="margin-right: 0.5rem; color: #1a73e8; font-size: 1.1rem;"></i>
-                                    <span style="font-size: 0.95rem;" data-i18n="card">国际信用卡/借记卡</span>
-                                </label>
-                                <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
-                                    <input type="checkbox" name="paymentMethod" value="apple_pay" checked style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
-                                    <i class="fab fa-apple" style="margin-right: 0.5rem; color: #000000; font-size: 1.2rem;"></i>
-                                    <span style="font-size: 0.95rem;">Apple Pay</span>
-                                </label>
-                                <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
-                                    <input type="checkbox" name="paymentMethod" value="google_pay" checked style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
-                                    <i class="fab fa-google" style="margin-right: 0.5rem; color: #4285F4; font-size: 1.1rem;"></i>
-                                    <span style="font-size: 0.95rem;">Google Pay</span>
-                                </label>
-                                <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
-                                    <input type="checkbox" name="paymentMethod" value="wechat" checked style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
-                                    <i class="fab fa-weixin" style="margin-right: 0.5rem; color: #09B83E; font-size: 1.2rem;"></i>
-                                    <span style="font-size: 0.95rem;" data-i18n="wechat">微信支付</span>
-                                </label>
-                                <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
-                                    <input type="checkbox" name="paymentMethod" value="alipay" checked style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
-                                    <i class="fab fa-alipay" style="margin-right: 0.5rem; color: #1677FF; font-size: 1.2rem;"></i>
-                                    <span style="font-size: 0.95rem;" data-i18n="alipay">支付宝</span>
-                                </label>
-                                <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
-                                    <input type="checkbox" name="paymentMethod" value="oxxo" style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
-                                    <i class="fas fa-store" style="margin-right: 0.5rem; color: #EC0000; font-size: 1.1rem;"></i>
-                                    <span style="font-size: 0.95rem;" data-i18n="oxxo">OXXO</span>
-                                </label>
-                                <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
-                                    <input type="checkbox" name="paymentMethod" value="kakao_pay" style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
-                                    <svg style="margin-right: 0.5rem; width: 24px; height: 24px;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <circle cx="12" cy="12" r="11" fill="#FFE812"/>
-                                        <path d="M12 5C8.13 5 5 7.68 5 11c0 2.04 1.23 3.82 3.04 4.63L7.84 18l3.05-1.61c.5.08 1.02.12 1.54.12 3.87 0 7-2.68 7-6s-3.13-6-7-6z" fill="#000000"/>
-                                    </svg>
-                                    <span style="font-size: 0.95rem;" data-i18n="kakaoPay">Kakao Pay</span>
-                                </label>
-                                <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
-                                    <input type="checkbox" name="paymentMethod" value="naver_pay" style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
-                                    <svg style="margin-right: 0.5rem; width: 24px; height: 24px;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <rect width="24" height="24" fill="#00C73C"/>
-                                        <path d="M6 8h3v8H6V8zm5 0h3v8h-3V8zm5 0h3v8h-3V8z" fill="white"/>
-                                    </svg>
-                                    <span style="font-size: 0.95rem;" data-i18n="naverPay">Naver Pay</span>
-                                </label>
-                                <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
-                                    <input type="checkbox" name="paymentMethod" value="payco" style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
-                                    <svg style="margin-right: 0.5rem; width: 24px; height: 24px;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <rect width="24" height="24" fill="#0066FF"/>
-                                        <text x="12" y="16" font-size="14" font-weight="bold" fill="white" text-anchor="middle">P</text>
-                                    </svg>
-                                    <span style="font-size: 0.95rem;" data-i18n="payco">Payco</span>
-                                </label>
-                                <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
-                                    <input type="checkbox" name="paymentMethod" value="toss_pay" style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
-                                    <svg style="margin-right: 0.5rem; width: 24px; height: 24px;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <rect width="24" height="24" fill="#0066FF" rx="4"/>
-                                        <path d="M12 6L8 14h3v4h2v-4h3L12 6z" fill="white"/>
-                                    </svg>
-                                    <span style="font-size: 0.95rem;" data-i18n="toss">Toss</span>
-                                </label>
-                                <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
-                                    <input type="checkbox" name="paymentMethod" value="samsung_pay" style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
-                                    <svg style="margin-right: 0.5rem; width: 24px; height: 24px;" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <rect width="512" height="512" rx="80" fill="#1428A0"/>
-                                        <path d="M256 140c-50 0-90 25-90 60 0 20 15 35 40 45-30 8-50 25-50 50 0 40 45 70 100 70s100-30 100-70c0-25-20-42-50-50 25-10 40-25 40-45 0-35-40-60-90-60zm0 35c25 0 45 12 45 30s-20 30-45 30-45-12-45-30 20-30 45-30zm0 110c30 0 55 15 55 35s-25 35-55 35-55-15-55-35 25-35 55-35z" fill="white"/>
-                                    </svg>
-                                    <span style="font-size: 0.95rem;" data-i18n="samsungPay">Samsung Pay</span>
-                                </label>
-                                <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
-                                    <input type="checkbox" name="paymentMethod" value="tmoney" style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
-                                    <svg style="margin-right: 0.5rem; width: 24px; height: 24px;" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <defs>
-                                            <linearGradient id="tmoneyGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                                                <stop offset="0%" style="stop-color:#FF6B00;stop-opacity:1" />
-                                                <stop offset="100%" style="stop-color:#FF9500;stop-opacity:1" />
-                                            </linearGradient>
-                                        </defs>
-                                        <rect width="512" height="512" rx="80" fill="url(#tmoneyGradient)"/>
-                                        <path d="M150 180h212v40H150zm106 80c-60 0-106 35-106 85 0 45 46 80 106 80s106-35 106-80c0-50-46-85-106-85zm0 125c-35 0-60-20-60-40s25-40 60-40 60 20 60 40-25 40-60 40z" fill="white"/>
-                                        <circle cx="256" cy="200" r="25" fill="white"/>
-                                    </svg>
-                                    <span style="font-size: 0.95rem;" data-i18n="tmoney">T-money</span>
-                                </label>
+                            <div id="paymentMethodsContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.8rem;">
+                                <!-- Payment methods will be rendered here dynamically -->
                             </div>
                         </div>
 
@@ -700,26 +105,8 @@
                             <label style="display: block; margin-bottom: 1rem; font-weight: 600; color: var(--text-color);">
                                 <i class="fas fa-wallet"></i> <span data-i18n="selectInstallmentMethod">选择支付方式：</span>
                             </label>
-                            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.8rem;">
-                                <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
-                                    <input type="checkbox" name="installmentMethod" value="afterpay" checked style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
-                                    <i class="fas fa-calendar-check" style="margin-right: 0.5rem; color: #B2FCE4; font-size: 1.1rem;"></i>
-                                    <span style="font-size: 0.95rem;" data-i18n="afterpay">Afterpay</span>
-                                </label>
-                                <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
-                                    <input type="checkbox" name="installmentMethod" value="klarna" checked style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
-                                    <i class="fas fa-shopping-bag" style="margin-right: 0.5rem; color: #FFB3C7; font-size: 1.1rem;"></i>
-                                    <span style="font-size: 0.95rem;" data-i18n="klarna">Klarna</span>
-                                </label>
-                                <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
-                                    <input type="checkbox" name="installmentMethod" value="affirm" checked style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
-                                    <i class="fas fa-check-circle" style="margin-right: 0.5rem; color: #0FA0EA; font-size: 1.1rem;"></i>
-                                    <span style="font-size: 0.95rem;" data-i18n="affirm">Affirm</span>
-                                </label>
-                                <div style="display: flex; align-items: center; justify-content: center; padding: 0.6rem; background: #f8f9fa; border-radius: 6px; border: 1px dashed #dee2e6;">
-                                    <i class="fas fa-ellipsis-h" style="margin-right: 0.5rem; color: #6c757d;"></i>
-                                    <span style="font-size: 0.9rem; color: #6c757d; font-style: italic;" data-i18n="morePaymentMethods">更多支付方式...</span>
-                                </div>
+                            <div id="installmentMethodsContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.8rem;">
+                                <!-- Installment methods will be rendered here dynamically -->
                             </div>
                         </div>
 
@@ -736,34 +123,8 @@
                             <label style="display: block; margin-bottom: 1rem; font-weight: 600; color: var(--text-color);">
                                 <i class="fas fa-wallet"></i> <span data-i18n="selectSubscriptionMethod">选择支付方式：</span>
                             </label>
-                            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.8rem;">
-                                <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
-                                    <input type="checkbox" name="subscriptionMethod" value="card" checked style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
-                                    <i class="fas fa-credit-card" style="margin-right: 0.5rem; color: #1a73e8; font-size: 1.1rem;"></i>
-                                    <span style="font-size: 0.95rem;" data-i18n="card">国际信用卡/借记卡</span>
-                                </label>
-                                <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
-                                    <input type="checkbox" name="subscriptionMethod" value="apple_pay" checked style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
-                                    <i class="fab fa-apple" style="margin-right: 0.5rem; color: #000000; font-size: 1.2rem;"></i>
-                                    <span style="font-size: 0.95rem;">Apple Pay</span>
-                                </label>
-                                <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
-                                    <input type="checkbox" name="subscriptionMethod" value="google_pay" checked style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
-                                    <i class="fab fa-google" style="margin-right: 0.5rem; color: #4285F4; font-size: 1.1rem;"></i>
-                                    <span style="font-size: 0.95rem;">Google Pay</span>
-                                </label>
-                                <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
-                                    <input type="checkbox" name="subscriptionMethod" value="kakao_pay" style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
-                                    <svg style="margin-right: 0.5rem; width: 24px; height: 24px;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <circle cx="12" cy="12" r="11" fill="#FFE812"/>
-                                        <path d="M12 5C8.13 5 5 7.68 5 11c0 2.04 1.23 3.82 3.04 4.63L7.84 18l3.05-1.61c.5.08 1.02.12 1.54.12 3.87 0 7-2.68 7-6s-3.13-6-7-6z" fill="#000000"/>
-                                    </svg>
-                                    <span style="font-size: 0.95rem;" data-i18n="kakaoPay">Kakao Pay</span>
-                                </label>
-                                <div style="display: flex; align-items: center; justify-content: center; padding: 0.6rem; background: #f8f9fa; border-radius: 6px; border: 1px dashed #dee2e6;">
-                                    <i class="fas fa-ellipsis-h" style="margin-right: 0.5rem; color: #6c757d;"></i>
-                                    <span style="font-size: 0.9rem; color: #6c757d; font-style: italic;" data-i18n="morePaymentMethods">更多支付方式...</span>
-                                </div>
+                            <div id="subscriptionMethodsContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.8rem;">
+                                <!-- Subscription methods will be rendered here dynamically -->
                             </div>
                         </div>
 
@@ -780,36 +141,8 @@
                             <label style="display: block; margin-bottom: 1rem; font-weight: 600; color: var(--text-color);">
                                 <i class="fas fa-wallet"></i> <span data-i18n="selectQuickPaymentMethod">选择支付方式：</span>
                             </label>
-                            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.8rem;">
-                                <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
-                                    <input type="checkbox" name="quickPaymentMethod" value="card" checked style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
-                                    <i class="fas fa-credit-card" style="margin-right: 0.5rem; color: #1a73e8; font-size: 1.1rem;"></i>
-                                    <span style="font-size: 0.95rem;" data-i18n="card">国际信用卡/借记卡</span>
-                                </label>
-                                <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
-                                    <input type="checkbox" name="quickPaymentMethod" value="apple_pay" checked style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
-                                    <i class="fab fa-apple" style="margin-right: 0.5rem; color: #000000; font-size: 1.2rem;"></i>
-                                    <span style="font-size: 0.95rem;">Apple Pay</span>
-                                </label>
-                                <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
-                                    <input type="checkbox" name="quickPaymentMethod" value="google_pay" checked style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
-                                    <i class="fab fa-google" style="margin-right: 0.5rem; color: #4285F4; font-size: 1.1rem;"></i>
-                                    <span style="font-size: 0.95rem;">Google Pay</span>
-                                </label>
-                                <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
-                                    <input type="checkbox" name="quickPaymentMethod" value="wechat" checked style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
-                                    <i class="fab fa-weixin" style="margin-right: 0.5rem; color: #09B83E; font-size: 1.2rem;"></i>
-                                    <span style="font-size: 0.95rem;" data-i18n="wechat">微信支付</span>
-                                </label>
-                                <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
-                                    <input type="checkbox" name="quickPaymentMethod" value="alipay" checked style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
-                                    <i class="fab fa-alipay" style="margin-right: 0.5rem; color: #1677FF; font-size: 1.2rem;"></i>
-                                    <span style="font-size: 0.95rem;" data-i18n="alipay">支付宝</span>
-                                </label>
-                                <div style="display: flex; align-items: center; justify-content: center; padding: 0.6rem; background: #f8f9fa; border-radius: 6px; border: 1px dashed #dee2e6;">
-                                    <i class="fas fa-ellipsis-h" style="margin-right: 0.5rem; color: #6c757d;"></i>
-                                    <span style="font-size: 0.9rem; color: #6c757d; font-style: italic;" data-i18n="morePaymentMethods">更多支付方式...</span>
-                                </div>
+                            <div id="quickPaymentMethodsContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.8rem;">
+                                <!-- Quick payment methods will be rendered here dynamically -->
                             </div>
                         </div>
 
@@ -992,7 +325,42 @@
         </div>
     </footer>
 
+    <!-- Payment Methods Configuration Module -->
+    <script src="/assets/js/payment/payment-methods-config.js"></script>
+
     <script>
+        // ===== 支付方式卡片配置 =====
+        const paymentCardsConfig = {
+            payment: {
+                containerId: 'paymentMethodsContainer',
+                inputName: 'paymentMethod',
+                methods: ['card', 'apple_pay', 'google_pay', 'wechat', 'alipay', 'oxxo', 'kakao_pay', 'naver_pay', 'payco', 'toss_pay', 'samsung_pay', 'tmoney'],
+                defaultChecked: ['card', 'apple_pay', 'google_pay'],
+                cacheKey: 'paymentMethods'
+            },
+            installment: {
+                containerId: 'installmentMethodsContainer',
+                inputName: 'installmentMethod',
+                methods: ['afterpay', 'klarna', 'affirm'],
+                defaultChecked: ['afterpay', 'klarna', 'affirm'],
+                cacheKey: 'installmentMethods'
+            },
+            subscription: {
+                containerId: 'subscriptionMethodsContainer',
+                inputName: 'subscriptionMethod',
+                methods: ['card', 'apple_pay', 'google_pay', 'kakao_pay'],
+                defaultChecked: ['card', 'apple_pay', 'google_pay'],
+                cacheKey: 'subscriptionMethods'
+            },
+            quickPayment: {
+                containerId: 'quickPaymentMethodsContainer',
+                inputName: 'quickPaymentMethod',
+                methods: ['card', 'apple_pay', 'google_pay', 'wechat', 'alipay'],
+                defaultChecked: ['card', 'apple_pay', 'google_pay', 'wechat', 'alipay'],
+                cacheKey: 'quickPaymentMethods'
+            }
+        };
+
         // ===== 国际化翻译 =====
         const translations = {
             zh: {
@@ -1031,7 +399,6 @@
                 expressCheckout: '快捷支付',
                 expressCheckoutDesc: '快速发起支付，支持多种支付方式。请选择您需要启用的支付方式：',
                 selectQuickPaymentMethod: '选择支付方式：',
-                selectQuickPaymentMethod: '选择支付方式：',
                 startExpressCheckout: '快捷支付',
                 features: '主要特性',
                 security: '安全可靠',
@@ -1060,6 +427,11 @@
                 morePaymentMethods: '更多支付方式...',
                 wechat: '微信支付',
                 alipay: '支付宝',
+                validationError: '验证错误',
+                selectAtLeastOnePaymentMethod: '请至少选择一种支付方式！',
+                selectAtLeastOneInstallmentMethod: '请至少选择一种分期支付方式！',
+                selectAtLeastOneSubscriptionMethod: '请至少选择一种订阅方式！',
+                ok: '确定',
                 afterpay: 'Afterpay',
                 klarna: 'Klarna',
                 affirm: 'Affirm',
@@ -1160,6 +532,11 @@
                 morePaymentMethods: 'More payment methods...',
                 wechat: 'WeChat Pay',
                 alipay: 'Alipay',
+                validationError: 'Validation Error',
+                selectAtLeastOnePaymentMethod: 'Please select at least one payment method!',
+                selectAtLeastOneInstallmentMethod: 'Please select at least one installment method!',
+                selectAtLeastOneSubscriptionMethod: 'Please select at least one subscription method!',
+                ok: 'OK',
                 afterpay: 'Afterpay',
                 klarna: 'Klarna',
                 affirm: 'Affirm',
@@ -1288,8 +665,89 @@
             localStorage.setItem('selectedBuildingMethod', value);
         }
 
+        // ===== 显示验证错误弹层 =====
+        function showValidationModal(messageKey) {
+            const modal = document.createElement('div');
+            modal.className = 'under-construction-modal show';
+            modal.style.display = 'flex';
+            
+            const title = translations[currentLang].validationError;
+            const message = translations[currentLang][messageKey];
+            const okText = translations[currentLang].ok;
+            
+            modal.innerHTML = `
+                <div class="under-construction-modal-content">
+                    <button class="under-construction-close" onclick="this.closest('.under-construction-modal').remove()">×</button>
+                    <div class="under-construction-icon">⚠️</div>
+                    <h2 class="under-construction-title">${title}</h2>
+                    <p class="under-construction-message">${message}</p>
+                    <button class="under-construction-btn" onclick="this.closest('.under-construction-modal').remove()">${okText}</button>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // 点击背景关闭
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            });
+        }
+
+        // ===== 初始化支付方式渲染 =====
+        function initializePaymentMethodsCards() {
+            console.log('=== Initializing Payment Methods Cards ===');
+            
+            // 遍历所有卡片配置
+            Object.keys(paymentCardsConfig).forEach(cardKey => {
+                const config = paymentCardsConfig[cardKey];
+                const container = document.getElementById(config.containerId);
+                
+                if (!container) {
+                    console.warn(`Container not found for ${cardKey}:`, config.containerId);
+                    return;
+                }
+                
+                console.log(`Rendering ${cardKey} payment methods...`);
+                
+                // 从浏览器缓存中获取支付方式列表
+                let checkedMethods = config.defaultChecked;
+                try {
+                    const cachedMethods = localStorage.getItem(config.cacheKey);
+                    if (cachedMethods) {
+                        const parsedMethods = JSON.parse(cachedMethods);
+                        if (Array.isArray(parsedMethods) && parsedMethods.length > 0) {
+                            checkedMethods = parsedMethods;
+                            console.log(`✓ Using cached methods for ${cardKey}:`, parsedMethods);
+                        } else {
+                            console.log(`⚠️ Cached methods empty for ${cardKey}, using defaults`);
+                        }
+                    } else {
+                        console.log(`ℹ️ No cached methods for ${cardKey}, using defaults`);
+                    }
+                } catch (error) {
+                    console.warn(`Failed to parse cached methods for ${cardKey}:`, error);
+                    console.log(`Using default methods for ${cardKey}`);
+                }
+                
+                // 渲染支付方式
+                const html = renderPaymentMethods({
+                    methods: config.methods,
+                    inputName: config.inputName,
+                    defaultChecked: checkedMethods
+                });
+                
+                container.innerHTML = html;
+                console.log(`✓ ${cardKey} payment methods rendered with ${checkedMethods.length} checked`);
+            });
+        }
+
         // 添加活动类到当前导航链接
         document.addEventListener('DOMContentLoaded', function() {
+            // 初始化支付方式卡片
+            initializePaymentMethodsCards();
+            
             // shopify和shopline板块内容携带hash跳转，便于往回跳
             updateLanguage();
             initBuildingMethodNav();
@@ -1358,122 +816,9 @@
                     console.error('Failed to restore integration mode from cache:', e);
                 }
             }
-
-            // 从缓存中恢复支付方式的选中状态，如果没有缓存则使用默认方式
-            function restorePaymentMethodsFromCache() {
-                try {
-                    const cachedPaymentMethods = localStorage.getItem('paymentMethods');
-                    const cachedSubscriptionMethods = localStorage.getItem('subscriptionMethods');
-                    const cachedInstallmentMethods = localStorage.getItem('installmentMethods');
-                    
-                    // 默认支付方式：信用卡、Apple Pay、Google Pay
-                    const defaultPaymentMethods = ['card', 'apple_pay', 'google_pay'];
-                    
-                    // 处理支付方式
-                    let paymentMethodsToUse = defaultPaymentMethods;
-                    if (cachedPaymentMethods) {
-                        try {
-                            paymentMethodsToUse = JSON.parse(cachedPaymentMethods);
-                            console.log('Restoring cached payment methods:', paymentMethodsToUse);
-                        } catch (parseError) {
-                            console.warn('Failed to parse cached payment methods, using default:', parseError);
-                            paymentMethodsToUse = defaultPaymentMethods;
-                        }
-                    } else {
-                        console.log('No cached payment methods, using default:', defaultPaymentMethods);
-                    }
-                    
-                    // 先取消所有支付方式的选中
-                    document.querySelectorAll('input[name="paymentMethod"]').forEach(cb => {
-                        cb.checked = false;
-                    });
-                    
-                    // 根据缓存或默认方式恢复选中状态
-                    paymentMethodsToUse.forEach(method => {
-                        const checkbox = document.querySelector(`input[name="paymentMethod"][value="${method}"]`);
-                        if (checkbox) {
-                            checkbox.checked = true;
-                        }
-                    });
-                    
-                    // 处理订阅方式
-                    if (cachedSubscriptionMethods) {
-                        try {
-                            const methods = JSON.parse(cachedSubscriptionMethods);
-                            console.log('Restoring cached subscription methods:', methods);
-                            
-                            // 先取消所有订阅方式的选中
-                            document.querySelectorAll('input[name="subscriptionMethod"]').forEach(cb => {
-                                cb.checked = false;
-                            });
-                            
-                            // 根据缓存恢复选中状态
-                            methods.forEach(method => {
-                                const checkbox = document.querySelector(`input[name="subscriptionMethod"][value="${method}"]`);
-                                if (checkbox) {
-                                    checkbox.checked = true;
-                                }
-                            });
-                        } catch (parseError) {
-                            console.warn('Failed to parse cached subscription methods:', parseError);
-                        }
-                    } else {
-                        console.log('No cached subscription methods, using defaults');
-                        // 订阅方式默认也选择相同的三种
-                        document.querySelectorAll('input[name="subscriptionMethod"]').forEach(cb => {
-                            cb.checked = false;
-                        });
-                        defaultPaymentMethods.forEach(method => {
-                            const checkbox = document.querySelector(`input[name="subscriptionMethod"][value="${method}"]`);
-                            if (checkbox) {
-                                checkbox.checked = true;
-                            }
-                        });
-                    }
-                    
-                    // 处理分期支付方式
-                    if (cachedInstallmentMethods) {
-                        try {
-                            const methods = JSON.parse(cachedInstallmentMethods);
-                            console.log('Restoring cached installment methods:', methods);
-                            
-                            // 先取消所有分期支付方式的选中
-                            document.querySelectorAll('input[name="installmentMethod"]').forEach(cb => {
-                                cb.checked = false;
-                            });
-                            
-                            // 根据缓存恢复选中状态
-                            methods.forEach(method => {
-                                const checkbox = document.querySelector(`input[name="installmentMethod"][value="${method}"]`);
-                                if (checkbox) {
-                                    checkbox.checked = true;
-                                }
-                            });
-                        } catch (parseError) {
-                            console.warn('Failed to parse cached installment methods:', parseError);
-                        }
-                    } else {
-                        console.log('No cached installment methods, using defaults');
-                        // 分期支付方式默认选择 Afterpay、Klarna 和 Affirm
-                        document.querySelectorAll('input[name="installmentMethod"]').forEach(cb => {
-                            cb.checked = false;
-                        });
-                        const defaultInstallmentMethods = ['afterpay', 'klarna', 'affirm'];
-                        defaultInstallmentMethods.forEach(method => {
-                            const checkbox = document.querySelector(`input[name="installmentMethod"][value="${method}"]`);
-                            if (checkbox) {
-                                checkbox.checked = true;
-                            }
-                        });
-                    }
-                } catch (e) {
-                    console.error('Failed to restore payment methods from cache:', e);
-                }
-            }
             
-            // 页面加载时恢复缓存的集成模式和支付方式
+            // 页面加载时恢复缓存的集成模式
             restoreIntegrationModeFromCache();
-            restorePaymentMethodsFromCache();
             
             const paymentModeRadios = document.querySelectorAll('input[name="paymentMode"]');
             const createPaymentBtn = document.getElementById('createPaymentBtn');
@@ -1583,29 +928,41 @@
                 
                 // 根据操作类型获取相应的支付方式
                 let methodName = '';
+                let actionText = '';
                 if (actionType === 'payment') {
                     methodName = 'paymentMethod';
+                    actionText = '支付';
                 } else if (actionType === 'subscription') {
                     methodName = 'subscriptionMethod';
+                    actionText = '订阅';
                 } else if (actionType === 'installment') {
                     methodName = 'installmentMethod';
+                    actionText = '分期支付';
                 }
                 
                 const selectedMethods = Array.from(document.querySelectorAll(`input[name="${methodName}"]:checked`))
                     .map(cb => cb.value);
                 console.log(`Selected ${actionType} methods:`, selectedMethods);
                 
+                // 验证：必须至少选择一个支付方式
+                if (selectedMethods.length === 0) {
+                    // 根据操作类型选择对应的国际化消息键
+                    let messageKey = '';
+                    if (actionType === 'payment') {
+                        messageKey = 'selectAtLeastOnePaymentMethod';
+                    } else if (actionType === 'subscription') {
+                        messageKey = 'selectAtLeastOneSubscriptionMethod';
+                    } else if (actionType === 'installment') {
+                        messageKey = 'selectAtLeastOneInstallmentMethod';
+                    }
+                    
+                    showValidationModal(messageKey);
+                    console.warn(`No payment methods selected for ${actionType}`);
+                    return;
+                }
+                
                 // 根据不同模式显示不同的提示
                 let message = '';
-                let actionText = '';
-                
-                if (actionType === 'payment') {
-                    actionText = '支付';
-                } else if (actionType === 'subscription') {
-                    actionText = '订阅';
-                } else if (actionType === 'installment') {
-                    actionText = '分期支付';
-                }
                 
                 switch(selectedMode) {
                     case 'redirect':
@@ -1651,8 +1008,6 @@
             function clearPaymentCache() {
                 try {
                     localStorage.removeItem('paymentIntegrationMode');
-                    localStorage.removeItem('paymentMethods');
-                    localStorage.removeItem('subscriptionMethods');
                     localStorage.removeItem('paymentActionType');
                     localStorage.removeItem('paymentCacheTimestamp');
                     console.log('✓ 本地内存缓存已清理');
