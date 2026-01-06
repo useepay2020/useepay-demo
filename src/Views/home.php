@@ -431,6 +431,8 @@
                 selectAtLeastOnePaymentMethod: '请至少选择一种支付方式！',
                 selectAtLeastOneInstallmentMethod: '请至少选择一种分期支付方式！',
                 selectAtLeastOneSubscriptionMethod: '请至少选择一种订阅方式！',
+                unsupportedMode: '不支持的集成模式',
+                expressCheckoutOnlySupportsEmbedded: '快捷支付仅支持内嵌收银台模式，请先选择内嵌收银台集成模式！',
                 ok: '确定',
                 afterpay: 'Afterpay',
                 klarna: 'Klarna',
@@ -536,6 +538,8 @@
                 selectAtLeastOnePaymentMethod: 'Please select at least one payment method!',
                 selectAtLeastOneInstallmentMethod: 'Please select at least one installment method!',
                 selectAtLeastOneSubscriptionMethod: 'Please select at least one subscription method!',
+                unsupportedMode: 'Unsupported Integration Mode',
+                expressCheckoutOnlySupportsEmbedded: 'Express Checkout only supports Embedded Checkout mode. Please select Embedded Checkout integration mode first!',
                 ok: 'OK',
                 afterpay: 'Afterpay',
                 klarna: 'Klarna',
@@ -679,6 +683,36 @@
                 <div class="under-construction-modal-content">
                     <button class="under-construction-close" onclick="this.closest('.under-construction-modal').remove()">×</button>
                     <div class="under-construction-icon">⚠️</div>
+                    <h2 class="under-construction-title">${title}</h2>
+                    <p class="under-construction-message">${message}</p>
+                    <button class="under-construction-btn" onclick="this.closest('.under-construction-modal').remove()">${okText}</button>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // 点击背景关闭
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            });
+        }
+
+        // ===== 显示不支持的集成模式弹层 =====
+        function showUnsupportedModeModal() {
+            const modal = document.createElement('div');
+            modal.className = 'under-construction-modal show';
+            modal.style.display = 'flex';
+            
+            const title = translations[currentLang].unsupportedMode;
+            const message = translations[currentLang].expressCheckoutOnlySupportsEmbedded;
+            const okText = translations[currentLang].ok;
+            
+            modal.innerHTML = `
+                <div class="under-construction-modal-content">
+                    <button class="under-construction-close" onclick="this.closest('.under-construction-modal').remove()">×</button>
+                    <div class="under-construction-icon">🚫</div>
                     <h2 class="under-construction-title">${title}</h2>
                     <p class="under-construction-message">${message}</p>
                     <button class="under-construction-btn" onclick="this.closest('.under-construction-modal').remove()">${okText}</button>
@@ -1161,7 +1195,39 @@
             if (expressCheckoutBtn) {
                 expressCheckoutBtn.addEventListener('click', function(e) {
                     e.preventDefault();
-                    showUnderConstructionModal();
+                    
+                    // 获取当前选择的集成模式
+                    const selectedMode = document.querySelector('input[name="paymentMode"]:checked').value;
+                    console.log('Express Checkout - Selected mode:', selectedMode);
+                    
+                    // 验证：快捷支付仅支持内嵌收银台模式
+                    if (selectedMode !== 'embedded') {
+                        showUnsupportedModeModal();
+                        console.warn('Express Checkout only supports embedded mode');
+                        return;
+                    }
+                    
+                    // 获取选中的支付方式
+                    const selectedMethods = Array.from(document.querySelectorAll('input[name="quickPaymentMethod"]:checked'))
+                        .map(cb => cb.value);
+                    console.log('Express Checkout - Selected methods:', selectedMethods);
+                    
+                    // 验证：必须至少选择一个支付方式
+                    if (selectedMethods.length === 0) {
+                        showValidationModal('selectAtLeastOnePaymentMethod');
+                        console.warn('No payment methods selected for express checkout');
+                        return;
+                    }
+                    
+                    // 清理并缓存配置
+                    clearPaymentCache();
+                    cachePaymentConfig(selectedMode, selectedMethods, 'express_checkout');
+                    
+                    // 跳转到服装商城页面
+                    setTimeout(() => {
+                        console.log('✓ 正在跳转到服装商城页面（快捷支付）...');
+                        window.location.href = '/payment/clothing-shop';
+                    }, 500);
                 });
             }
         });

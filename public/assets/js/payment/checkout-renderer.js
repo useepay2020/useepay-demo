@@ -167,6 +167,30 @@ class CheckoutRenderer {
     }
 
     /**
+     * Render Express Checkout section when integration mode is embedded and action type is express
+     * @returns {string}
+     */
+    renderExpressCheckout() {
+        const integrationMode = localStorage.getItem('paymentIntegrationMode');
+        const actionType = localStorage.getItem('paymentActionType');
+        const isExpress = actionType === 'express' || actionType === 'express_checkout' || actionType === '快捷支付';
+
+        if (integrationMode !== 'embedded' || !isExpress) {
+            return '';
+        }
+
+        const t = this.translations[this.currentLang];
+        const title = t.expressCheckout || 'Express Checkout';
+
+        return `
+            <div class="form-section" id="express-checkout-section">
+                <h3>${title}</h3>
+                <div id="express-checkout-element"></div>
+            </div>
+        `;
+    }
+
+    /**
      * Generate payment methods HTML
      * @returns {string} Payment methods HTML
      */
@@ -445,8 +469,8 @@ class CheckoutRenderer {
         return `
             <div class="checkout-form">
                 <h2 class="section-title">${t.checkoutInfo}</h2>
-                
                 <form id="checkoutForm">
+                    ${this.renderExpressCheckout()}
                     ${this.renderCustomerInfo()}
                     ${this.renderShippingAddress()}
                     ${this.renderBillingAddress()}
