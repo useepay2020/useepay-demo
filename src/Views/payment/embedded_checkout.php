@@ -137,7 +137,8 @@
     // Use translations from i18n file
     const translations = checkoutTranslations;
     let currentLang = getCurrentLanguage();
-
+    // Load cart from localStorage
+    let cart = [];
     // Initialize PaymentHandler globally
     let paymentHandler = new PaymentHandler({
         translations: translations,
@@ -147,9 +148,30 @@
     });
     
     console.log('PaymentHandler initialized:', !!paymentHandler);
+    
+    // Initialize Express Checkout if in embedded mode
+    let expressCheckoutElement;
+    
+    async function initializeExpressCheckout() {
+        // Prepare checkout data
+        const form = document.getElementById('checkoutForm');
+        if (!form) {
+            throw new Error('Checkout form not found');
+        }
 
-    // Load cart from localStorage
-    let cart = [];
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData);
+
+        const checkoutData = CheckoutRenderer.prepareCheckoutData(
+            data,
+            cart,
+            getPaymentMethods,
+            () => CheckoutRenderer.calculateTotals(cart)
+        );
+        checkoutData.businessName = 'UseePay Test';
+        // Use PaymentHandler to initialize Express Checkout
+        await paymentHandler.initializeExpressCheckout(checkoutData);
+    }
 
     function loadCart() {
         const saved = localStorage.getItem('fashionCart');
@@ -168,6 +190,8 @@
             cacheKey = 'subscriptionMethods';
         } else if (actionType === 'installment') {
             cacheKey = 'installmentMethods';
+        }else if(actionType === 'express_checkout'){
+            cacheKey = 'expressCheckoutMethods';
         }
 
         const cached = localStorage.getItem(cacheKey);
@@ -427,6 +451,7 @@
         
         // Initialize payment element with cart amount and currency
         setTimeout(() => {
+            initializeExpressCheckout();
             initializePaymentElement();
         }, 500);
         

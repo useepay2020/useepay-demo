@@ -6,95 +6,82 @@
 
 const paymentMethodsMap = {
     'card': {
-        icon: '<i class="fas fa-credit-card" style="color: #1a73e8;"></i>',
-        name_zh: '信用卡/借记卡',
+        icon: '<i class="fas fa-credit-card" style="color: #1a73e8; font-size: 1.1rem;"></i>',
+        name_zh: '国际信用卡/借记卡',
         name_en: 'Credit/Debit Card',
-        desc_zh: '支持 Visa, MasterCard, American Express',
-        desc_en: 'Supports Visa, MasterCard, American Express'
+        i18nKey: 'card'
     },
     'apple_pay': {
-        icon: '<i class="fab fa-apple" style="color: #000000;"></i>',
+        icon: '<i class="fab fa-apple" style="color: #000000; font-size: 1.2rem;"></i>',
         name_zh: 'Apple Pay',
         name_en: 'Apple Pay',
-        desc_zh: '使用 Apple Pay 快速支付',
-        desc_en: 'Pay quickly with Apple Pay'
+        i18nKey: null
     },
     'google_pay': {
-        icon: '<i class="fab fa-google" style="color: #4285F4;"></i>',
+        icon: '<i class="fab fa-google" style="color: #4285F4; font-size: 1.1rem;"></i>',
         name_zh: 'Google Pay',
         name_en: 'Google Pay',
-        desc_zh: '使用 Google Pay 快速支付',
-        desc_en: 'Pay quickly with Google Pay'
+        i18nKey: null
     },
     'wechat': {
-        icon: '<i class="fab fa-weixin" style="color: #09B83E;"></i>',
+        icon: '<i class="fab fa-weixin" style="color: #09B83E; font-size: 1.2rem;"></i>',
         name_zh: '微信支付',
         name_en: 'WeChat Pay',
-        desc_zh: '使用微信账户安全支付',
-        desc_en: 'Pay securely with WeChat'
+        i18nKey: 'wechat'
     },
     'alipay': {
-        icon: '<i class="fab fa-alipay" style="color: #1677FF;"></i>',
+        icon: '<i class="fab fa-alipay" style="color: #1677FF; font-size: 1.2rem;"></i>',
         name_zh: '支付宝',
         name_en: 'Alipay',
-        desc_zh: '使用支付宝账户安全支付',
-        desc_en: 'Pay securely with Alipay'
+        i18nKey: 'alipay'
     },
     'afterpay': {
-        icon: '<i class="fas fa-calendar-check" style="color: #B2FCE4;"></i>',
+        icon: '<i class="fas fa-calendar-check" style="color: #B2FCE4; font-size: 1.1rem;"></i>',
         name_zh: 'Afterpay',
         name_en: 'Afterpay',
-        desc_zh: '分期付款，先买后付',
-        desc_en: 'Buy now, pay later'
+        i18nKey: 'afterpay'
     },
     'klarna': {
-        icon: '<i class="fas fa-shopping-bag" style="color: #FFB3C7;"></i>',
+        icon: '<i class="fas fa-shopping-bag" style="color: #FFB3C7; font-size: 1.1rem;"></i>',
         name_zh: 'Klarna',
         name_en: 'Klarna',
-        desc_zh: '灵活的支付计划',
-        desc_en: 'Flexible payment plans'
+        i18nKey: 'klarna'
     },
     'affirm': {
-        icon: '<i class="fas fa-check-circle" style="color: #0FA0EA;"></i>',
+        icon: '<i class="fas fa-check-circle" style="color: #0FA0EA; font-size: 1.1rem;"></i>',
         name_zh: 'Affirm',
         name_en: 'Affirm',
-        desc_zh: '分期付款，灵活选择',
-        desc_en: 'Flexible installment payments'
+        i18nKey: 'affirm'
     },
     'oxxo': {
-        icon: '<i class="fas fa-store" style="color: #EC0000;"></i>',
+        icon: '<i class="fas fa-store" style="color: #EC0000; font-size: 1.1rem;"></i>',
         name_zh: 'OXXO',
         name_en: 'OXXO',
-        desc_zh: '在 OXXO 便利店支付',
-        desc_en: 'Pay at OXXO convenience stores'
+        i18nKey: 'oxxo'
     },
     'kakao_pay': {
-        icon: '<i class="fas fa-comment" style="color: #FFE812;"></i>',
+        icon: '<svg style="margin-right: 0.5rem; width: 24px; height: 24px;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="11" fill="#FFE812"/><path d="M12 5C8.13 5 5 7.68 5 11c0 2.04 1.23 3.82 3.04 4.63L7.84 18l3.05-1.61c.5.08 1.02.12 1.54.12 3.87 0 7-2.68 7-6s-3.13-6-7-6z" fill="#000000"/></svg>',
         name_zh: 'Kakao Pay',
         name_en: 'Kakao Pay',
-        desc_zh: '使用 Kakao Pay 快速支付',
-        desc_en: 'Pay quickly with Kakao Pay'
+        i18nKey: 'kakaoPay'
     },
     'naver_pay': {
-        icon: '<i class="fas fa-shopping-bag" style="color: #00C73C;"></i>',
+        icon: '<svg style="margin-right: 0.5rem; width: 24px; height: 24px;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="24" height="24" fill="#00C73C"/><path d="M6 8h3v8H6V8zm5 0h3v8h-3V8zm5 0h3v8h-3V8z" fill="white"/></svg>',
         name_zh: 'Naver Pay',
         name_en: 'Naver Pay',
-        desc_zh: '使用 Naver Pay 快速支付',
-        desc_en: 'Pay quickly with Naver Pay'
+        i18nKey: 'naverPay'
     },
     'payco': {
-        icon: '<i class="fas fa-wallet" style="color: #0066FF;"></i>',
+        icon: '<svg style="margin-right: 0.5rem; width: 24px; height: 24px;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="24" height="24" fill="#0066FF"/><text x="12" y="16" font-size="14" font-weight="bold" fill="white" text-anchor="middle">P</text></svg>',
         name_zh: 'Payco',
         name_en: 'Payco',
-        desc_zh: '使用 Payco 快速支付',
-        desc_en: 'Pay quickly with Payco'
+        i18nKey: 'payco'
     },
     'toss_pay': {
-        icon: '<i class="fas fa-mobile-alt" style="color: #0066FF;"></i>',
+        icon: '<svg style="margin-right: 0.5rem; width: 24px; height: 24px;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="24" height="24" fill="#0066FF" rx="4"/><path d="M12 6L8 14h3v4h2v-4h3L12 6z" fill="white"/></svg>',
         name_zh: 'Toss',
         name_en: 'Toss',
-        desc_zh: '使用 Toss 快速支付',
-        desc_en: 'Pay quickly with Toss'
+        i18nKey: 'toss'
     },
     'samsung_pay': {
         icon: '<svg style="width: 1.2rem; height: 1.2rem; vertical-align: middle;" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="512" height="512" rx="80" fill="#1428A0"/><path d="M256 140c-50 0-90 25-90 60 0 20 15 35 40 45-30 8-50 25-50 50 0 40 45 70 100 70s100-30 100-70c0-25-20-42-50-50 25-10 40-25 40-45 0-35-40-60-90-60zm0 35c25 0 45 12 45 30s-20 30-45 30-45-12-45-30 20-30 45-30zm0 110c30 0 55 15 55 35s-25 35-55 35-55-15-55-35 25-35 55-35z" fill="white"/></svg>',
@@ -136,4 +123,91 @@ function getAllPaymentMethodKeys() {
  */
 function hasPaymentMethod(methodKey) {
     return methodKey in paymentMethodsMap;
+}
+
+/**
+ * Render payment methods as HTML checkboxes
+ * @param {Object} config - Configuration object
+ * @param {Array<string>} config.methods - Array of payment method keys to render
+ * @param {string} config.inputName - Name attribute for checkboxes (e.g., 'paymentMethod')
+ * @param {Array<string>} config.defaultChecked - Array of method keys that should be checked by default
+ * @param {string} config.containerId - ID of the container to render into (optional)
+ * @returns {string} HTML string of payment method checkboxes
+ */
+function renderPaymentMethods(config) {
+    const { methods, inputName, defaultChecked = [], containerId } = config;
+    
+    if (!methods || !Array.isArray(methods) || methods.length === 0) {
+        console.warn('renderPaymentMethods: No methods provided');
+        return '';
+    }
+    
+    let html = '';
+    
+    methods.forEach(methodKey => {
+        const methodInfo = getPaymentMethodInfo(methodKey);
+        
+        if (!methodInfo) {
+            console.warn(`renderPaymentMethods: Unknown payment method '${methodKey}'`);
+            return;
+        }
+        
+        const isChecked = defaultChecked.includes(methodKey) ? 'checked' : '';
+        const i18nAttr = methodInfo.i18nKey ? `data-i18n="${methodInfo.i18nKey}"` : '';
+        
+        html += `
+            <label style="display: flex; align-items: center; cursor: pointer; padding: 0.6rem; background: white; border-radius: 6px; transition: all 0.2s;">
+                <input type="checkbox" name="${inputName}" value="${methodKey}" ${isChecked} style="margin-right: 0.6rem; cursor: pointer; width: 16px; height: 16px;">
+                ${methodInfo.icon}
+                <span style="font-size: 0.95rem; margin-left: 0.5rem;" ${i18nAttr}>${methodInfo.name_zh}</span>
+            </label>
+        `;
+    });
+    
+    // If containerId is provided, render directly into the container
+    if (containerId) {
+        const container = document.getElementById(containerId);
+        if (container) {
+            container.innerHTML = html;
+        } else {
+            console.warn(`renderPaymentMethods: Container '${containerId}' not found`);
+        }
+    }
+    
+    return html;
+}
+
+/**
+ * Render payment methods section with title and grid layout
+ * @param {Object} config - Configuration object
+ * @param {Array<string>} config.methods - Array of payment method keys to render
+ * @param {string} config.inputName - Name attribute for checkboxes
+ * @param {Array<string>} config.defaultChecked - Array of method keys that should be checked by default
+ * @param {string} config.titleIcon - Icon HTML for the title (optional)
+ * @param {string} config.titleText - Title text (optional)
+ * @param {string} config.titleI18nKey - i18n key for title (optional)
+ * @returns {string} Complete HTML section with title and payment methods grid
+ */
+function renderPaymentMethodsSection(config) {
+    const {
+        methods,
+        inputName,
+        defaultChecked = [],
+        titleIcon = '<i class="fas fa-wallet"></i>',
+        titleText = '选择支付方式：',
+        titleI18nKey = 'selectPaymentMethod'
+    } = config;
+    
+    const methodsHtml = renderPaymentMethods({ methods, inputName, defaultChecked });
+    
+    return `
+        <div style="margin: 1.5rem 0; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+            <label style="display: block; margin-bottom: 1rem; font-weight: 600; color: var(--text-color);">
+                ${titleIcon} <span data-i18n="${titleI18nKey}">${titleText}</span>
+            </label>
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.8rem;">
+                ${methodsHtml}
+            </div>
+        </div>
+    `;
 }
