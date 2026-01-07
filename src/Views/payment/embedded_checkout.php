@@ -137,7 +137,8 @@
     // Use translations from i18n file
     const translations = checkoutTranslations;
     let currentLang = getCurrentLanguage();
-
+    // Load cart from localStorage
+    let cart = [];
     // Initialize PaymentHandler globally
     let paymentHandler = new PaymentHandler({
         translations: translations,
@@ -152,287 +153,25 @@
     let expressCheckoutElement;
     
     async function initializeExpressCheckout() {
-        console.log('=== Initializing Express Checkout ===');
-
-        const integrationMode = localStorage.getItem('paymentIntegrationMode');
-        const actionType = localStorage.getItem('paymentActionType');
-        const isExpress = actionType === 'express' || actionType === 'express_checkout' || actionType === '快捷支付';
-
-        if (integrationMode !== 'embedded' || !isExpress) {
-            console.log('❌ Express Checkout skipped - not in embedded mode');
-            return ;
+        // Prepare checkout data
+        const form = document.getElementById('checkoutForm');
+        if (!form) {
+            throw new Error('Checkout form not found');
         }
-        try {
-            console.log('🔑 UseePay Public Key:', USEEPAY_PUBLIC_KEY ? 'Available' : 'Missing');
-            
-            // Check if UseePay SDK is loaded
-            if (typeof UseePay === 'undefined') {
-                throw new Error('UseePay SDK not loaded');
-            }
-            console.log('✓ UseePay SDK loaded');
-            
-            // Initialize UseePay with public key
-            const useepay = UseePay(USEEPAY_PUBLIC_KEY);
-            console.log('✓ UseePay instance initialized');
-            
-            // Calculate totals and log details
-            const totals = CheckoutRenderer.calculateTotals(cart);
-            console.log('💰 Cart totals:', totals);
-            
-            // Validate and ensure amount is a valid number
-            let amount = Number(totals.totalAmount);
-            console.log('💳 Payment amount:', totals.totalAmount, '-> converted to:', amount);
-            console.log('🔍 Amount type:', typeof amount);
-            
-            if (typeof amount !== 'number' || isNaN(amount) || amount <= 0) {
-                console.error('⚠️ Invalid amount detected:', amount);
-                console.error('🛒 Cart totals:', totals);
-                return ;
-            }
-            console.log('✅ Final amount to use:', amount);
-            
-            // Create elements instance
-            const elementsConfig = {
-                mode: 'payment',
-                amount: amount,
-                currency: 'USD', // Update with your currency
-                paymentMethodTypes: ['googlepay','applepay']
-            };
-            console.log('⚙️ Elements config:', elementsConfig);
-            
-            const elements = useepay.elements(elementsConfig);
-            console.log('✓ UseePay Elements created');
-            
-            // Create and mount Express Checkout element
-            console.log('🚀 Creating Express Checkout element...');
-            expressCheckoutElement = elements.create('expressCheckout', {
-                // Add any additional options here
-            });
-            console.log('✓ Express Checkout element created');
-            
-            // Check if container exists
-            const expressCheckoutContainer = document.getElementById('express-checkout-element');
-            console.log('📦 Express Checkout container:', expressCheckoutContainer ? 'Found' : 'Not found');
-            
-            if (expressCheckoutContainer) {
-                console.log('🔧 Mounting Express Checkout element...');
-                // Try mounting with selector string instead of DOM element
-                expressCheckoutElement.mount('express-checkout-element');
-                
-                // Handle ready event
-                expressCheckoutElement.on('ready', function(event) {
-                    console.log('✅ Express Checkout is ready');
-                    console.log('📋 Ready event details:', event);
-                });
-                
-                // Handle click event
-                expressCheckoutElement.on('click', function(event) {
-                    console.log('🖱️ Express Checkout clicked');
-                    console.log('📋 Click event details:', event);
-                    console.log('🛒 Current cart state:', cart);
-                    // You can update line items or other data here if needed
-                    const { resolve } = event;
-                    resolve();
-                });
-                
-                // Handle shipping address change
-                expressCheckoutElement.on('shippingAddressChange', function(event) {
-                    console.log('📍 Shipping address changed');
-                    console.log('📋 Address change event:', event);
-                    console.log('🏠 New address:', event.shippingAddress);
-                    
-                    // Update shipping rates based on address
-                    const shippingRates = [
-                        {
-                            id: 'free-shipping',
-                            label: 'Free Shipping',
-                            detail: '3-5 business days',
-                            amount: 0
-                        }
-                    ];
-                    console.log('🚚 Resolving with shipping rates:', shippingRates);
-                    
-                    event.resolve({
-                        shippingRates: shippingRates
-                    });
-                });
-                
-                // Handle shipping rate change
-                expressCheckoutElement.on('shippingRateChange', function(event) {
-                    console.log('🚚 Shipping rate changed');
-                    console.log('📋 Rate change event:', event);
-                    console.log('💰 Selected rate:', event.shippingRate);
-                    
-                    const lineItems = getLineItemsForExpressCheckout();
-                    console.log('📦 Resolving with line items:', lineItems);
-                    
-                    // Update order total based on selected shipping rate
-                    event.resolve({
-                        lineItems: lineItems
-                    });
-                });
-                
-                // Handle payment confirmation
-                expressCheckoutElement.on('confirm', async function(event) {
-                    console.log('💳 Payment confirmation started');
-                    console.log('📋 Confirm event details:', event);
-                    console.log('👤 Payment method:', event.paymentMethod);
-                    console.log('🏠 Billing address:', event.billingAddress);
-                    console.log('📦 Shipping address:', event.shippingAddress);
-                    
-                    try {
-                        // Show processing state
-                        console.log('⏳ Showing payment progress...');
-                        showPaymentProgress('processing', translations[currentLang]?.processingPayment || 'Processing payment...');
-                        
-                        // Prepare payment data
-                        const paymentData = {
-                            amount: CheckoutRenderer.calculateTotals(cart).total,
-                            currency: 'USD',
-                            paymentMethodType: 'card',
-                            // Include any additional data needed by your backend
-                        };
-                        console.log('💰 Payment data to send:', paymentData);
-                        
-                        // Call your backend to create a payment intent
-                        console.log('🌐 Calling backend to create payment intent...');
-                        const response = await fetch('/api/create-payment-intent', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify(paymentData)
-                        });
-                        
-                        console.log('📡 Backend response status:', response.status);
-                        console.log('📡 Backend response ok:', response.ok);
-                        
-                        if (!response.ok) {
-                            throw new Error(`Backend request failed: ${response.status} ${response.statusText}`);
-                        }
-                        
-                        const responseData = await response.json();
-                        console.log('📋 Backend response data:', responseData);
-                        
-                        const { paymentIntentId, clientSecret } = responseData;
-                        console.log('🔑 Payment Intent ID:', paymentIntentId);
-                        console.log('🔐 Client Secret:', clientSecret ? 'Available' : 'Missing');
-                        
-                        // Confirm the payment
-                        console.log('✅ Confirming payment with UseePay...');
-                        const confirmParams = {
-                            elements,
-                            paymentIntentId,
-                            clientSecret,
-                            confirmParams: {
-                                return_url: window.location.origin + '/payment/success',
-                                // Include any additional parameters
-                            }
-                        };
-                        console.log('⚙️ Confirm params:', confirmParams);
-                        
-                        const { error, paymentIntent } = await useepay.confirmPayment(confirmParams);
-                        
-                        console.log('📋 Payment confirmation result:', { error, paymentIntent });
-                        
-                        if (error) {
-                            console.error('❌ Payment confirmation error:', error);
-                            throw error;
-                        }
-                        
-                        // Payment succeeded
-                        console.log('💳 Payment Intent status:', paymentIntent?.status);
-                        if (paymentIntent.status === 'succeeded') {
-                            console.log('🎉 Payment succeeded!');
-                            showPaymentProgress('success', translations[currentLang]?.paymentSuccess || 'Payment successful!');
-                            // Redirect to success page or update UI
-                            console.log('🔄 Redirecting to success page...');
-                            window.location.href = '/payment/success';
-                        } else {
-                            console.warn('⚠️ Payment status not succeeded:', paymentIntent.status);
-                        }
-                        
-                    } catch (error) {
-                        console.error('❌ Payment confirmation error:', error);
-                        console.error('📋 Error details:', {
-                            message: error.message,
-                            code: error.code,
-                            type: error.type,
-                            stack: error.stack
-                        });
-                        showPaymentProgress('error', error.message || 'Payment failed. Please try again.');
-                    }
-                });
-                
-                console.log('✅ Express Checkout element mounted successfully');
-            } else {
-                console.error('❌ Express Checkout container not found');
-                console.error('📋 Available containers on page:', {
-                    'express-checkout-element': !!document.getElementById('express-checkout-element'),
-                    'payment-element': !!document.getElementById('payment-element'),
-                    'checkout-form': !!document.querySelector('.checkout-form')
-                });
-            }
-            
-        } catch (error) {
-            console.error('❌ Failed to initialize Express Checkout');
-            console.error('📋 Error details:', {
-                message: error.message,
-                code: error.code,
-                type: error.type,
-                stack: error.stack
-            });
-            console.error('🔍 Debug info:', {
-                'UseePay SDK loaded': typeof UseePay !== 'undefined',
-                'Public key available': !!window.USEEPAY_PUBLIC_KEY,
-                'Cart available': !!cart,
-                'CheckoutRenderer available': typeof CheckoutRenderer !== 'undefined'
-            });
-        }
-        
-        console.log('=== Express Checkout initialization complete ===');
+
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData);
+
+        const checkoutData = CheckoutRenderer.prepareCheckoutData(
+            data,
+            cart,
+            getPaymentMethods,
+            () => CheckoutRenderer.calculateTotals(cart)
+        );
+        checkoutData.businessName = 'UseePay Test';
+        // Use PaymentHandler to initialize Express Checkout
+        await paymentHandler.initializeExpressCheckout(checkoutData);
     }
-    
-    // Helper function to get line items for Express Checkout
-    function getLineItemsForExpressCheckout() {
-        const totals = CheckoutRenderer.calculateTotals(cart);
-        
-        // Map cart items to line items format expected by Express Checkout
-        const lineItems = cart.map(item => ({
-            name: item.name,
-            description: item.description || '',
-            quantity: item.quantity,
-            amount: Math.round(item.price * 100), // Amount in cents
-            currency: 'USD' // Update with your currency
-        }));
-        
-        // Add shipping as a line item if applicable
-        if (totals.shipping > 0) {
-            lineItems.push({
-                name: 'Shipping',
-                description: 'Standard Shipping',
-                quantity: 1,
-                amount: Math.round(totals.shipping * 100),
-                currency: 'USD' // Update with your currency
-            });
-        }
-        
-        // Add tax as a line item if applicable
-        if (totals.tax > 0) {
-            lineItems.push({
-                name: 'Tax',
-                description: 'Sales Tax',
-                quantity: 1,
-                amount: Math.round(totals.tax * 100),
-                currency: 'USD' // Update with your currency
-            });
-        }
-        
-        return lineItems;
-    }
-
-    // Load cart from localStorage
-    let cart = [];
 
     function loadCart() {
         const saved = localStorage.getItem('fashionCart');
@@ -451,6 +190,8 @@
             cacheKey = 'subscriptionMethods';
         } else if (actionType === 'installment') {
             cacheKey = 'installmentMethods';
+        }else if(actionType === 'express_checkout'){
+            cacheKey = 'expressCheckoutMethods';
         }
 
         const cached = localStorage.getItem(cacheKey);

@@ -1068,6 +1068,8 @@
                         methodsKey = 'subscriptionMethods';
                     } else if (actionType === 'installment') {
                         methodsKey = 'installmentMethods';
+                    }else if(actionType === 'express_checkout'){
+                        methodsKey = 'expressCheckoutMethods';
                     }
                     
                     // 缓存集成模式
