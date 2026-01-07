@@ -1307,7 +1307,7 @@ class PaymentHandler {
                 mode: 'payment',
                 amount: amount,
                 currency: checkoutData.currency || 'USD',
-                paymentMethodTypes: ['googlepay','applepay'],
+                paymentMethodTypes: checkoutData.paymentMethods,
             };
             console.log('⚙️ Elements config:', elementsConfig);
             
