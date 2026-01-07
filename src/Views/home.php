@@ -326,7 +326,7 @@
     </footer>
 
     <!-- Payment Methods Configuration Module -->
-    <script src="/assets/js/payment/payment-methods-config.js"></script>
+    <script src="/assets/js/payment/payment-methods-config.js?v=<?php echo @filemtime(__DIR__ . '/../../public/assets/js/payment/payment-methods-config.js') ?: time(); ?>"></script>
 
     <script>
         // ===== 支付方式卡片配置 =====
