@@ -10,8 +10,8 @@ echo.
 
 REM Check if version argument is provided
 if "%1"=="" (
-    echo Usage: publish.bat ^<version^>
-    echo Example: publish.bat 1.0.0
+    echo Usage: publish_new.bat ^<version^>
+    echo Example: publish_new.bat 1.0.0
     exit /b 1
 )
 
@@ -75,7 +75,7 @@ if errorlevel 1 (
 
 echo.
 echo ==========================================
-echo ✅ Successfully published version %VERSION%
+echo Successfully published version %VERSION%
 echo ==========================================
 echo.
 echo Next steps:

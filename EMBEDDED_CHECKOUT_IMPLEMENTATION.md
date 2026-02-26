@@ -196,7 +196,7 @@ const publicKey = window.USEEPAY_PUBLIC_KEY || 'UseePay_PK_TEST_1234';
 
 ## 测试
 
-1. 访问 `/payment/embedded-checkout`
+1. 访问 `/payment/embedded_checkout`
 2. 填写客户信息和收货地址
 3. 选择信用卡支付方式
 4. 在 UseePay Payment Element 中输入测试卡号

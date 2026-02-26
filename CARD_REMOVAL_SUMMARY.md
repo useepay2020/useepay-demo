@@ -127,7 +127,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 ## 测试检查清单
 
-- [ ] 访问 `/payment/embedded-checkout` 页面
+- [ ] 访问 `/payment/embedded_checkout` 页面
 - [ ] 确认支付方式列表中没有"信用卡/借记卡"选项
 - [ ] 确认第一个支付方式是 Apple Pay
 - [ ] 确认其他支付方式正常显示

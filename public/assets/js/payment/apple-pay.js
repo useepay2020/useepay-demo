@@ -63,7 +63,7 @@ const ApplePay = (function() {
         const totals = CheckoutRenderer.calculateTotals(cart);
         const amount = parseFloat(totals.totalAmount) || 0;
         try {
-            const response = await fetch('/api/payment/apple-pay/configuration', {
+            const response = await fetch('/api/payment/apple_pay/configuration', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -195,7 +195,7 @@ const ApplePay = (function() {
                 console.log('onvalidatemerchant - validationURL:', event.validationURL);
                 
                 try {
-                    const response = await fetch('/api/payment/apple-pay/validate', {
+                    const response = await fetch('/api/payment/apple_pay/validate', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({

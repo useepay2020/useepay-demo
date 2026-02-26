@@ -11,6 +11,7 @@ use UseePay\Service\Billing\InvoiceService;
 use UseePay\Service\Payment\PaymentIntentService;
 use UseePay\Service\Payment\RefundService;
 use UseePay\Service\Webhook\WebhookService;
+use UseePay\Service\Checkout\CheckoutSessionService;
 
 class UseePayClient extends ApiService
 {
@@ -59,6 +60,13 @@ class UseePayClient extends ApiService
     public function webhooks()
     {
         $service = new WebhookService($this->getAuthentication());
+        $service->setEnvironment($this->getEnvironment());
+        return $service;
+    }
+    
+    public function checkoutSessions()
+    {
+        $service = new CheckoutSessionService($this->getAuthentication());
         $service->setEnvironment($this->getEnvironment());
         return $service;
     }

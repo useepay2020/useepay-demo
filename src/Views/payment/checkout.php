@@ -121,6 +121,68 @@
             renderer.render(container);
         }
 
+        // Handle PaymentIntent integration
+        function handlePaymentIntentSubmit(checkoutData, paymentHandler, formData) {
+            fetch('/api/payment', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(checkoutData)
+            })
+            .then(response => paymentHandler.handleResponse(response))
+            .then(result => {
+                // Prepare order data for success page
+                const orderData = {
+                    orderId: result.data.merchant_order_id,
+                    paymentIntentId: result.data.id,
+                    customer: formData,
+                    items: cart,
+                    totals: checkoutData.totals,
+                    date: new Date().toISOString(),
+                    status: result.data.status,
+                    amount: result.data.amount
+                };
+
+                // Process payment result
+                paymentHandler.processPaymentResultForRedirect(result, orderData);
+            })
+            .catch(error => {
+                paymentHandler.handleFetchError(error);
+            });
+        }
+
+        // Handle CheckoutSession integration
+        function handleCheckoutSessionSubmit(checkoutData, paymentHandler, formData) {
+            fetch('/api/checkout_session', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(checkoutData)
+            })
+            .then(response => paymentHandler.handleResponse(response))
+            .then(result => {
+                // Prepare order data for success page
+                const orderData = {
+                    orderId: result.data.merchant_order_id,
+                    sessionId: result.data.id,
+                    customer: formData,
+                    items: cart,
+                    totals: checkoutData.totals,
+                    date: new Date().toISOString(),
+                    status: result.data.status,
+                    amount: result.data.amount
+                };
+
+                // Process payment result
+                paymentHandler.processPaymentResultForRedirect(result, orderData);
+            })
+            .catch(error => {
+                paymentHandler.handleFetchError(error);
+            });
+        }
+
         // Handle form submission
         function handleSubmit(e) {
             e.preventDefault();
@@ -145,7 +207,8 @@
                 getPaymentMethods,
                 () => CheckoutRenderer.calculateTotals(cart)
             );
-
+            checkoutData.mode = 'payment';
+            checkoutData.ui_mode = 'custom';
             // Initialize payment response handler
             const paymentHandler = new PaymentResponseHandler({
                 translations: translations,
@@ -154,34 +217,17 @@
                 totals: checkoutData.totals
             });
 
-            // Submit to backend - Call PaymentController::createPayment()
-            fetch('/api/payment', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(checkoutData)
-            })
-            .then(response => paymentHandler.handleResponse(response))
-            .then(result => {
-                // Prepare order data for success page
-                const orderData = {
-                    orderId: result.data.merchant_order_id,
-                    paymentIntentId: result.data.id,
-                    customer: data,
-                    items: cart,
-                    totals: checkoutData.totals,
-                    date: new Date().toISOString(),
-                    status: result.data.status,
-                    amount: result.data.amount
-                };
+            // Get payment integration type from localStorage
+            const paymentIntegrationType = localStorage.getItem('paymentIntegrationType') || 'payment_intent';
+            console.log('Payment integration type:', paymentIntegrationType);
 
-                // Process payment result
-                paymentHandler.processPaymentResultForRedirect(result, orderData);
-            })
-            .catch(error => {
-                paymentHandler.handleFetchError(error);
-            });
+            // Route to appropriate handler based on integration type
+            if (paymentIntegrationType === 'checkout_session') {
+                handleCheckoutSessionSubmit(checkoutData, paymentHandler, data);
+            } else {
+                // Default to payment_intent
+                handlePaymentIntentSubmit(checkoutData, paymentHandler, data);
+            }
         }
 
         document.addEventListener('DOMContentLoaded', function() {

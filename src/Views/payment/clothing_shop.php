@@ -775,10 +775,10 @@
 
             // 根据集成模式选择对应的结算页面
             if (integrationMode === 'embedded') {
-                checkoutUrl = '/payment/embedded-checkout';
+                checkoutUrl = '/payment/embedded_checkout';
                 console.log('Redirecting to embedded checkout');
             } else if (integrationMode === 'api') {
-                checkoutUrl = '/payment/api-checkout';
+                checkoutUrl = '/payment/api_checkout';
                 console.log('Redirecting to API checkout');
             } else if (integrationMode === 'redirect') {
                 checkoutUrl = '/payment/checkout';

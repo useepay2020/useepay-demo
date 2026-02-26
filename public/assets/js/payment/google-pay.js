@@ -81,7 +81,7 @@ const GooglePay = (function() {
         const totals = CheckoutRenderer.calculateTotals(cart);
         const amount = parseFloat(totals.totalAmount) || 0;
         try {
-            const response = await fetch('/api/payment/google-pay/configuration', {
+            const response = await fetch('/api/payment/google_pay/configuration', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

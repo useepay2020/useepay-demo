@@ -78,6 +78,29 @@
                     </div>
                 </div>
 
+                <!-- 对接方式选择区域 -->
+                <div class="card" style="margin-bottom: 2rem; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+                    <h2 style="text-align: center; color: var(--primary-color); margin-bottom: 1.5rem;">
+                        <i class="fas fa-plug"></i> <span data-i18n="selectIntegrationType">选择对接方式</span>
+                    </h2>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem;">
+                        <label class="integration-type-option" style="display: flex; flex-direction: column; cursor: pointer; padding: 1.2rem; background: white; border: 2px solid #dee2e6; border-radius: 8px; transition: all 0.3s ease;">
+                            <div style="display: flex; align-items: center; margin-bottom: 0.5rem;">
+                                <input type="radio" name="integrationType" value="payment_intent" checked style="margin-right: 0.8rem; cursor: pointer; width: 18px; height: 18px;">
+                                <strong style="font-size: 1.1rem; color: var(--text-color);" data-i18n="paymentIntent">Payment Intent</strong>
+                            </div>
+                            <small style="color: var(--text-light); line-height: 1.5;" data-i18n="paymentIntentDesc">通过支付意向创建支付，适合需要精细控制支付流程的场景</small>
+                        </label>
+                        <label id="checkoutSessionOption" class="integration-type-option" style="display: flex; flex-direction: column; cursor: pointer; padding: 1.2rem; background: white; border: 2px solid #dee2e6; border-radius: 8px; transition: all 0.3s ease;">
+                            <div style="display: flex; align-items: center; margin-bottom: 0.5rem;">
+                                <input type="radio" name="integrationType" value="checkout_session" style="margin-right: 0.8rem; cursor: pointer; width: 18px; height: 18px;">
+                                <strong style="font-size: 1.1rem; color: var(--text-color);" data-i18n="checkoutSession">Checkout Session</strong>
+                            </div>
+                            <small style="color: var(--text-light); line-height: 1.5;" data-i18n="checkoutSessionDesc">通过支付会话创建支付，简化集成流程，快速上线</small>
+                        </label>
+                    </div>
+                </div>
+
                 <div class="cards">
                     <div class="card">
                         <h2><i class="fas fa-credit-card"></i> <span data-i18n="payment">一次支付</span></h2>
@@ -133,7 +156,7 @@
                         </a>
                     </div>
 
-                    <div class="card">
+                    <div class="card" id="expressCheckoutCard">
                         <h2><i class="fas fa-bolt"></i> <span data-i18n="expressCheckout">Expression Checkout</span></h2>
                         <p data-i18n="expressCheckoutDesc">快速发起支付，支持多种支付方式。请选择您需要启用的支付方式：</p>
 
@@ -383,6 +406,11 @@
                 embeddedDesc: '在您的页面中嵌入收银台组件，保持品牌一致性',
                 api: '纯 API 模式',
                 apiDesc: '完全自定义支付流程和界面，灵活度最高',
+                selectIntegrationType: '选择对接方式',
+                paymentIntent: 'Payment Intent',
+                paymentIntentDesc: '通过支付意向创建支付，适合需要精细控制支付流程的场景',
+                checkoutSession: 'Checkout Session',
+                checkoutSessionDesc: '通过支付会话创建支付，简化集成流程，快速上线',
                 payment: '一次支付',
                 paymentDesc: '处理一次性支付，支持多种支付方式。请选择您需要启用的支付方式：',
                 selectPaymentMethod: '选择支付方式：',
@@ -490,6 +518,11 @@
                 embeddedDesc: 'Embed checkout component in your page, maintain brand consistency',
                 api: 'Pure API Mode',
                 apiDesc: 'Fully customize payment flow and interface, maximum flexibility',
+                selectIntegrationType: 'Select Integration Type',
+                paymentIntent: 'Payment Intent',
+                paymentIntentDesc: 'Create payments via Payment Intent, ideal for scenarios requiring fine-grained control over the payment flow',
+                checkoutSession: 'Checkout Session',
+                checkoutSessionDesc: 'Create payments via Checkout Session, simplified integration for quick deployment',
                 payment: 'One-Time Payment',
                 paymentDesc: 'Process one-time payments, support multiple payment methods. Please select the payment methods you want to enable:',
                 selectPaymentMethod: 'Select Payment Method:',
@@ -729,6 +762,77 @@
             });
         }
 
+        // ===== 根据集成模式控制快捷支付卡片显示/隐藏 =====
+        function updateExpressCheckoutCardVisibility(mode) {
+            const expressCheckoutCard = document.getElementById('expressCheckoutCard');
+            if (!expressCheckoutCard) {
+                console.warn('Express checkout card not found');
+                return;
+            }
+            
+            // 跳转收银台(redirect)或纯API模式(api)时隐藏快捷支付卡片
+            // 内嵌收银台(embedded)时显示
+            if (mode === 'redirect' || mode === 'api') {
+                expressCheckoutCard.style.display = 'none';
+                console.log(`Express checkout card hidden (mode: ${mode})`);
+            } else {
+                expressCheckoutCard.style.display = 'block';
+                console.log(`Express checkout card shown (mode: ${mode})`);
+            }
+            
+            // 纯API模式时隐藏Checkout Session对接方式选项
+            updateCheckoutSessionOptionVisibility(mode);
+        }
+        
+        // ===== 根据集成模式控制Checkout Session选项显示/隐藏 =====
+        function updateCheckoutSessionOptionVisibility(mode) {
+            const checkoutSessionOption = document.getElementById('checkoutSessionOption');
+            if (!checkoutSessionOption) {
+                console.warn('Checkout session option not found');
+                return;
+            }
+            
+            // 纯API模式(api)时隐藏Checkout Session选项
+            // 其他模式时显示
+            if (mode === 'api') {
+                checkoutSessionOption.style.display = 'none';
+                console.log(`Checkout Session option hidden (mode: ${mode})`);
+                
+                // 如果Checkout Session当前被选中，切换到Payment Intent
+                const checkoutSessionRadio = checkoutSessionOption.querySelector('input[type="radio"]');
+                if (checkoutSessionRadio && checkoutSessionRadio.checked) {
+                    const paymentIntentRadio = document.querySelector('input[name="integrationType"][value="payment_intent"]');
+                    if (paymentIntentRadio) {
+                        paymentIntentRadio.checked = true;
+                        console.log('Switched to Payment Intent as Checkout Session is hidden');
+                        
+                        // 更新样式：移除 Checkout Session 的选中样式
+                        const checkoutSessionLabel = checkoutSessionRadio.closest('label');
+                        if (checkoutSessionLabel) {
+                            checkoutSessionLabel.style.borderColor = '#dee2e6';
+                            checkoutSessionLabel.style.background = 'white';
+                            checkoutSessionLabel.style.boxShadow = 'none';
+                        }
+                        
+                        // 更新样式：添加 Payment Intent 的选中样式
+                        const paymentIntentLabel = paymentIntentRadio.closest('label');
+                        if (paymentIntentLabel) {
+                            paymentIntentLabel.style.borderColor = 'var(--success-color)';
+                            paymentIntentLabel.style.background = '#f0f9f0';
+                            paymentIntentLabel.style.boxShadow = '0 4px 12px rgba(76, 175, 80, 0.2)';
+                        }
+                        
+                        // 更新缓存
+                        localStorage.setItem('paymentIntegrationType', 'payment_intent');
+                        console.log('✓ Integration type "payment_intent" cached to localStorage');
+                    }
+                }
+            } else {
+                checkoutSessionOption.style.display = 'flex';
+                console.log(`Checkout Session option shown (mode: ${mode})`);
+            }
+        }
+
         // ===== 初始化支付方式渲染 =====
         function initializePaymentMethodsCards() {
             console.log('=== Initializing Payment Methods Cards ===');
@@ -845,6 +949,9 @@
                             label.style.background = '#f0f9f0';
                             label.style.boxShadow = '0 4px 12px rgba(76, 175, 80, 0.2)';
                         }
+                        
+                        // 根据集成模式初始化快捷支付卡片显示状态
+                        updateExpressCheckoutCardVisibility(modeToUse);
                     }
                 } catch (e) {
                     console.error('Failed to restore integration mode from cache:', e);
@@ -853,6 +960,50 @@
             
             // 页面加载时恢复缓存的集成模式
             restoreIntegrationModeFromCache();
+            
+            // ===== 从缓存恢复对接方式 =====
+            function restoreIntegrationTypeFromCache() {
+                try {
+                    const cachedIntegrationType = localStorage.getItem('paymentIntegrationType');
+                    console.log('Cached integration type:', cachedIntegrationType);
+
+                    // 默认对接方式：Payment Intent
+                    const defaultType = 'payment_intent';
+                    let typeToUse = defaultType;
+
+                    if (cachedIntegrationType) {
+                        typeToUse = cachedIntegrationType;
+                        console.log('Restoring cached integration type:', typeToUse);
+                    } else {
+                        console.log('No cached integration type, using default:', defaultType);
+                    }
+
+                    // 先取消所有对接方式的选中
+                    document.querySelectorAll('input[name="integrationType"]').forEach(radio => {
+                        radio.checked = false;
+                    });
+
+                    // 根据缓存或默认方式恢复选中状态
+                    const typeRadio = document.querySelector(`input[name="integrationType"][value="${typeToUse}"]`);
+                    if (typeRadio) {
+                        typeRadio.checked = true;
+                        console.log(`✓ Integration type "${typeToUse}" has been selected`);
+
+                        // 更新样式
+                        const label = typeRadio.closest('label');
+                        if (label) {
+                            label.style.borderColor = 'var(--success-color)';
+                            label.style.background = '#f0f9f0';
+                            label.style.boxShadow = '0 4px 12px rgba(76, 175, 80, 0.2)';
+                        }
+                    }
+                } catch (e) {
+                    console.error('Failed to restore integration type from cache:', e);
+                }
+            }
+            
+            // 页面加载时恢复缓存的对接方式
+            restoreIntegrationTypeFromCache();
             
             const paymentModeRadios = document.querySelectorAll('input[name="paymentMode"]');
             const createPaymentBtn = document.getElementById('createPaymentBtn');
@@ -890,6 +1041,58 @@
                         label.style.background = '#f0f9f0';
                         label.style.transform = 'translateY(-2px)';
                         label.style.boxShadow = '0 4px 12px rgba(76, 175, 80, 0.2)';
+                    }
+                    
+                    // 根据集成模式控制快捷支付卡片显示/隐藏
+                    updateExpressCheckoutCardVisibility(this.value);
+                });
+                
+                // 初始化选中状态的样式
+                if (radio.checked) {
+                    label.style.borderColor = 'var(--success-color)';
+                    label.style.background = '#f0f9f0';
+                    label.style.boxShadow = '0 4px 12px rgba(76, 175, 80, 0.2)';
+                }
+            });
+            
+            // 为对接方式单选框添加交互效果和缓存
+            const integrationTypeRadios = document.querySelectorAll('input[name="integrationType"]');
+            integrationTypeRadios.forEach(radio => {
+                const label = radio.closest('label');
+                
+                label.addEventListener('mouseenter', function() {
+                    if (!radio.checked) {
+                        this.style.transform = 'translateY(-2px)';
+                        this.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)';
+                    }
+                });
+                
+                label.addEventListener('mouseleave', function() {
+                    if (!radio.checked) {
+                        this.style.transform = 'translateY(0)';
+                        this.style.boxShadow = 'none';
+                    }
+                });
+                
+                radio.addEventListener('change', function() {
+                    // 移除所有标签的选中样式
+                    integrationTypeRadios.forEach(r => {
+                        const lbl = r.closest('label');
+                        lbl.style.borderColor = '#dee2e6';
+                        lbl.style.background = 'white';
+                        lbl.style.transform = 'translateY(0)';
+                        lbl.style.boxShadow = 'none';
+                    });
+                    // 为选中的标签添加样式
+                    if (this.checked) {
+                        label.style.borderColor = 'var(--success-color)';
+                        label.style.background = '#f0f9f0';
+                        label.style.transform = 'translateY(-2px)';
+                        label.style.boxShadow = '0 4px 12px rgba(76, 175, 80, 0.2)';
+                        
+                        // 缓存对接方式到 localStorage
+                        localStorage.setItem('paymentIntegrationType', this.value);
+                        console.log(`✓ Integration type "${this.value}" cached to localStorage`);
                     }
                 });
                 

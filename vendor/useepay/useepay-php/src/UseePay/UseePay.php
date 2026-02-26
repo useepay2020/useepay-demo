@@ -8,7 +8,7 @@ namespace UseePay;
  */
 class UseePay
 {
-    const VERSION = '1.0.0';
+    const VERSION = '1.1.0';
 
     const DEFAULT_CONNECT_TIMEOUT = 6;
     const DEFAULT_READ_TIMEOUT = 30;

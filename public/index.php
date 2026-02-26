@@ -73,6 +73,15 @@ if (preg_match('#^/api/payment/confirm/([a-zA-Z0-9_-]+)$#', $request, $matches))
     $controller->confirmPayment($matches[1]);
     exit;
 }
+
+// Checkout Session API - Retrieve by ID
+if (preg_match('#^/api/checkout_session/([a-zA-Z0-9_-]+)$#', $request, $matches)) {
+    require_once __DIR__ . '/../src/Controllers/CheckoutSessionController.php';
+    $controller = new \UseePayDemo\Controllers\CheckoutSessionController();
+    $controller->getCheckoutSession($matches[1]);
+    exit;
+}
+
 // Handling dynamic routing of Shopify and Shopify plugin documents
 // /plugin-docs/{lang}/{slug} eg:/plugin-docs/en/shopify-embedded
 if (preg_match('#^/plugin-docs/(zh|en)/([a-zA-Z0-9_-]+)$#', $request, $matches)) {
@@ -123,13 +132,13 @@ switch ($request) {
         $controller = new \UseePayDemo\Controllers\CheckoutController();
         $controller->checkout();
         break;
-    case '/payment/embedded-checkout':
+    case '/payment/embedded_checkout':
         // Load embedded checkout page
         require_once __DIR__ . '/../src/Controllers/CheckoutController.php';
         $controller = new \UseePayDemo\Controllers\CheckoutController();
         $controller->embeddedCheckout();
         break;
-    case '/payment/api-checkout':
+    case '/payment/api_checkout':
         // Load API checkout page
         require_once __DIR__ . '/../src/Controllers/CheckoutController.php';
         $controller = new \UseePayDemo\Controllers\CheckoutController();
@@ -160,19 +169,19 @@ switch ($request) {
     case '/api/payment':
         require __DIR__ . '/../src/Controllers/PaymentApiHandler.php';
         break;
-    case '/api/payment/apple-pay/configuration':
+    case '/api/payment/apple_pay/configuration':
         // Apple Pay 配置获取 API
         require_once __DIR__ . '/../src/Controllers/PaymentController.php';
         $controller = new \UseePayDemo\Controllers\PaymentController();
         $controller->getApplePayConfiguration();
         break;
-    case '/api/payment/apple-pay/validate':
+    case '/api/payment/apple_pay/validate':
         // Apple Pay Session 验证 API
         require_once __DIR__ . '/../src/Controllers/PaymentController.php';
         $controller = new \UseePayDemo\Controllers\PaymentController();
         $controller->validateApplePaySession();
         break;
-    case '/api/payment/google-pay/configuration':
+    case '/api/payment/google_pay/configuration':
         // Google Pay 配置获取 API
         require_once __DIR__ . '/../src/Controllers/PaymentController.php';
         $controller = new \UseePayDemo\Controllers\PaymentController();
@@ -185,6 +194,12 @@ switch ($request) {
         break;
     case '/api/subscription':
         require __DIR__ . '/../src/Controllers/SubscriptionController.php';
+        break;
+    case '/api/checkout_session':
+        // Create Checkout Session API
+        require_once __DIR__ . '/../src/Controllers/CheckoutSessionController.php';
+        $controller = new \UseePayDemo\Controllers\CheckoutSessionController();
+        $controller->createCheckoutSession();
         break;
     case '/api/webhook':
         break;
