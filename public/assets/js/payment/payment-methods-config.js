@@ -23,6 +23,12 @@ const paymentMethodsMap = {
         name_en: 'Google Pay',
         i18nKey: null
     },
+    'link': {
+        icon: '<svg style="width: 1.2rem; height: 1.2rem; vertical-align: middle;" viewBox="0 0 60 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="60" height="24" rx="4" fill="#00D924"/><text x="30" y="16" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="white" text-anchor="middle">Link</text></svg>',
+        name_zh: 'Pay with Link',
+        name_en: 'Pay with Link',
+        i18nKey: null
+    },
     'wechat': {
         icon: '<i class="fab fa-weixin" style="color: #09B83E; font-size: 1.2rem;"></i>',
         name_zh: '微信支付',

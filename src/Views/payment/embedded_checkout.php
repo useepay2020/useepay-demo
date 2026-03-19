@@ -119,8 +119,10 @@
     <?php
     global $config;
     $publicKey = $config['usee_pay']['api_public_key'];
+    $app_id = $config['usee_pay']['app_id'];
     ?>
     window.USEEPAY_PUBLIC_KEY = '<?php echo $publicKey; ?>';
+    window.USEEPAY_APP_ID = '<?php echo $app_id; ?>';
     console.log('UseePay Public Key configured:', window.USEEPAY_PUBLIC_KEY ? '✓' : '✗');
 </script>
 
